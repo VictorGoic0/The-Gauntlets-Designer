@@ -456,13 +456,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Create presence data structure in Firestore
+1. - [x] Create presence data structure in Firestore
 
    - Collection: `/projects/shared-canvas/presence/{userId}`
    - Hardcoded project ID: 'shared-canvas'
    - Fields: `userName`, `userEmail`, `userColor` (from PR #4), `isOnline`, `lastSeen` (server timestamp)
 
-2. - [ ] Create usePresence hook
+2. - [x] Create usePresence hook
 
    - File: `src/hooks/usePresence.js`
    - Write user presence on mount to `/projects/shared-canvas/presence/{userId}`
