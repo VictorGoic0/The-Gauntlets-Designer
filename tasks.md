@@ -196,7 +196,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Integration Tests:**
 
-10. - [ ] Test login flow
+10. - [x] Test login flow
     - File: `src/components/auth/__tests__/Login.integration.test.jsx`
     - Test Google Sign-In button triggers auth flow
     - Test error message display on failure
