@@ -456,13 +456,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Create presence data structure in Firestore
+1. - [x] Create presence data structure in Firestore
 
    - Collection: `/projects/shared-canvas/presence/{userId}`
    - Hardcoded project ID: 'shared-canvas'
    - Fields: `userName`, `userEmail`, `userColor` (from PR #4), `isOnline`, `lastSeen` (server timestamp)
 
-2. - [ ] Create usePresence hook
+2. - [x] Create usePresence hook
 
    - File: `src/hooks/usePresence.js`
    - Write user presence on mount to `/projects/shared-canvas/presence/{userId}`
@@ -470,14 +470,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Set `isOnline: false` on unmount
    - Use `onDisconnect()` to set `isOnline: false` and update `lastSeen`
 
-3. - [ ] Create presence sync hook
+3. - [x] Create presence sync hook
 
    - File: `src/hooks/usePresenceSync.js`
    - Listen to presence collection with `onSnapshot`
    - Return list of online users
    - Filter users by `isOnline` status and recent `lastSeen`
 
-4. - [ ] Create PresencePanel component
+4. - [x] Create PresencePanel component
 
    - File: `src/components/canvas/PresencePanel.jsx`
    - Display list of online users
@@ -486,7 +486,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Collapsible panel (toggle button)
    - Use Tailwind for styling
 
-5. - [ ] Integrate presence panel
+5. - [x] Integrate presence panel
    - Update `src/pages/CanvasPage.jsx`
    - Add `PresencePanel` to layout
    - Position in top-right corner

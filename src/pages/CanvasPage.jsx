@@ -2,6 +2,7 @@ import { CanvasProvider } from "../contexts/CanvasContext";
 import Header from "../components/ui/Header";
 import Canvas from "../components/canvas/Canvas";
 import ZoomControls from "../components/canvas/ZoomControls";
+import PresencePanel from "../components/canvas/PresencePanel";
 
 export default function CanvasPage() {
   return (
@@ -13,6 +14,9 @@ export default function CanvasPage() {
         {/* Canvas fills remaining space */}
         <div className="flex-1 relative">
           <Canvas />
+          
+          {/* Presence panel overlay positioned in top-right corner */}
+          <PresencePanel />
           
           {/* Zoom controls overlay positioned in bottom-right corner */}
           <ZoomControls />

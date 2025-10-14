@@ -3,6 +3,7 @@ import { Stage, Layer, Rect } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
 import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
+import usePresence from "../../hooks/usePresence";
 import Cursor from "./Cursor";
 
 export default function Canvas() {
@@ -32,6 +33,9 @@ export default function Canvas() {
   // Cursor tracking and syncing
   useCursorTracking(true);
   const remoteCursors = useCursorSync();
+  
+  // Presence tracking
+  usePresence(true);
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
