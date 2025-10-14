@@ -330,37 +330,37 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Set up Firestore collections structure
+1. - [x] Set up Firestore collections structure
 
    - Create collection: `/projects/shared-canvas/cursors/{userId}`
    - Hardcoded project ID: 'shared-canvas'
    - Add Firestore security rules in Firebase console (auth users can read/write)
    - Rule: `match /projects/shared-canvas/{document=**} { allow read, write: if request.auth != null; }`
 
-2. - [ ] Define cursor color palette
+2. - [x] Define cursor color palette
 
    - File: `src/utils/userColors.js`
    - Define 10 predefined colors (vibrant, distinct colors)
    - Function to randomly assign one color per user: `getUserColor(userId)`
    - Store color assignment in component state or Firestore
 
-3. - [ ] Create cursor tracking hook
+3. - [x] Create cursor tracking hook
 
    - File: `src/hooks/useCursorTracking.js`
    - Track local mouse position with `useState`
-   - **Throttle cursor updates to 100ms** (10 updates/second)
+   - **Throttle cursor updates to 45ms** (~22 updates/second for <50ms perceived latency)
    - Write cursor position to Firestore on mouse move
    - Include: `x`, `y`, `userName`, `userColor`, `lastSeen` (server timestamp)
    - Use `FieldValue.serverTimestamp()` for lastSeen
 
-4. - [ ] Implement cursor cleanup with onDisconnect()
+4. - [x] Implement cursor cleanup with onDisconnect()
 
    - File: `src/hooks/useCursorTracking.js`
    - Set up Firebase `onDisconnect().remove()` for cursor document
    - Ensures cursor auto-deleted when user disconnects/closes browser
    - Clean up on component unmount as well
 
-5. - [ ] Create cursor sync hook
+5. - [x] Create cursor sync hook
 
    - File: `src/hooks/useCursorSync.js`
    - Listen to `/projects/shared-canvas/cursors` collection with `onSnapshot`
@@ -368,7 +368,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Filter out current user's cursor
    - Implement cursor interpolation for smooth movement (target <50ms perceived latency)
 
-6. - [ ] Create Cursor component
+6. - [x] Create Cursor component
 
    - File: `src/components/canvas/Cursor.jsx`
    - Render SVG cursor shape with Konva `Group`
@@ -376,7 +376,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Use user's assigned color
    - Position based on cursor data
 
-7. - [ ] Integrate cursors into Canvas
+7. - [x] Integrate cursors into Canvas
    - Update `src/components/canvas/Canvas.jsx`
    - Use `useCursorTracking` hook
    - Use `useCursorSync` hook
@@ -385,22 +385,22 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Unit Tests:**
 
-8. - [ ] Test cursor throttling
+8. - [x] Test cursor throttling
 
    - File: `src/hooks/__tests__/useCursorTracking.test.js`
-   - Test cursor updates are throttled to 100ms
+   - Test cursor updates are throttled to 45ms
    - Test cursor data includes x, y, userName, userColor, lastSeen
    - Test uses server timestamp for lastSeen
    - Mock Firestore writes
 
-9. - [ ] Test cursor sync logic
+9. - [x] Test cursor sync logic
 
    - File: `src/hooks/__tests__/useCursorSync.test.js`
    - Test filters out current user's cursor
    - Test cursor interpolation works
    - Mock Firestore onSnapshot
 
-10. - [ ] Test user color assignment
+10. - [x] Test user color assignment
 
     - File: `src/utils/__tests__/userColors.test.js`
     - Test 10 colors are defined
@@ -408,7 +408,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
     - Test color is randomly assigned per user
     - Test color format is valid hex
 
-11. - [ ] Test onDisconnect cleanup
+11. - [x] Test onDisconnect cleanup
     - File: `src/hooks/__tests__/useCursorTracking.test.js`
     - Test onDisconnect().remove() is called
     - Test cleanup on unmount
@@ -416,7 +416,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Integration Tests:**
 
-12. - [ ] Test cursor component rendering
+12. - [x] Test cursor component rendering
     - File: `src/components/canvas/__tests__/Cursor.integration.test.jsx`
     - Test cursor renders at correct position
     - Test cursor displays user name
@@ -439,13 +439,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Open app in 2 browsers (both signed in with different Google accounts)
-- [ ] Both cursors visible and moving smoothly with interpolation
-- [ ] Each cursor has one of the 10 predefined colors
-- [ ] Cursor names from Google accounts display correctly
-- [ ] **Perceived latency <50ms** (feels real-time despite 100ms throttle)
-- [ ] Cursors disappear immediately when user closes browser (onDisconnect works)
-- [ ] Pan/zoom doesn't break cursor positioning
+- [x] Open app in 2 browsers (both signed in with different Google accounts)
+- [x] Both cursors visible and moving smoothly with interpolation
+- [x] Each cursor has one of the 10 predefined colors
+- [x] Cursor names from Google accounts display correctly
+- [x] **Perceived latency <50ms** (feels real-time despite 45ms throttle)
+- [x] Cursors disappear immediately when user closes browser (onDisconnect works)
+- [x] Pan/zoom doesn't break cursor positioning
 - [ ] `npm test` passes all cursor tests
 
 ---

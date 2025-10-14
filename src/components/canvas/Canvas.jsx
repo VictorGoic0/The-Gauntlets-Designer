@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
+import useCursorTracking from "../../hooks/useCursorTracking";
+import useCursorSync from "../../hooks/useCursorSync";
+import Cursor from "./Cursor";
 
 export default function Canvas() {
   // Get canvas state from context
@@ -25,6 +28,10 @@ export default function Canvas() {
   const stageRef = useRef(null);
   const containerRef = useRef(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
+
+  // Cursor tracking and syncing
+  useCursorTracking(true);
+  const remoteCursors = useCursorSync();
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
@@ -171,6 +178,17 @@ export default function Canvas() {
           </Layer>
         </Stage>
       )}
+
+      {/* Cursor overlay - HTML elements for simplicity */}
+      {remoteCursors.map((cursor) => (
+        <Cursor
+          key={cursor.userId}
+          x={cursor.x}
+          y={cursor.y}
+          userName={cursor.userName}
+          userColor={cursor.userColor}
+        />
+      ))}
     </div>
   );
 }

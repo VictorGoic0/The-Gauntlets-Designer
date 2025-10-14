@@ -1,5 +1,5 @@
 // Color palette - 10 vibrant, distinct colors for user cursors
-const COLOR_PALETTE = [
+export const COLOR_PALETTE = [
   "#FF6B6B", // Red
   "#4ECDC4", // Teal
   "#45B7D1", // Blue
@@ -13,16 +13,20 @@ const COLOR_PALETTE = [
 ];
 
 /**
- * Get a consistent color for a user based on their userId
- * @param {string} userId - The unique identifier for the user
- * @returns {string} A hex color code
+ * Get a consistent color for a user based on their userId.
+ * The same userId will always return the same color (deterministic),
+ * ensuring consistent cursor colors across sessions.
+ *
+ * @param {string} userId - The unique identifier for the user (Firebase Auth UID)
+ * @returns {string} A hex color code from the palette
  */
 export const getUserColor = (userId) => {
   if (!userId) {
     return COLOR_PALETTE[0];
   }
 
-  // Simple hash function to convert userId to a number
+  // Hash function to convert userId string to a number
+  // This ensures the same user always gets the same color
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
     hash = userId.charCodeAt(i) + ((hash << 5) - hash);
