@@ -145,7 +145,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Export `useAuth` hook
    - Handle `onAuthStateChanged` listener
 
-3. - [ ] Create Login component
+3. - [x] Create Login component
 
    - File: `src/components/auth/Login.jsx`
    - Simple landing page with "Sign in with Google" button
@@ -153,14 +153,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Error message display
    - Use Tailwind for styling
 
-4. - [ ] Implement auth functions
+4. - [x] Implement auth functions
 
    - File: `src/lib/firebase.js`
    - `signInWithGoogle()` - uses GoogleAuthProvider
    - `signOutUser()`
    - User display name comes from Google account automatically
 
-5. - [ ] Create ProtectedRoute component
+5. - [x] Create ProtectedRoute component
 
    - File: `src/components/auth/ProtectedRoute.jsx`
    - Redirect to login if not authenticated
