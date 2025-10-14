@@ -1,7 +1,24 @@
 import { describe, it, expect } from "vitest";
-import { getUserColor } from "../userColors";
+import { getUserColor, COLOR_PALETTE } from "../userColors";
 
 describe("userColors utility", () => {
+  describe("color palette", () => {
+    it("should have exactly 10 colors defined", () => {
+      expect(COLOR_PALETTE).toHaveLength(10);
+    });
+
+    it("should have all colors in valid hex format", () => {
+      COLOR_PALETTE.forEach((color) => {
+        expect(color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      });
+    });
+
+    it("should have all unique colors", () => {
+      const uniqueColors = new Set(COLOR_PALETTE);
+      expect(uniqueColors.size).toBe(10);
+    });
+  });
+
   describe("color generation consistency", () => {
     it("should return the same color for the same userId", () => {
       const userId = "user-123";
@@ -23,9 +40,7 @@ describe("userColors utility", () => {
       const userId = "user-789";
       const color = getUserColor(userId);
 
-      // This will be validated once we have the actual color palette defined
-      expect(color).toBeDefined();
-      expect(typeof color).toBe("string");
+      expect(COLOR_PALETTE).toContain(color);
     });
   });
 

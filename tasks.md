@@ -330,14 +330,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Set up Firestore collections structure
+1. - [x] Set up Firestore collections structure
 
    - Create collection: `/projects/shared-canvas/cursors/{userId}`
    - Hardcoded project ID: 'shared-canvas'
    - Add Firestore security rules in Firebase console (auth users can read/write)
    - Rule: `match /projects/shared-canvas/{document=**} { allow read, write: if request.auth != null; }`
 
-2. - [ ] Define cursor color palette
+2. - [x] Define cursor color palette
 
    - File: `src/utils/userColors.js`
    - Define 10 predefined colors (vibrant, distinct colors)
