@@ -137,7 +137,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Enable Google Sign-In provider in Firebase Console
    - Configure authorized domains
 
-2. - [ ] Create AuthContext
+2. - [x] Create AuthContext
 
    - File: `src/contexts/AuthContext.jsx`
    - Manage auth state with `useState`
