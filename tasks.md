@@ -173,7 +173,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Show login page if not authenticated
    - Redirect to canvas after successful Google Sign-In
 
-7. - [ ] Add sign out button
+7. - [x] Add sign out button
    - File: `src/components/ui/Header.jsx`
    - Display current user name (from Google account)
    - Sign out button
