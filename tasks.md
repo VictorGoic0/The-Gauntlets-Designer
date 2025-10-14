@@ -477,7 +477,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Return list of online users
    - Filter users by `isOnline` status and recent `lastSeen`
 
-4. - [ ] Create PresencePanel component
+4. - [x] Create PresencePanel component
 
    - File: `src/components/canvas/PresencePanel.jsx`
    - Display list of online users

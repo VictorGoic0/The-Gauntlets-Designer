@@ -3,6 +3,7 @@ import { Stage, Layer, Rect } from "react-konva";
 import { useCanvas } from "../../hooks/useCanvas";
 import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
+import usePresence from "../../hooks/usePresence";
 import Cursor from "./Cursor";
 
 export default function Canvas() {
