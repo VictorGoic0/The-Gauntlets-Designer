@@ -61,7 +61,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Add `.env.local` for Firebase keys
    - Add `.env.local` to `.gitignore`
 
-7. - [ ] Create basic README
+7. - [x] Create basic README
 
    - File: `README.md`
    - Setup instructions
