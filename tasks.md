@@ -12,11 +12,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Create new Vite + React project
+1. - [x] Create new Vite + React project
    - Run: `npm create vite@latest collabcanvas -- --template react`
    - Install dependencies: `npm install`
 
-2. - [ ] Install all required dependencies
+2. - [x] Install all required dependencies
 
    ```bash
    npm install firebase konva react-konva
@@ -24,12 +24,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    npx tailwindcss init -p
    ```
 
-3. - [ ] Configure Tailwind CSS
+3. - [x] Configure Tailwind CSS
 
    - Update `tailwind.config.js` with content paths
    - Add Tailwind directives to `src/index.css`
 
-4. - [ ] Create project file structure
+4. - [x] Create project file structure
 
    ```
    src/
