@@ -119,10 +119,10 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] `npm run dev` starts without errors
-- [ ] Tailwind classes work
-- [ ] No console errors
-- [ ] `npm test` passes
+- [x] `npm run dev` starts without errors
+- [x] Tailwind classes work
+- [x] No console errors
+- [x] `npm test` passes
 
 ---
 
@@ -132,7 +132,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Set up Firebase Authentication
+1. - [x] Set up Firebase Authentication
 
    - Enable Google Sign-In provider in Firebase Console
    - Configure authorized domains
