@@ -12,12 +12,19 @@ export default function Canvas() {
   const [isDragging, setIsDragging] = useState(false);
   const [spacePressed, setSpacePressed] = useState(false);
 
+  // Zoom state
+  const [stageScale, setStageScale] = useState(1);
+
   const stageRef = useRef(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
   const CANVAS_HEIGHT = 5000;
+
+  // Zoom constraints
+  const MIN_SCALE = 0.1;
+  const MAX_SCALE = 5;
 
   // Update stage size on window resize
   useEffect(() => {
@@ -92,6 +99,38 @@ export default function Canvas() {
     setIsDragging(false);
   };
 
+  // Zoom handler - zoom toward cursor position
+  const handleWheel = (e) => {
+    e.evt.preventDefault();
+
+    const stage = stageRef.current;
+    const oldScale = stageScale;
+    const pointer = stage.getPointerPosition();
+
+    // Calculate new scale based on wheel direction
+    const scaleBy = 1.1;
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+    // Clamp scale between min and max
+    const clampedScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+
+    // Calculate mouse position relative to stage before zoom
+    const mousePointTo = {
+      x: (pointer.x - stagePosition.x) / oldScale,
+      y: (pointer.y - stagePosition.y) / oldScale,
+    };
+
+    // Calculate new position to keep zoom centered on cursor
+    const newPosition = {
+      x: pointer.x - mousePointTo.x * clampedScale,
+      y: pointer.y - mousePointTo.y * clampedScale,
+    };
+
+    setStageScale(clampedScale);
+    setStagePosition(newPosition);
+  };
+
   return (
     <div 
       className="w-full h-screen overflow-hidden bg-gray-900"
@@ -103,9 +142,12 @@ export default function Canvas() {
         height={stageSize.height}
         x={stagePosition.x}
         y={stagePosition.y}
+        scaleX={stageScale}
+        scaleY={stageScale}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onWheel={handleWheel}
         className="bg-gray-900"
       >
         <Layer>

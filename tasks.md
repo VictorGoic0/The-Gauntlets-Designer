@@ -248,7 +248,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Use `onMouseDown`, `onMouseMove`, `onMouseUp` events
    - Implement drag mode (spacebar or middle mouse button)
 
-3. - [ ] Implement zoom functionality
+3. - [x] Implement zoom functionality
 
    - Listen to `onWheel` event on Stage
    - Update stage scale with `useState`
