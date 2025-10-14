@@ -360,7 +360,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Ensures cursor auto-deleted when user disconnects/closes browser
    - Clean up on component unmount as well
 
-5. - [ ] Create cursor sync hook
+5. - [x] Create cursor sync hook
 
    - File: `src/hooks/useCursorSync.js`
    - Listen to `/projects/shared-canvas/cursors` collection with `onSnapshot`
