@@ -188,7 +188,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Test useAuth hook returns correct values
    - Mock Firebase auth functions
 
-9. - [ ] Test auth functions
+9. - [x] Test auth functions
    - File: `src/lib/__tests__/firebase.test.js`
    - Test signInWithGoogle initiates Google sign-in flow
    - Test signOutUser signs out user
