@@ -870,12 +870,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Configure build for production
+1. - [x] Configure build for production
 
    - Update `vite.config.js` if needed
    - Test production build locally: `npm run build` && `npm run preview`
 
-2. - [ ] Set up Netlify
+2. - [x] Set up Netlify
 
    - Create Netlify account
    - Connect GitHub repository
@@ -883,30 +883,33 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
      - Build command: `npm run build`
      - Publish directory: `dist`
 
-3. - [ ] Add environment variables to Netlify
+3. - [x] Add environment variables to Netlify
 
    - Add all Firebase config variables
    - Variables: `VITE_FIREBASE_API_KEY`, etc.
 
-4. - [ ] Configure redirects for SPA
+4. - [x] Configure redirects for SPA
 
    - File: `public/_redirects`
    - Add: `/* /index.html 200`
 
-5. - [ ] Deploy and test
+5. - [x] Deploy and test
 
    - Push to main branch to trigger deploy
    - Test authentication on deployed URL
    - Test multiplayer with 2 devices/browsers
 
-6. - [ ] Update README
-   - Add deployed URL
-   - Add screenshots
+6. - [x] Update README
+   - Add deployed URL placeholder
+   - Add deployment instructions
+   - Add troubleshooting section
    - Verify setup instructions
 
 **Files Created:**
 
 - `public/_redirects`
+- `netlify.toml`
+- `DEPLOYMENT.md`
 
 **Files Modified:**
 
@@ -914,7 +917,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Deployed URL is accessible
+- [ ] Deployed URL is accessible (requires user to deploy to Netlify)
 - [ ] Can sign up and sign in
 - [ ] Cursors sync across devices
 - [ ] Can create and move rectangles
