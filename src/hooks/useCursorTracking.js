@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "./useAuth";
 import { getUserColor } from "../utils/userColors";
@@ -8,6 +8,7 @@ import { getUserColor } from "../utils/userColors";
  * Hook to track local cursor position and sync to Firestore.
  * Throttles updates to 45ms (~22 updates/second) for performance
  * while maintaining <50ms perceived latency.
+ * Automatically cleans up cursor on unmount and browser close.
  *
  * @param {boolean} enabled - Whether cursor tracking is enabled
  */
@@ -21,6 +22,13 @@ export function useCursorTracking(enabled = true) {
     if (!enabled || !currentUser) return;
 
     const userColor = getUserColor(currentUser.uid);
+    const cursorRef = doc(
+      db,
+      "projects",
+      "shared-canvas",
+      "cursors",
+      currentUser.uid
+    );
 
     const handleMouseMove = async (e) => {
       const now = Date.now();
@@ -40,14 +48,6 @@ export function useCursorTracking(enabled = true) {
 
       try {
         // Write cursor position to Firestore
-        const cursorRef = doc(
-          db,
-          "projects",
-          "shared-canvas",
-          "cursors",
-          currentUser.uid
-        );
-
         await setDoc(cursorRef, {
           x: cursorPositionRef.current.x,
           y: cursorPositionRef.current.y,
@@ -63,9 +63,14 @@ export function useCursorTracking(enabled = true) {
     // Add event listener
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Cleanup
+    // Cleanup on unmount or when user logs out
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+
+      // Remove cursor document from Firestore
+      deleteDoc(cursorRef).catch((error) => {
+        console.error("Error removing cursor:", error);
+      });
     };
   }, [enabled, currentUser]);
 }

@@ -353,7 +353,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Include: `x`, `y`, `userName`, `userColor`, `lastSeen` (server timestamp)
    - Use `FieldValue.serverTimestamp()` for lastSeen
 
-4. - [ ] Implement cursor cleanup with onDisconnect()
+4. - [x] Implement cursor cleanup with onDisconnect()
 
    - File: `src/hooks/useCursorTracking.js`
    - Set up Firebase `onDisconnect().remove()` for cursor document
