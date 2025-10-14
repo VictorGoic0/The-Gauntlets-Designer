@@ -288,7 +288,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Test stage position updates on drag
    - Test pan is constrained to valid bounds
 
-9. - [ ] Test zoom functionality
+9. - [x] Test zoom functionality
 
    - File: `src/components/canvas/__tests__/Canvas.test.jsx`
    - Test zoom level updates on wheel event

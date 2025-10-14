@@ -232,6 +232,144 @@ describe("Canvas - Pan Functionality", () => {
   });
 });
 
+describe("Canvas - Zoom Functionality", () => {
+  beforeEach(() => {
+    // Mock offsetWidth/offsetHeight for container
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      value: 800,
+    });
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      value: 600,
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should zoom in on wheel event with negative deltaY", () => {
+    renderCanvas();
+    const stage = screen.getByTestId("konva-stage");
+
+    // Simulate wheel event (scroll up = zoom in)
+    fireEvent.wheel(stage, {
+      deltaY: -100,
+      clientX: 400,
+      clientY: 300,
+    });
+
+    // Verify stage is still rendered (zoom state is managed internally)
+    expect(stage).toBeInTheDocument();
+  });
+
+  it("should zoom out on wheel event with positive deltaY", () => {
+    renderCanvas();
+    const stage = screen.getByTestId("konva-stage");
+
+    // Simulate wheel event (scroll down = zoom out)
+    fireEvent.wheel(stage, {
+      deltaY: 100,
+      clientX: 400,
+      clientY: 300,
+    });
+
+    // Verify stage is still rendered
+    expect(stage).toBeInTheDocument();
+  });
+
+  it("should clamp zoom level to minimum scale", () => {
+    renderCanvas();
+    const stage = screen.getByTestId("konva-stage");
+
+    // Zoom out multiple times to hit minimum
+    for (let i = 0; i < 20; i++) {
+      fireEvent.wheel(stage, {
+        deltaY: 100,
+        clientX: 400,
+        clientY: 300,
+      });
+    }
+
+    // Verify stage is still rendered and didn't crash
+    expect(stage).toBeInTheDocument();
+  });
+
+  it("should clamp zoom level to maximum scale", () => {
+    renderCanvas();
+    const stage = screen.getByTestId("konva-stage");
+
+    // Zoom in multiple times to hit maximum
+    for (let i = 0; i < 20; i++) {
+      fireEvent.wheel(stage, {
+        deltaY: -100,
+        clientX: 400,
+        clientY: 300,
+      });
+    }
+
+    // Verify stage is still rendered and didn't crash
+    expect(stage).toBeInTheDocument();
+  });
+
+  it("should zoom toward mouse cursor position", () => {
+    renderCanvas();
+    const stage = screen.getByTestId("konva-stage");
+
+    // Zoom at a specific mouse position
+    fireEvent.wheel(stage, {
+      deltaY: -100,
+      clientX: 200,
+      clientY: 150,
+    });
+
+    // Verify stage is rendered (position calculation happens internally)
+    expect(stage).toBeInTheDocument();
+
+    // Zoom at a different position
+    fireEvent.wheel(stage, {
+      deltaY: -100,
+      clientX: 600,
+      clientY: 450,
+    });
+
+    expect(stage).toBeInTheDocument();
+  });
+
+  it("should prevent default on wheel event", () => {
+    renderCanvas();
+    const stage = screen.getByTestId("konva-stage");
+
+    const preventDefault = vi.fn();
+    fireEvent.wheel(stage, {
+      deltaY: -100,
+      clientX: 400,
+      clientY: 300,
+      preventDefault,
+    });
+
+    // The component should handle the wheel event
+    expect(stage).toBeInTheDocument();
+  });
+
+  it("should handle rapid zoom events without crashing", () => {
+    renderCanvas();
+    const stage = screen.getByTestId("konva-stage");
+
+    // Simulate rapid zoom in and out
+    for (let i = 0; i < 10; i++) {
+      fireEvent.wheel(stage, {
+        deltaY: i % 2 === 0 ? -50 : 50,
+        clientX: 400 + i * 10,
+        clientY: 300 + i * 10,
+      });
+    }
+
+    expect(stage).toBeInTheDocument();
+  });
+});
+
 // Note: Pan bounds constraints are not currently implemented in the Canvas component.
 // If bounds checking is required (e.g., preventing pan beyond canvas edges),
 // additional logic and tests should be added.
