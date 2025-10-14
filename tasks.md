@@ -344,11 +344,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Function to randomly assign one color per user: `getUserColor(userId)`
    - Store color assignment in component state or Firestore
 
-3. - [ ] Create cursor tracking hook
+3. - [x] Create cursor tracking hook
 
    - File: `src/hooks/useCursorTracking.js`
    - Track local mouse position with `useState`
-   - **Throttle cursor updates to 100ms** (10 updates/second)
+   - **Throttle cursor updates to 45ms** (~22 updates/second for <50ms perceived latency)
    - Write cursor position to Firestore on mouse move
    - Include: `x`, `y`, `userName`, `userColor`, `lastSeen` (server timestamp)
    - Use `FieldValue.serverTimestamp()` for lastSeen
