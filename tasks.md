@@ -181,7 +181,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Unit Tests:**
 
-8. - [ ] Test auth context
+8. - [x] Test auth context
 
    - File: `src/contexts/__tests__/AuthContext.test.jsx`
    - Test AuthProvider renders children when authenticated
