@@ -46,14 +46,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    └── main.jsx
    ```
 
-5. - [ ] Set up Firebase project
+5. - [x] Set up Firebase project
 
    - Create new Firebase project in console
    - Enable Firestore Database
    - Enable Firebase Authentication
    - Copy Firebase config credentials
 
-6. - [ ] Create Firebase configuration file
+6. - [x] Create Firebase configuration file
 
    - File: `src/lib/firebase.js`
    - Initialize Firebase app
