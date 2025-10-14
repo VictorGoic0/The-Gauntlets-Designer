@@ -1,14 +1,14 @@
 graph TB
     subgraph "Client Browser A"
         A1[React App]
-        A2[AuthContext]
-        A3[CanvasContext]
-        A4[Canvas Component]
-        A5[Konva Stage/Layer]
+        A2["AuthContext<br/>(Google user state)"]
+        A3["CanvasContext<br/>(canvas state)"]
+        A4["Canvas Component<br/>(5,000 x 5,000px)"]
+        A5["Konva Stage/Layer<br/>(pan & zoom)"]
         A6[Shape Components]
-        A7[useCursorTracking]
-        A8[useObjectSync]
-        A9[usePresence]
+        A7["useCursorTracking<br/>(100ms throttle)"]
+        A8["useObjectSync<br/>(shared-canvas)"]
+        A9["usePresence<br/>(onDisconnect)"]
         
         A1 --> A2
         A1 --> A3
@@ -23,14 +23,14 @@ graph TB
     
     subgraph "Client Browser B"
         B1[React App]
-        B2[AuthContext]
-        B3[CanvasContext]
-        B4[Canvas Component]
-        B5[Konva Stage/Layer]
+        B2["AuthContext<br/>(Google user state)"]
+        B3["CanvasContext<br/>(canvas state)"]
+        B4["Canvas Component<br/>(5,000 x 5,000px)"]
+        B5["Konva Stage/Layer<br/>(pan & zoom)"]
         B6[Shape Components]
-        B7[useCursorTracking]
-        B8[useObjectSync]
-        B9[usePresence]
+        B7["useCursorTracking<br/>(100ms throttle)"]
+        B8["useObjectSync<br/>(shared-canvas)"]
+        B9["usePresence<br/>(onDisconnect)"]
         
         B1 --> B2
         B1 --> B3
@@ -44,13 +44,13 @@ graph TB
     end
     
     subgraph "Firebase Backend"
-        F1[Firebase Auth]
+        F1["Firebase Auth<br/>(Google Sign-In Only)"]
         F2[Firestore Database]
         
-        subgraph "Firestore Collections"
-            F3["projects/objects"]
-            F4["projects/cursors"]
-            F5["projects/presence"]
+        subgraph "Firestore Collections<br/>(Shared Canvas)"
+            F3["projects/shared-canvas/objects<br/>(with server timestamps)"]
+            F4["projects/shared-canvas/cursors<br/>(auto-deleted via onDisconnect)"]
+            F5["projects/shared-canvas/presence<br/>(auto-cleaned via onDisconnect)"]
         end
         
         F2 --> F3
@@ -60,37 +60,38 @@ graph TB
     
     subgraph "Real-Time Data Flow"
         direction LR
-        R1[onSnapshot Listeners]
-        R2[Write Operations]
-        R3[Optimistic Updates]
+        R1["onSnapshot Listeners"]
+        R2["Write Operations<br/>(with server timestamps)"]
+        R3["Optimistic Updates<br/>(incl. deletion priority)"]
+        R4["10 Color Palette<br/>(random assignment)"]
     end
     
-    A2 -->|signIn/signUp/signOut| F1
-    B2 -->|signIn/signUp/signOut| F1
+    A2 -->|Google Sign-In| F1
+    B2 -->|Google Sign-In| F1
     
-    A7 -->|Write cursor position every 50ms| F4
-    B7 -->|Write cursor position every 50ms| F4
+    A7 -->|Write cursor every 100ms<br/>10 colors, interpolation<br/>Target: <50ms latency| F4
+    B7 -->|Write cursor every 100ms<br/>10 colors, interpolation<br/>Target: <50ms latency| F4
     
-    A8 -->|Write object changes| F3
-    B8 -->|Write object changes| F3
+    A8 -->|Write object changes<br/>Last-write-wins<br/>Optimistic deletion| F3
+    B8 -->|Write object changes<br/>Last-write-wins<br/>Optimistic deletion| F3
     
-    A9 -->|Write presence data| F5
-    B9 -->|Write presence data| F5
+    A9 -->|Write presence data<br/>onDisconnect cleanup| F5
+    B9 -->|Write presence data<br/>onDisconnect cleanup| F5
     
-    F4 -->|onSnapshot real-time updates| A7
-    F4 -->|onSnapshot real-time updates| B7
+    F4 -->|onSnapshot updates<br/>Cursor interpolation| A7
+    F4 -->|onSnapshot updates<br/>Cursor interpolation| B7
     
-    F3 -->|onSnapshot real-time updates| A8
-    F3 -->|onSnapshot real-time updates| B8
+    F3 -->|onSnapshot updates<br/>Server timestamps| A8
+    F3 -->|onSnapshot updates<br/>Server timestamps| B8
     
-    F5 -->|onSnapshot real-time updates| A9
-    F5 -->|onSnapshot real-time updates| B9
+    F5 -->|onSnapshot updates| A9
+    F5 -->|onSnapshot updates| B9
     
-    A8 -.->|Optimistic local update| A6
-    B8 -.->|Optimistic local update| B6
+    A8 -.->|Optimistic update<br/>Instant local| A6
+    B8 -.->|Optimistic update<br/>Instant local| B6
     
-    F3 -.->|Server reconciliation| A8
-    F3 -.->|Server reconciliation| B8
+    F3 -.->|Server reconciliation<br/>Timestamp-based| A8
+    F3 -.->|Server reconciliation<br/>Timestamp-based| B8
     
     style F1 fill:#FFA500
     style F2 fill:#4285F4

@@ -133,7 +133,7 @@ Build the foundational infrastructure for real-time collaborative design, provin
 - Throttled updates: 100ms (10 updates/second per user)
 - Update cursor position <50ms perceived latency with interpolation
 - Display user name label near cursor
-- Unique color per user
+- Unique color per user (randomly assigned from 10 predefined colors)
 - Smooth cursor interpolation (no jittering)
 - Auto-cleanup on disconnect via Firebase onDisconnect()
 
@@ -452,6 +452,7 @@ service cloud.firestore {
 - ✅ **Project model**: Single shared canvas accessible to all authenticated users (hardcoded project ID: 'shared-canvas')
 - ✅ **Landing page**: Simple page with Google Sign-In button → redirect to canvas
 - ✅ **Canvas dimensions**: 5,000 x 5,000 pixels
+- ✅ **Cursor colors**: 10 predefined colors assigned randomly per user
 - ✅ **Cursor throttle**: 100ms updates with <50ms perceived latency via interpolation
 - ✅ **Conflict resolution**: Last-write-wins with optimistic deletion (deletes take priority)
 - ✅ **Development environment**: Direct against live Firebase (no emulator for MVP)
