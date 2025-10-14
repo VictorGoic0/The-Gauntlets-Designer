@@ -282,7 +282,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Unit Tests:**
 
-8. - [ ] Test pan functionality
+8. - [x] Test pan functionality
 
    - File: `src/components/canvas/__tests__/Canvas.test.jsx`
    - Test stage position updates on drag
