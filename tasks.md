@@ -12,97 +12,100 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Create new Vite + React project
-  - Run: `npm create vite@latest collabcanvas -- --template react`
-  - Install dependencies: `npm install`
-- [ ] Install all required dependencies
+1. - [ ] Create new Vite + React project
+   - Run: `npm create vite@latest collabcanvas -- --template react`
+   - Install dependencies: `npm install`
 
-  ```bash
-  npm install firebase konva react-konva
-  npm install -D tailwindcss postcss autoprefixer
-  npx tailwindcss init -p
-  ```
+2. - [ ] Install all required dependencies
 
-- [ ] Configure Tailwind CSS
+   ```bash
+   npm install firebase konva react-konva
+   npm install -D tailwindcss postcss autoprefixer
+   npx tailwindcss init -p
+   ```
 
-  - Update `tailwind.config.js` with content paths
-  - Add Tailwind directives to `src/index.css`
+3. - [ ] Configure Tailwind CSS
 
-- [ ] Create project file structure
+   - Update `tailwind.config.js` with content paths
+   - Add Tailwind directives to `src/index.css`
 
-  ```
-  src/
-  ├── components/
-  │   ├── auth/
-  │   ├── canvas/
-  │   └── ui/
-  ├── contexts/
-  ├── hooks/
-  ├── lib/
-  │   └── firebase.js
-  ├── utils/
-  ├── App.jsx
-  └── main.jsx
-  ```
+4. - [ ] Create project file structure
 
-- [ ] Set up Firebase project
+   ```
+   src/
+   ├── components/
+   │   ├── auth/
+   │   ├── canvas/
+   │   └── ui/
+   ├── contexts/
+   ├── hooks/
+   ├── lib/
+   │   └── firebase.js
+   ├── utils/
+   ├── App.jsx
+   └── main.jsx
+   ```
 
-  - Create new Firebase project in console
-  - Enable Firestore Database
-  - Enable Firebase Authentication
-  - Copy Firebase config credentials
+5. - [ ] Set up Firebase project
 
-- [ ] Create Firebase configuration file
+   - Create new Firebase project in console
+   - Enable Firestore Database
+   - Enable Firebase Authentication
+   - Copy Firebase config credentials
 
-  - File: `src/lib/firebase.js`
-  - Initialize Firebase app
-  - Export `auth`, `db` instances
-  - Add `.env.local` for Firebase keys
-  - Add `.env.local` to `.gitignore`
+6. - [ ] Create Firebase configuration file
 
-- [ ] Create basic README
+   - File: `src/lib/firebase.js`
+   - Initialize Firebase app
+   - Export `auth`, `db` instances
+   - Add `.env.local` for Firebase keys
+   - Add `.env.local` to `.gitignore`
 
-  - File: `README.md`
-  - Setup instructions
-  - Environment variables needed
-  - How to run locally
+7. - [ ] Create basic README
 
-- [ ] Initial Git setup
-  - Initialize git repo
-  - Create `.gitignore` (include `.env.local`, `node_modules`, `dist`)
-  - Initial commit
+   - File: `README.md`
+   - Setup instructions
+   - Environment variables needed
+   - How to run locally
+
+8. - [ ] Initial Git setup
+   - Initialize git repo
+   - Create `.gitignore` (include `.env.local`, `node_modules`, `dist`)
+   - Initial commit
 
 **Testing Setup:**
 
-- [ ] Install testing dependencies
-  ```bash
-  npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
-  ```
-- [ ] Create Vitest config
+9. - [ ] Install testing dependencies
 
-  - File: `vitest.config.js`
-  - Configure jsdom environment
-  - Add test globals
+   ```bash
+   npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
+   ```
 
-- [ ] Create test setup file
+10. - [ ] Create Vitest config
 
-  - File: `src/test/setup.js`
-  - Import @testing-library/jest-dom
-  - Mock Firebase (avoid real Firebase calls in tests)
+    - File: `vitest.config.js`
+    - Configure jsdom environment
+    - Add test globals
 
-- [ ] Add test scripts to package.json
-  ```json
-  "test": "vitest",
-  "test:ui": "vitest --ui",
-  "test:coverage": "vitest --coverage"
-  ```
+11. - [ ] Create test setup file
+
+    - File: `src/test/setup.js`
+    - Import @testing-library/jest-dom
+    - Mock Firebase (avoid real Firebase calls in tests)
+
+12. - [ ] Add test scripts to package.json
+    ```json
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+    ```
 
 **Unit Tests:**
 
-- [ ] Test utility functions
-  - File: `src/utils/__tests__/userColors.test.js`
-  - Test color generation consistency
-  - Test color uniqueness
+13. - [ ] Test utility functions
+    - File: `src/utils/__tests__/userColors.test.js`
+    - Test color generation consistency
+    - Test color uniqueness
 
 **Files Created:**
 
@@ -129,75 +132,75 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Set up Firebase Authentication
+1. - [ ] Set up Firebase Authentication
 
-  - Enable Google Sign-In provider in Firebase Console
-  - Configure authorized domains
+   - Enable Google Sign-In provider in Firebase Console
+   - Configure authorized domains
 
-- [ ] Create AuthContext
+2. - [ ] Create AuthContext
 
-  - File: `src/contexts/AuthContext.jsx`
-  - Manage auth state with `useState`
-  - Create `AuthProvider` component
-  - Export `useAuth` hook
-  - Handle `onAuthStateChanged` listener
+   - File: `src/contexts/AuthContext.jsx`
+   - Manage auth state with `useState`
+   - Create `AuthProvider` component
+   - Export `useAuth` hook
+   - Handle `onAuthStateChanged` listener
 
-- [ ] Create Login component
+3. - [ ] Create Login component
 
-  - File: `src/components/auth/Login.jsx`
-  - Simple landing page with "Sign in with Google" button
-  - Use Google popup sign-in flow
-  - Error message display
-  - Use Tailwind for styling
+   - File: `src/components/auth/Login.jsx`
+   - Simple landing page with "Sign in with Google" button
+   - Use Google popup sign-in flow
+   - Error message display
+   - Use Tailwind for styling
 
-- [ ] Implement auth functions
+4. - [ ] Implement auth functions
 
-  - File: `src/lib/firebase.js`
-  - `signInWithGoogle()` - uses GoogleAuthProvider
-  - `signOutUser()`
-  - User display name comes from Google account automatically
+   - File: `src/lib/firebase.js`
+   - `signInWithGoogle()` - uses GoogleAuthProvider
+   - `signOutUser()`
+   - User display name comes from Google account automatically
 
-- [ ] Create ProtectedRoute component
+5. - [ ] Create ProtectedRoute component
 
-  - File: `src/components/auth/ProtectedRoute.jsx`
-  - Redirect to login if not authenticated
-  - Show loading state while checking auth
+   - File: `src/components/auth/ProtectedRoute.jsx`
+   - Redirect to login if not authenticated
+   - Show loading state while checking auth
 
-- [ ] Update App.jsx
+6. - [ ] Update App.jsx
 
-  - Wrap app with `AuthProvider`
-  - Add routing logic (login page vs canvas)
-  - Show login page if not authenticated
-  - Redirect to canvas after successful Google Sign-In
+   - Wrap app with `AuthProvider`
+   - Add routing logic (login page vs canvas)
+   - Show login page if not authenticated
+   - Redirect to canvas after successful Google Sign-In
 
-- [ ] Add sign out button
-  - File: `src/components/ui/Header.jsx`
-  - Display current user name (from Google account)
-  - Sign out button
-  - Use Tailwind for styling
+7. - [ ] Add sign out button
+   - File: `src/components/ui/Header.jsx`
+   - Display current user name (from Google account)
+   - Sign out button
+   - Use Tailwind for styling
 
 **Unit Tests:**
 
-- [ ] Test auth context
+8. - [ ] Test auth context
 
-  - File: `src/contexts/__tests__/AuthContext.test.jsx`
-  - Test AuthProvider renders children when authenticated
-  - Test useAuth hook returns correct values
-  - Mock Firebase auth functions
+   - File: `src/contexts/__tests__/AuthContext.test.jsx`
+   - Test AuthProvider renders children when authenticated
+   - Test useAuth hook returns correct values
+   - Mock Firebase auth functions
 
-- [ ] Test auth functions
-  - File: `src/lib/__tests__/firebase.test.js`
-  - Test signInWithGoogle initiates Google sign-in flow
-  - Test signOutUser signs out user
-  - Mock Firebase calls
+9. - [ ] Test auth functions
+   - File: `src/lib/__tests__/firebase.test.js`
+   - Test signInWithGoogle initiates Google sign-in flow
+   - Test signOutUser signs out user
+   - Mock Firebase calls
 
 **Integration Tests:**
 
-- [ ] Test login flow
-  - File: `src/components/auth/__tests__/Login.integration.test.jsx`
-  - Test Google Sign-In button triggers auth flow
-  - Test error message display on failure
-  - Mock Firebase Google auth responses
+10. - [ ] Test login flow
+    - File: `src/components/auth/__tests__/Login.integration.test.jsx`
+    - Test Google Sign-In button triggers auth flow
+    - Test error message display on failure
+    - Mock Firebase Google auth responses
 
 **Files Created:**
 
@@ -230,72 +233,72 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Create Canvas component
+1. - [ ] Create Canvas component
 
-  - File: `src/components/canvas/Canvas.jsx`
-  - Import Konva: `Stage`, `Layer` from `react-konva`
-  - Set stage size to window dimensions (viewport)
-  - Canvas dimensions: 5,000 x 5,000 pixels (logical canvas size)
-  - Add dark background
+   - File: `src/components/canvas/Canvas.jsx`
+   - Import Konva: `Stage`, `Layer` from `react-konva`
+   - Set stage size to window dimensions (viewport)
+   - Canvas dimensions: 5,000 x 5,000 pixels (logical canvas size)
+   - Add dark background
 
-- [ ] Implement pan functionality
+2. - [ ] Implement pan functionality
 
-  - Track mouse drag on stage
-  - Update stage position with `useState`
-  - Use `onMouseDown`, `onMouseMove`, `onMouseUp` events
-  - Implement drag mode (spacebar or middle mouse button)
+   - Track mouse drag on stage
+   - Update stage position with `useState`
+   - Use `onMouseDown`, `onMouseMove`, `onMouseUp` events
+   - Implement drag mode (spacebar or middle mouse button)
 
-- [ ] Implement zoom functionality
+3. - [ ] Implement zoom functionality
 
-  - Listen to `onWheel` event on Stage
-  - Update stage scale with `useState`
-  - Zoom toward mouse cursor position
-  - Clamp zoom level (min: 0.1, max: 5)
+   - Listen to `onWheel` event on Stage
+   - Update stage scale with `useState`
+   - Zoom toward mouse cursor position
+   - Clamp zoom level (min: 0.1, max: 5)
 
-- [ ] Create CanvasProvider context
+4. - [ ] Create CanvasProvider context
 
-  - File: `src/contexts/CanvasContext.jsx`
-  - Manage canvas state: zoom level, pan position, selected objects
-  - Export `useCanvas` hook
+   - File: `src/contexts/CanvasContext.jsx`
+   - Manage canvas state: zoom level, pan position, selected objects
+   - Export `useCanvas` hook
 
-- [ ] Add zoom controls UI
+5. - [ ] Add zoom controls UI
 
-  - File: `src/components/canvas/ZoomControls.jsx`
-  - Zoom in button
-  - Zoom out button
-  - Reset zoom button
-  - Display current zoom percentage
-  - Position in corner with Tailwind
+   - File: `src/components/canvas/ZoomControls.jsx`
+   - Zoom in button
+   - Zoom out button
+   - Reset zoom button
+   - Display current zoom percentage
+   - Position in corner with Tailwind
 
-- [ ] Create canvas page layout
+6. - [ ] Create canvas page layout
 
-  - File: `src/pages/CanvasPage.jsx`
-  - Header with user info and sign out
-  - Canvas component (full screen)
-  - Zoom controls overlay
+   - File: `src/pages/CanvasPage.jsx`
+   - Header with user info and sign out
+   - Canvas component (full screen)
+   - Zoom controls overlay
 
-- [ ] Update App.jsx routing
-  - Show CanvasPage after authentication
+7. - [ ] Update App.jsx routing
+   - Show CanvasPage after authentication
 
 **Unit Tests:**
 
-- [ ] Test pan functionality
+8. - [ ] Test pan functionality
 
-  - File: `src/components/canvas/__tests__/Canvas.test.jsx`
-  - Test stage position updates on drag
-  - Test pan is constrained to valid bounds
+   - File: `src/components/canvas/__tests__/Canvas.test.jsx`
+   - Test stage position updates on drag
+   - Test pan is constrained to valid bounds
 
-- [ ] Test zoom functionality
+9. - [ ] Test zoom functionality
 
-  - File: `src/components/canvas/__tests__/Canvas.test.jsx`
-  - Test zoom level updates on wheel event
-  - Test zoom is clamped between min/max
-  - Test zoom centers on mouse position
+   - File: `src/components/canvas/__tests__/Canvas.test.jsx`
+   - Test zoom level updates on wheel event
+   - Test zoom is clamped between min/max
+   - Test zoom centers on mouse position
 
-- [ ] Test CanvasContext
-  - File: `src/contexts/__tests__/CanvasContext.test.jsx`
-  - Test zoom/pan state management
-  - Test canvas mode switching
+10. - [ ] Test CanvasContext
+    - File: `src/contexts/__tests__/CanvasContext.test.jsx`
+    - Test zoom/pan state management
+    - Test canvas mode switching
 
 **Files Created:**
 
@@ -327,97 +330,97 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Set up Firestore collections structure
+1. - [ ] Set up Firestore collections structure
 
-  - Create collection: `/projects/shared-canvas/cursors/{userId}`
-  - Hardcoded project ID: 'shared-canvas'
-  - Add Firestore security rules in Firebase console (auth users can read/write)
-  - Rule: `match /projects/shared-canvas/{document=**} { allow read, write: if request.auth != null; }`
+   - Create collection: `/projects/shared-canvas/cursors/{userId}`
+   - Hardcoded project ID: 'shared-canvas'
+   - Add Firestore security rules in Firebase console (auth users can read/write)
+   - Rule: `match /projects/shared-canvas/{document=**} { allow read, write: if request.auth != null; }`
 
-- [ ] Define cursor color palette
+2. - [ ] Define cursor color palette
 
-  - File: `src/utils/userColors.js`
-  - Define 10 predefined colors (vibrant, distinct colors)
-  - Function to randomly assign one color per user: `getUserColor(userId)`
-  - Store color assignment in component state or Firestore
+   - File: `src/utils/userColors.js`
+   - Define 10 predefined colors (vibrant, distinct colors)
+   - Function to randomly assign one color per user: `getUserColor(userId)`
+   - Store color assignment in component state or Firestore
 
-- [ ] Create cursor tracking hook
+3. - [ ] Create cursor tracking hook
 
-  - File: `src/hooks/useCursorTracking.js`
-  - Track local mouse position with `useState`
-  - **Throttle cursor updates to 100ms** (10 updates/second)
-  - Write cursor position to Firestore on mouse move
-  - Include: `x`, `y`, `userName`, `userColor`, `lastSeen` (server timestamp)
-  - Use `FieldValue.serverTimestamp()` for lastSeen
+   - File: `src/hooks/useCursorTracking.js`
+   - Track local mouse position with `useState`
+   - **Throttle cursor updates to 100ms** (10 updates/second)
+   - Write cursor position to Firestore on mouse move
+   - Include: `x`, `y`, `userName`, `userColor`, `lastSeen` (server timestamp)
+   - Use `FieldValue.serverTimestamp()` for lastSeen
 
-- [ ] Implement cursor cleanup with onDisconnect()
+4. - [ ] Implement cursor cleanup with onDisconnect()
 
-  - File: `src/hooks/useCursorTracking.js`
-  - Set up Firebase `onDisconnect().remove()` for cursor document
-  - Ensures cursor auto-deleted when user disconnects/closes browser
-  - Clean up on component unmount as well
+   - File: `src/hooks/useCursorTracking.js`
+   - Set up Firebase `onDisconnect().remove()` for cursor document
+   - Ensures cursor auto-deleted when user disconnects/closes browser
+   - Clean up on component unmount as well
 
-- [ ] Create cursor sync hook
+5. - [ ] Create cursor sync hook
 
-  - File: `src/hooks/useCursorSync.js`
-  - Listen to `/projects/shared-canvas/cursors` collection with `onSnapshot`
-  - Store remote cursors in `useState`
-  - Filter out current user's cursor
-  - Implement cursor interpolation for smooth movement (target <50ms perceived latency)
+   - File: `src/hooks/useCursorSync.js`
+   - Listen to `/projects/shared-canvas/cursors` collection with `onSnapshot`
+   - Store remote cursors in `useState`
+   - Filter out current user's cursor
+   - Implement cursor interpolation for smooth movement (target <50ms perceived latency)
 
-- [ ] Create Cursor component
+6. - [ ] Create Cursor component
 
-  - File: `src/components/canvas/Cursor.jsx`
-  - Render SVG cursor shape with Konva `Group`
-  - Display user name label
-  - Use user's assigned color
-  - Position based on cursor data
+   - File: `src/components/canvas/Cursor.jsx`
+   - Render SVG cursor shape with Konva `Group`
+   - Display user name label
+   - Use user's assigned color
+   - Position based on cursor data
 
-- [ ] Integrate cursors into Canvas
-  - Update `src/components/canvas/Canvas.jsx`
-  - Use `useCursorTracking` hook
-  - Use `useCursorSync` hook
-  - Render `Cursor` component for each remote user
-  - Transform cursor positions based on canvas pan/zoom
+7. - [ ] Integrate cursors into Canvas
+   - Update `src/components/canvas/Canvas.jsx`
+   - Use `useCursorTracking` hook
+   - Use `useCursorSync` hook
+   - Render `Cursor` component for each remote user
+   - Transform cursor positions based on canvas pan/zoom
 
 **Unit Tests:**
 
-- [ ] Test cursor throttling
+8. - [ ] Test cursor throttling
 
-  - File: `src/hooks/__tests__/useCursorTracking.test.js`
-  - Test cursor updates are throttled to 100ms
-  - Test cursor data includes x, y, userName, userColor, lastSeen
-  - Test uses server timestamp for lastSeen
-  - Mock Firestore writes
+   - File: `src/hooks/__tests__/useCursorTracking.test.js`
+   - Test cursor updates are throttled to 100ms
+   - Test cursor data includes x, y, userName, userColor, lastSeen
+   - Test uses server timestamp for lastSeen
+   - Mock Firestore writes
 
-- [ ] Test cursor sync logic
+9. - [ ] Test cursor sync logic
 
-  - File: `src/hooks/__tests__/useCursorSync.test.js`
-  - Test filters out current user's cursor
-  - Test cursor interpolation works
-  - Mock Firestore onSnapshot
+   - File: `src/hooks/__tests__/useCursorSync.test.js`
+   - Test filters out current user's cursor
+   - Test cursor interpolation works
+   - Mock Firestore onSnapshot
 
-- [ ] Test user color assignment
+10. - [ ] Test user color assignment
 
-  - File: `src/utils/__tests__/userColors.test.js`
-  - Test 10 colors are defined
-  - Test getUserColor returns one of the 10 colors
-  - Test color is randomly assigned per user
-  - Test color format is valid hex
+    - File: `src/utils/__tests__/userColors.test.js`
+    - Test 10 colors are defined
+    - Test getUserColor returns one of the 10 colors
+    - Test color is randomly assigned per user
+    - Test color format is valid hex
 
-- [ ] Test onDisconnect cleanup
-  - File: `src/hooks/__tests__/useCursorTracking.test.js`
-  - Test onDisconnect().remove() is called
-  - Test cleanup on unmount
-  - Mock Firebase onDisconnect
+11. - [ ] Test onDisconnect cleanup
+    - File: `src/hooks/__tests__/useCursorTracking.test.js`
+    - Test onDisconnect().remove() is called
+    - Test cleanup on unmount
+    - Mock Firebase onDisconnect
 
 **Integration Tests:**
 
-- [ ] Test cursor component rendering
-  - File: `src/components/canvas/__tests__/Cursor.integration.test.jsx`
-  - Test cursor renders at correct position
-  - Test cursor displays user name
-  - Test cursor uses correct color
+12. - [ ] Test cursor component rendering
+    - File: `src/components/canvas/__tests__/Cursor.integration.test.jsx`
+    - Test cursor renders at correct position
+    - Test cursor displays user name
+    - Test cursor uses correct color
 
 **Files Created:**
 
@@ -453,64 +456,64 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Create presence data structure in Firestore
+1. - [ ] Create presence data structure in Firestore
 
-  - Collection: `/projects/shared-canvas/presence/{userId}`
-  - Hardcoded project ID: 'shared-canvas'
-  - Fields: `userName`, `userEmail`, `userColor` (from PR #4), `isOnline`, `lastSeen` (server timestamp)
+   - Collection: `/projects/shared-canvas/presence/{userId}`
+   - Hardcoded project ID: 'shared-canvas'
+   - Fields: `userName`, `userEmail`, `userColor` (from PR #4), `isOnline`, `lastSeen` (server timestamp)
 
-- [ ] Create usePresence hook
+2. - [ ] Create usePresence hook
 
-  - File: `src/hooks/usePresence.js`
-  - Write user presence on mount to `/projects/shared-canvas/presence/{userId}`
-  - Update `lastSeen` every 30 seconds using `FieldValue.serverTimestamp()`
-  - Set `isOnline: false` on unmount
-  - Use `onDisconnect()` to set `isOnline: false` and update `lastSeen`
+   - File: `src/hooks/usePresence.js`
+   - Write user presence on mount to `/projects/shared-canvas/presence/{userId}`
+   - Update `lastSeen` every 30 seconds using `FieldValue.serverTimestamp()`
+   - Set `isOnline: false` on unmount
+   - Use `onDisconnect()` to set `isOnline: false` and update `lastSeen`
 
-- [ ] Create presence sync hook
+3. - [ ] Create presence sync hook
 
-  - File: `src/hooks/usePresenceSync.js`
-  - Listen to presence collection with `onSnapshot`
-  - Return list of online users
-  - Filter users by `isOnline` status and recent `lastSeen`
+   - File: `src/hooks/usePresenceSync.js`
+   - Listen to presence collection with `onSnapshot`
+   - Return list of online users
+   - Filter users by `isOnline` status and recent `lastSeen`
 
-- [ ] Create PresencePanel component
+4. - [ ] Create PresencePanel component
 
-  - File: `src/components/canvas/PresencePanel.jsx`
-  - Display list of online users
-  - Show user avatar/initials with color
-  - Show user name
-  - Collapsible panel (toggle button)
-  - Use Tailwind for styling
+   - File: `src/components/canvas/PresencePanel.jsx`
+   - Display list of online users
+   - Show user avatar/initials with color
+   - Show user name
+   - Collapsible panel (toggle button)
+   - Use Tailwind for styling
 
-- [ ] Integrate presence panel
-  - Update `src/pages/CanvasPage.jsx`
-  - Add `PresencePanel` to layout
-  - Position in top-right corner
+5. - [ ] Integrate presence panel
+   - Update `src/pages/CanvasPage.jsx`
+   - Add `PresencePanel` to layout
+   - Position in top-right corner
 
 **Unit Tests:**
 
-- [ ] Test presence hook
+6. - [ ] Test presence hook
 
-  - File: `src/hooks/__tests__/usePresence.test.js`
-  - Test presence data is written on mount
-  - Test lastSeen updates periodically
-  - Test isOnline set to false on unmount
-  - Mock Firestore and onDisconnect
+   - File: `src/hooks/__tests__/usePresence.test.js`
+   - Test presence data is written on mount
+   - Test lastSeen updates periodically
+   - Test isOnline set to false on unmount
+   - Mock Firestore and onDisconnect
 
-- [ ] Test presence sync
-  - File: `src/hooks/__tests__/usePresenceSync.test.js`
-  - Test filters users by isOnline status
-  - Test filters users by recent lastSeen
-  - Mock Firestore onSnapshot
+7. - [ ] Test presence sync
+   - File: `src/hooks/__tests__/usePresenceSync.test.js`
+   - Test filters users by isOnline status
+   - Test filters users by recent lastSeen
+   - Mock Firestore onSnapshot
 
 **Integration Tests:**
 
-- [ ] Test presence panel
-  - File: `src/components/canvas/__tests__/PresencePanel.integration.test.jsx`
-  - Test displays list of online users
-  - Test user count updates
-  - Test panel is collapsible
+8. - [ ] Test presence panel
+   - File: `src/components/canvas/__tests__/PresencePanel.integration.test.jsx`
+   - Test displays list of online users
+   - Test user count updates
+   - Test panel is collapsible
 
 **Files Created:**
 
@@ -542,94 +545,94 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Set up objects collection in Firestore
+1. - [ ] Set up objects collection in Firestore
 
-  - Collection: `/projects/shared-canvas/objects/{objectId}`
-  - Hardcoded project ID: 'shared-canvas'
-  - Fields: `type`, `x`, `y`, `width`, `height`, `fill`, `rotation`, `zIndex`, `createdBy`, `lastModifiedBy`, `lastModified` (server timestamp)
+   - Collection: `/projects/shared-canvas/objects/{objectId}`
+   - Hardcoded project ID: 'shared-canvas'
+   - Fields: `type`, `x`, `y`, `width`, `height`, `fill`, `rotation`, `zIndex`, `createdBy`, `lastModifiedBy`, `lastModified` (server timestamp)
 
-- [ ] Create canvas mode state
+2. - [ ] Create canvas mode state
 
-  - Update `src/contexts/CanvasContext.jsx`
-  - Add `canvasMode` state: 'select', 'rectangle', 'circle', 'text'
-  - Add `setCanvasMode` function
+   - Update `src/contexts/CanvasContext.jsx`
+   - Add `canvasMode` state: 'select', 'rectangle', 'circle', 'text'
+   - Add `setCanvasMode` function
 
-- [ ] Create Toolbar component
+3. - [ ] Create Toolbar component
 
-  - File: `src/components/canvas/Toolbar.jsx`
-  - Buttons for each tool: Select, Rectangle, Circle, Text
-  - Highlight active tool
-  - Position on left side with Tailwind
+   - File: `src/components/canvas/Toolbar.jsx`
+   - Buttons for each tool: Select, Rectangle, Circle, Text
+   - Highlight active tool
+   - Position on left side with Tailwind
 
-- [ ] Create Rectangle component
+4. - [ ] Create Rectangle component
 
-  - File: `src/components/canvas/shapes/Rectangle.jsx`
-  - Render Konva `Rect` with props
-  - Handle click for selection
-  - Show selection border when selected
+   - File: `src/components/canvas/shapes/Rectangle.jsx`
+   - Render Konva `Rect` with props
+   - Handle click for selection
+   - Show selection border when selected
 
-- [ ] Implement rectangle creation
+5. - [ ] Implement rectangle creation
 
-  - Update `src/components/canvas/Canvas.jsx`
-  - On stage click in 'rectangle' mode:
-    - Create rectangle at click position
-    - Generate unique ID
-    - Set default size (100x100) and color
-  - Write to Firestore immediately with `FieldValue.serverTimestamp()` for lastModified
-  - Add to local state instantly (optimistic update)
+   - Update `src/components/canvas/Canvas.jsx`
+   - On stage click in 'rectangle' mode:
+     - Create rectangle at click position
+     - Generate unique ID
+     - Set default size (100x100) and color
+   - Write to Firestore immediately with `FieldValue.serverTimestamp()` for lastModified
+   - Add to local state instantly (optimistic update)
 
-- [ ] Create object sync hook
+6. - [ ] Create object sync hook
 
-  - File: `src/hooks/useObjectSync.js`
-  - Listen to `/projects/shared-canvas/objects` collection with `onSnapshot`
-  - Store objects in `useState`
-  - Merge remote updates with local state
-  - Handle create, update, delete operations
-  - Use server timestamp to prevent stale updates
+   - File: `src/hooks/useObjectSync.js`
+   - Listen to `/projects/shared-canvas/objects` collection with `onSnapshot`
+   - Store objects in `useState`
+   - Merge remote updates with local state
+   - Handle create, update, delete operations
+   - Use server timestamp to prevent stale updates
 
-- [ ] Render all rectangles
+7. - [ ] Render all rectangles
 
-  - Update `src/components/canvas/Canvas.jsx`
-  - Use `useObjectSync` hook
-  - Map through objects array
-  - Render `Rectangle` component for each object
+   - Update `src/components/canvas/Canvas.jsx`
+   - Use `useObjectSync` hook
+   - Map through objects array
+   - Render `Rectangle` component for each object
 
-- [ ] Implement selection
-  - Update `src/contexts/CanvasContext.jsx`
-  - Add `selectedObjectIds` state (array for multi-select)
-  - Add `selectObject`, `deselectObject`, `clearSelection` functions
-  - Handle click on background to deselect
+8. - [ ] Implement selection
+   - Update `src/contexts/CanvasContext.jsx`
+   - Add `selectedObjectIds` state (array for multi-select)
+   - Add `selectObject`, `deselectObject`, `clearSelection` functions
+   - Handle click on background to deselect
 
 **Unit Tests:**
 
-- [ ] Test object sync hook
+9. - [ ] Test object sync hook
 
-  - File: `src/hooks/__tests__/useObjectSync.test.js`
-  - Test objects are stored in state
-  - Test handles create, update, delete operations
-  - Test merges remote updates with local state
-  - Mock Firestore onSnapshot
+   - File: `src/hooks/__tests__/useObjectSync.test.js`
+   - Test objects are stored in state
+   - Test handles create, update, delete operations
+   - Test merges remote updates with local state
+   - Mock Firestore onSnapshot
 
-- [ ] Test rectangle creation
+10. - [ ] Test rectangle creation
 
-  - File: `src/components/canvas/__tests__/Canvas.test.jsx`
-  - Test clicking in rectangle mode creates rectangle
-  - Test rectangle has unique ID
-  - Test rectangle has default properties (size, color)
+    - File: `src/components/canvas/__tests__/Canvas.test.jsx`
+    - Test clicking in rectangle mode creates rectangle
+    - Test rectangle has unique ID
+    - Test rectangle has default properties (size, color)
 
-- [ ] Test selection logic
-  - File: `src/contexts/__tests__/CanvasContext.test.jsx`
-  - Test selectObject adds to selectedObjectIds
-  - Test deselectObject removes from selectedObjectIds
-  - Test clearSelection empties selectedObjectIds
+11. - [ ] Test selection logic
+    - File: `src/contexts/__tests__/CanvasContext.test.jsx`
+    - Test selectObject adds to selectedObjectIds
+    - Test deselectObject removes from selectedObjectIds
+    - Test clearSelection empties selectedObjectIds
 
 **Integration Tests:**
 
-- [ ] Test rectangle component
-  - File: `src/components/canvas/shapes/__tests__/Rectangle.integration.test.jsx`
-  - Test renders with correct props
-  - Test shows selection border when selected
-  - Test click selects rectangle
+12. - [ ] Test rectangle component
+    - File: `src/components/canvas/shapes/__tests__/Rectangle.integration.test.jsx`
+    - Test renders with correct props
+    - Test shows selection border when selected
+    - Test click selects rectangle
 
 **Files Created:**
 
@@ -663,87 +666,87 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Add drag handlers to Rectangle
+1. - [ ] Add drag handlers to Rectangle
 
-  - Update `src/components/canvas/shapes/Rectangle.jsx`
-  - Make `draggable={true}` when selected
-  - Add `onDragStart` handler
-  - Add `onDragMove` handler (optional for smooth preview)
-  - Add `onDragEnd` handler
+   - Update `src/components/canvas/shapes/Rectangle.jsx`
+   - Make `draggable={true}` when selected
+   - Add `onDragStart` handler
+   - Add `onDragMove` handler (optional for smooth preview)
+   - Add `onDragEnd` handler
 
-- [ ] Implement optimistic updates
+2. - [ ] Implement optimistic updates
 
-  - On drag start: update local state immediately
-  - On drag move: update local position (no Firestore write yet)
-  - On drag end: write final position to Firestore
+   - On drag start: update local state immediately
+   - On drag move: update local position (no Firestore write yet)
+   - On drag end: write final position to Firestore
 
-- [ ] Create object update utility
+3. - [ ] Create object update utility
 
-  - File: `src/utils/firestoreUtils.js`
-  - Function: `updateObject(objectId, updates)` - uses hardcoded 'shared-canvas' project ID
-  - Function: `deleteObject(objectId)` - uses hardcoded 'shared-canvas' project ID
-  - Updates Firestore document
-  - Includes `lastModified: FieldValue.serverTimestamp()`
-  - Includes `lastModifiedBy` userId
+   - File: `src/utils/firestoreUtils.js`
+   - Function: `updateObject(objectId, updates)` - uses hardcoded 'shared-canvas' project ID
+   - Function: `deleteObject(objectId)` - uses hardcoded 'shared-canvas' project ID
+   - Updates Firestore document
+   - Includes `lastModified: FieldValue.serverTimestamp()`
+   - Includes `lastModifiedBy` userId
 
-- [ ] Implement optimistic deletion
+4. - [ ] Implement optimistic deletion
 
-  - File: `src/utils/firestoreUtils.js`
-  - Delete from local state immediately
-  - Delete from Firestore immediately
-  - Deletion takes priority over any other operations (last-write-wins exception)
+   - File: `src/utils/firestoreUtils.js`
+   - Delete from local state immediately
+   - Delete from Firestore immediately
+   - Deletion takes priority over any other operations (last-write-wins exception)
 
-- [ ] Handle remote updates during drag
+5. - [ ] Handle remote updates during drag
 
-  - Update `src/hooks/useObjectSync.js`
-  - Don't override local object if currently being dragged
-  - Apply remote updates after drag ends
-  - Implement last-write-wins for conflicts (except deletes)
-  - Use server timestamp to determine which update is newer
+   - Update `src/hooks/useObjectSync.js`
+   - Don't override local object if currently being dragged
+   - Apply remote updates after drag ends
+   - Implement last-write-wins for conflicts (except deletes)
+   - Use server timestamp to determine which update is newer
 
-- [ ] Add visual feedback during drag
+6. - [ ] Add visual feedback during drag
 
-  - Show semi-transparent version while dragging
-  - Snap back if drag is invalid
-  - Disable drag when not in 'select' mode
+   - Show semi-transparent version while dragging
+   - Snap back if drag is invalid
+   - Disable drag when not in 'select' mode
 
-- [ ] Transform coordinates for pan/zoom
-  - Update drag handlers to account for canvas transform
-  - Convert screen coordinates to canvas coordinates
-  - Ensure objects stay in correct position across zoom levels
+7. - [ ] Transform coordinates for pan/zoom
+   - Update drag handlers to account for canvas transform
+   - Convert screen coordinates to canvas coordinates
+   - Ensure objects stay in correct position across zoom levels
 
 **Unit Tests:**
 
-- [ ] Test Firestore update utility
+8. - [ ] Test Firestore update utility
 
-  - File: `src/utils/__tests__/firestoreUtils.test.js`
-  - Test updateObject uses hardcoded 'shared-canvas' project ID
-  - Test updateObject includes server timestamp for lastModified
-  - Test updateObject includes lastModifiedBy userId
-  - Test deleteObject removes from Firestore immediately
-  - Mock Firestore updateDoc and deleteDoc
+   - File: `src/utils/__tests__/firestoreUtils.test.js`
+   - Test updateObject uses hardcoded 'shared-canvas' project ID
+   - Test updateObject includes server timestamp for lastModified
+   - Test updateObject includes lastModifiedBy userId
+   - Test deleteObject removes from Firestore immediately
+   - Mock Firestore updateDoc and deleteDoc
 
-- [ ] Test optimistic updates
+9. - [ ] Test optimistic updates
 
-  - File: `src/hooks/__tests__/useObjectSync.test.js`
-  - Test local object not overridden during drag
-  - Test remote updates applied after drag ends
-  - Test last-write-wins conflict resolution (using server timestamps)
-  - Test optimistic deletion takes priority over all other operations
+   - File: `src/hooks/__tests__/useObjectSync.test.js`
+   - Test local object not overridden during drag
+   - Test remote updates applied after drag ends
+   - Test last-write-wins conflict resolution (using server timestamps)
+   - Test optimistic deletion takes priority over all other operations
 
-- [ ] Test coordinate transformation
-  - File: `src/utils/__tests__/canvasUtils.test.js`
-  - Test screen to canvas coordinate conversion
-  - Test coordinates correct at different zoom levels
-  - Test coordinates correct with pan offset
+10. - [ ] Test coordinate transformation
+    - File: `src/utils/__tests__/canvasUtils.test.js`
+    - Test screen to canvas coordinate conversion
+    - Test coordinates correct at different zoom levels
+    - Test coordinates correct with pan offset
 
 **Integration Tests:**
 
-- [ ] Test drag behavior
-  - File: `src/components/canvas/shapes/__tests__/Rectangle.integration.test.jsx`
-  - Test rectangle moves on drag
-  - Test drag updates local state immediately
-  - Test drag end triggers Firestore update
+11. - [ ] Test drag behavior
+    - File: `src/components/canvas/shapes/__tests__/Rectangle.integration.test.jsx`
+    - Test rectangle moves on drag
+    - Test drag updates local state immediately
+    - Test drag end triggers Firestore update
 
 **Files Created:**
 
@@ -778,63 +781,63 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Implement Firestore persistence
+1. - [ ] Implement Firestore persistence
 
-  - Already handled by Firestore `onSnapshot` listeners
-  - Verify objects persist when all users disconnect
+   - Already handled by Firestore `onSnapshot` listeners
+   - Verify objects persist when all users disconnect
 
-- [ ] Add loading state
+2. - [ ] Add loading state
 
-  - File: `src/components/canvas/LoadingState.jsx`
-  - Show spinner while loading canvas data
-  - Display "Loading canvas..." message
+   - File: `src/components/canvas/LoadingState.jsx`
+   - Show spinner while loading canvas data
+   - Display "Loading canvas..." message
 
-- [ ] Create connection status indicator
+3. - [ ] Create connection status indicator
 
-  - File: `src/components/ui/ConnectionStatus.jsx`
-  - Listen to Firestore connection state
-  - Display indicator: Connected (green) / Disconnected (red)
-  - Position in header with Tailwind
+   - File: `src/components/ui/ConnectionStatus.jsx`
+   - Listen to Firestore connection state
+   - Display indicator: Connected (green) / Disconnected (red)
+   - Position in header with Tailwind
 
-- [ ] Handle offline mode
+4. - [ ] Handle offline mode
 
-  - Update `src/hooks/useObjectSync.js`
-  - Queue updates when offline
-  - Sync queued updates when reconnected
-  - Use Firestore offline persistence: `enableIndexedDbPersistence(db)`
+   - Update `src/hooks/useObjectSync.js`
+   - Queue updates when offline
+   - Sync queued updates when reconnected
+   - Use Firestore offline persistence: `enableIndexedDbPersistence(db)`
 
-- [ ] Add reconnection logic
+5. - [ ] Add reconnection logic
 
-  - Automatically handled by Firestore
-  - Test by disconnecting network and reconnecting
+   - Automatically handled by Firestore
+   - Test by disconnecting network and reconnecting
 
-- [ ] Test state persistence scenarios
-  - Create objects, refresh page → objects still there
-  - Two users create objects, both leave, both return → objects still there
-  - Create object while offline, reconnect → object syncs
+6. - [ ] Test state persistence scenarios
+   - Create objects, refresh page → objects still there
+   - Two users create objects, both leave, both return → objects still there
+   - Create object while offline, reconnect → object syncs
 
 **Unit Tests:**
 
-- [ ] Test offline queue logic
+7. - [ ] Test offline queue logic
 
-  - File: `src/hooks/__tests__/useObjectSync.test.js`
-  - Test updates queued when offline
-  - Test queued updates sync when reconnected
-  - Mock Firestore connection state
+   - File: `src/hooks/__tests__/useObjectSync.test.js`
+   - Test updates queued when offline
+   - Test queued updates sync when reconnected
+   - Mock Firestore connection state
 
-- [ ] Test connection status
-  - File: `src/components/ui/__tests__/ConnectionStatus.test.jsx`
-  - Test shows connected state
-  - Test shows disconnected state
-  - Mock Firestore connection listeners
+8. - [ ] Test connection status
+   - File: `src/components/ui/__tests__/ConnectionStatus.test.jsx`
+   - Test shows connected state
+   - Test shows disconnected state
+   - Mock Firestore connection listeners
 
 **Integration Tests:**
 
-- [ ] Test state persistence
-  - File: `src/hooks/__tests__/useObjectSync.integration.test.js`
-  - Test objects persist after page reload
-  - Test objects persist when all users disconnect
-  - Use Firestore emulator for testing
+9. - [ ] Test state persistence
+   - File: `src/hooks/__tests__/useObjectSync.integration.test.js`
+   - Test objects persist after page reload
+   - Test objects persist when all users disconnect
+   - Use Firestore emulator for testing
 
 **Files Created:**
 
@@ -867,39 +870,39 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Configure build for production
+1. - [ ] Configure build for production
 
-  - Update `vite.config.js` if needed
-  - Test production build locally: `npm run build` && `npm run preview`
+   - Update `vite.config.js` if needed
+   - Test production build locally: `npm run build` && `npm run preview`
 
-- [ ] Set up Netlify
+2. - [ ] Set up Netlify
 
-  - Create Netlify account
-  - Connect GitHub repository
-  - Configure build settings:
-    - Build command: `npm run build`
-    - Publish directory: `dist`
+   - Create Netlify account
+   - Connect GitHub repository
+   - Configure build settings:
+     - Build command: `npm run build`
+     - Publish directory: `dist`
 
-- [ ] Add environment variables to Netlify
+3. - [ ] Add environment variables to Netlify
 
-  - Add all Firebase config variables
-  - Variables: `VITE_FIREBASE_API_KEY`, etc.
+   - Add all Firebase config variables
+   - Variables: `VITE_FIREBASE_API_KEY`, etc.
 
-- [ ] Configure redirects for SPA
+4. - [ ] Configure redirects for SPA
 
-  - File: `public/_redirects`
-  - Add: `/* /index.html 200`
+   - File: `public/_redirects`
+   - Add: `/* /index.html 200`
 
-- [ ] Deploy and test
+5. - [ ] Deploy and test
 
-  - Push to main branch to trigger deploy
-  - Test authentication on deployed URL
-  - Test multiplayer with 2 devices/browsers
+   - Push to main branch to trigger deploy
+   - Test authentication on deployed URL
+   - Test multiplayer with 2 devices/browsers
 
-- [ ] Update README
-  - Add deployed URL
-  - Add screenshots
-  - Verify setup instructions
+6. - [ ] Update README
+   - Add deployed URL
+   - Add screenshots
+   - Verify setup instructions
 
 **Files Created:**
 
@@ -927,40 +930,40 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Create Circle component
+1. - [ ] Create Circle component
 
-  - File: `src/components/canvas/shapes/Circle.jsx`
-  - Render Konva `Circle` with props
-  - Same selection and drag behavior as Rectangle
-  - Default radius: 50px
+   - File: `src/components/canvas/shapes/Circle.jsx`
+   - Render Konva `Circle` with props
+   - Same selection and drag behavior as Rectangle
+   - Default radius: 50px
 
-- [ ] Create Text component
+2. - [ ] Create Text component
 
-  - File: `src/components/canvas/shapes/Text.jsx`
-  - Render Konva `Text` with props
-  - Add basic text editing on double-click
-  - Default text: "Double-click to edit"
-  - Default fontSize: 16
+   - File: `src/components/canvas/shapes/Text.jsx`
+   - Render Konva `Text` with props
+   - Add basic text editing on double-click
+   - Default text: "Double-click to edit"
+   - Default fontSize: 16
 
-- [ ] Update Toolbar
+3. - [ ] Update Toolbar
 
-  - Update `src/components/canvas/Toolbar.jsx`
-  - Add Circle tool button
-  - Add Text tool button
+   - Update `src/components/canvas/Toolbar.jsx`
+   - Add Circle tool button
+   - Add Text tool button
 
-- [ ] Update Canvas to handle all shapes
+4. - [ ] Update Canvas to handle all shapes
 
-  - Update `src/components/canvas/Canvas.jsx`
-  - Handle circle creation on click
-  - Handle text creation on click
-  - Render different components based on object type
-  - Update `useObjectSync` to handle all types
+   - Update `src/components/canvas/Canvas.jsx`
+   - Handle circle creation on click
+   - Handle text creation on click
+   - Render different components based on object type
+   - Update `useObjectSync` to handle all types
 
-- [ ] Add shape-specific properties
-  - Update Firestore data model to include:
-    - `radius` for circles
-    - `text`, `fontSize`, `fontFamily` for text
-  - Update creation functions
+5. - [ ] Add shape-specific properties
+   - Update Firestore data model to include:
+     - `radius` for circles
+     - `text`, `fontSize`, `fontFamily` for text
+   - Update creation functions
 
 **Files Created:**
 
@@ -989,66 +992,66 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-- [ ] Install Konva Transformer
+1. - [ ] Install Konva Transformer
 
-  - Already included with `react-konva`
+   - Already included with `react-konva`
 
-- [ ] Create TransformWrapper component
+2. - [ ] Create TransformWrapper component
 
-  - File: `src/components/canvas/TransformWrapper.jsx`
-  - Wraps selected shape with Konva `Transformer`
-  - Shows resize handles (corners and edges)
-  - Shows rotation handle
+   - File: `src/components/canvas/TransformWrapper.jsx`
+   - Wraps selected shape with Konva `Transformer`
+   - Shows resize handles (corners and edges)
+   - Shows rotation handle
 
-- [ ] Add transform handlers
+3. - [ ] Add transform handlers
 
-  - Update shape components (Rectangle, Circle, Text)
-  - Add `onTransform` handler
-  - Add `onTransformEnd` handler
-  - Update local state during transform
-  - Write to Firestore on transform end
+   - Update shape components (Rectangle, Circle, Text)
+   - Add `onTransform` handler
+   - Add `onTransformEnd` handler
+   - Update local state during transform
+   - Write to Firestore on transform end
 
-- [ ] Update object data structure
+4. - [ ] Update object data structure
 
-  - Add `rotation` field (already in data model)
-  - Add `scaleX`, `scaleY` fields
-  - Update Firestore on transform end
+   - Add `rotation` field (already in data model)
+   - Add `scaleX`, `scaleY` fields
+   - Update Firestore on transform end
 
-- [ ] Handle rotation sync
+5. - [ ] Handle rotation sync
 
-  - Update `useObjectSync` to apply rotation
-  - Render shapes with rotation applied
+   - Update `useObjectSync` to apply rotation
+   - Render shapes with rotation applied
 
-- [ ] Handle resize sync
+6. - [ ] Handle resize sync
 
-  - Update dimensions on resize
-  - Maintain aspect ratio option (shift key)
+   - Update dimensions on resize
+   - Maintain aspect ratio option (shift key)
 
-- [ ] Add keyboard shortcuts
-  - Delete key: delete selected objects
-  - Escape key: deselect all
+7. - [ ] Add keyboard shortcuts
+   - Delete key: delete selected objects
+   - Escape key: deselect all
 
 **Unit Tests:**
 
-- [ ] Test transform calculations
+8. - [ ] Test transform calculations
 
-  - File: `src/components/canvas/__tests__/TransformWrapper.test.jsx`
-  - Test resize calculations are correct
-  - Test rotation calculations are correct
-  - Test aspect ratio lock works
+   - File: `src/components/canvas/__tests__/TransformWrapper.test.jsx`
+   - Test resize calculations are correct
+   - Test rotation calculations are correct
+   - Test aspect ratio lock works
 
-- [ ] Test keyboard shortcuts
-  - File: `src/components/canvas/__tests__/Canvas.test.jsx`
-  - Test Delete key deletes selected objects
-  - Test Escape key deselects all
+9. - [ ] Test keyboard shortcuts
+   - File: `src/components/canvas/__tests__/Canvas.test.jsx`
+   - Test Delete key deletes selected objects
+   - Test Escape key deselects all
 
 **Integration Tests:**
 
-- [ ] Test transform sync
-  - File: `src/components/canvas/__tests__/TransformWrapper.integration.test.jsx`
-  - Test resize syncs to Firestore
-  - Test rotation syncs to Firestore
-  - Test transforms applied correctly on remote clients
+10. - [ ] Test transform sync
+    - File: `src/components/canvas/__tests__/TransformWrapper.integration.test.jsx`
+    - Test resize syncs to Firestore
+    - Test rotation syncs to Firestore
+    - Test transforms applied correctly on remote clients
 
 **Files Created:**
 
