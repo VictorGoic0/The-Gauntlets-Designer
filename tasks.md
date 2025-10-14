@@ -385,22 +385,22 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Unit Tests:**
 
-8. - [ ] Test cursor throttling
+8. - [x] Test cursor throttling
 
    - File: `src/hooks/__tests__/useCursorTracking.test.js`
-   - Test cursor updates are throttled to 100ms
+   - Test cursor updates are throttled to 45ms
    - Test cursor data includes x, y, userName, userColor, lastSeen
    - Test uses server timestamp for lastSeen
    - Mock Firestore writes
 
-9. - [ ] Test cursor sync logic
+9. - [x] Test cursor sync logic
 
    - File: `src/hooks/__tests__/useCursorSync.test.js`
    - Test filters out current user's cursor
    - Test cursor interpolation works
    - Mock Firestore onSnapshot
 
-10. - [ ] Test user color assignment
+10. - [x] Test user color assignment
 
     - File: `src/utils/__tests__/userColors.test.js`
     - Test 10 colors are defined
@@ -408,7 +408,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
     - Test color is randomly assigned per user
     - Test color format is valid hex
 
-11. - [ ] Test onDisconnect cleanup
+11. - [x] Test onDisconnect cleanup
     - File: `src/hooks/__tests__/useCursorTracking.test.js`
     - Test onDisconnect().remove() is called
     - Test cleanup on unmount
@@ -416,7 +416,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Integration Tests:**
 
-12. - [ ] Test cursor component rendering
+12. - [x] Test cursor component rendering
     - File: `src/components/canvas/__tests__/Cursor.integration.test.jsx`
     - Test cursor renders at correct position
     - Test cursor displays user name
@@ -439,13 +439,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Open app in 2 browsers (both signed in with different Google accounts)
-- [ ] Both cursors visible and moving smoothly with interpolation
-- [ ] Each cursor has one of the 10 predefined colors
-- [ ] Cursor names from Google accounts display correctly
-- [ ] **Perceived latency <50ms** (feels real-time despite 100ms throttle)
-- [ ] Cursors disappear immediately when user closes browser (onDisconnect works)
-- [ ] Pan/zoom doesn't break cursor positioning
+- [x] Open app in 2 browsers (both signed in with different Google accounts)
+- [x] Both cursors visible and moving smoothly with interpolation
+- [x] Each cursor has one of the 10 predefined colors
+- [x] Cursor names from Google accounts display correctly
+- [x] **Perceived latency <50ms** (feels real-time despite 45ms throttle)
+- [x] Cursors disappear immediately when user closes browser (onDisconnect works)
+- [x] Pan/zoom doesn't break cursor positioning
 - [ ] `npm test` passes all cursor tests
 
 ---

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 import Canvas from "../Canvas";
 import { CanvasProvider } from "../../../contexts/CanvasContext";
+import { AuthProvider } from "../../../contexts/AuthContext";
 
 // Mock react-konva components
 vi.mock("react-konva", async () => {
@@ -58,12 +59,54 @@ vi.mock("react-konva", async () => {
   };
 });
 
-// Helper to render Canvas within CanvasProvider
+// Mock Firebase auth
+vi.mock("firebase/auth", () => ({
+  getAuth: vi.fn(() => ({})),
+  onAuthStateChanged: vi.fn((auth, callback) => {
+    // Simulate authenticated user
+    callback({
+      uid: "test-user-123",
+      displayName: "Test User",
+      email: "test@example.com",
+    });
+    return vi.fn(); // unsubscribe function
+  }),
+}));
+
+// Mock Firestore
+vi.mock("firebase/firestore", () => ({
+  getFirestore: vi.fn(() => ({})),
+  collection: vi.fn(),
+  doc: vi.fn(),
+  setDoc: vi.fn(),
+  deleteDoc: vi.fn(),
+  onSnapshot: vi.fn(),
+  query: vi.fn(),
+  serverTimestamp: vi.fn(() => ({})),
+}));
+
+// Mock Firebase and hooks
+vi.mock("../../../lib/firebase", () => ({
+  db: {},
+  auth: {},
+}));
+
+vi.mock("../../../hooks/useCursorTracking", () => ({
+  default: vi.fn(() => {}),
+}));
+
+vi.mock("../../../hooks/useCursorSync", () => ({
+  default: vi.fn(() => []),
+}));
+
+// Helper to render Canvas within providers
 const renderCanvas = () => {
   return render(
-    <CanvasProvider>
-      <Canvas />
-    </CanvasProvider>
+    <AuthProvider>
+      <CanvasProvider>
+        <Canvas />
+      </CanvasProvider>
+    </AuthProvider>
   );
 };
 
