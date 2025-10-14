@@ -166,7 +166,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Redirect to login if not authenticated
    - Show loading state while checking auth
 
-6. - [ ] Update App.jsx
+6. - [x] Update App.jsx
 
    - Wrap app with `AuthProvider`
    - Add routing logic (login page vs canvas)
