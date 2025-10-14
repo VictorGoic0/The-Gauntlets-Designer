@@ -1,0 +1,101 @@
+graph TB
+    subgraph "Client Browser A"
+        A1[React App]
+        A2[AuthContext]
+        A3[CanvasContext]
+        A4[Canvas Component]
+        A5[Konva Stage/Layer]
+        A6[Shape Components]
+        A7[useCursorTracking]
+        A8[useObjectSync]
+        A9[usePresence]
+        
+        A1 --> A2
+        A1 --> A3
+        A2 --> A4
+        A3 --> A4
+        A4 --> A5
+        A5 --> A6
+        A4 --> A7
+        A4 --> A8
+        A4 --> A9
+    end
+    
+    subgraph "Client Browser B"
+        B1[React App]
+        B2[AuthContext]
+        B3[CanvasContext]
+        B4[Canvas Component]
+        B5[Konva Stage/Layer]
+        B6[Shape Components]
+        B7[useCursorTracking]
+        B8[useObjectSync]
+        B9[usePresence]
+        
+        B1 --> B2
+        B1 --> B3
+        B2 --> B4
+        B3 --> B4
+        B4 --> B5
+        B5 --> B6
+        B4 --> B7
+        B4 --> B8
+        B4 --> B9
+    end
+    
+    subgraph "Firebase Backend"
+        F1[Firebase Auth]
+        F2[Firestore Database]
+        
+        subgraph "Firestore Collections"
+            F3["projects/objects"]
+            F4["projects/cursors"]
+            F5["projects/presence"]
+        end
+        
+        F2 --> F3
+        F2 --> F4
+        F2 --> F5
+    end
+    
+    subgraph "Real-Time Data Flow"
+        direction LR
+        R1[onSnapshot Listeners]
+        R2[Write Operations]
+        R3[Optimistic Updates]
+    end
+    
+    A2 -->|signIn/signUp/signOut| F1
+    B2 -->|signIn/signUp/signOut| F1
+    
+    A7 -->|Write cursor position every 50ms| F4
+    B7 -->|Write cursor position every 50ms| F4
+    
+    A8 -->|Write object changes| F3
+    B8 -->|Write object changes| F3
+    
+    A9 -->|Write presence data| F5
+    B9 -->|Write presence data| F5
+    
+    F4 -->|onSnapshot real-time updates| A7
+    F4 -->|onSnapshot real-time updates| B7
+    
+    F3 -->|onSnapshot real-time updates| A8
+    F3 -->|onSnapshot real-time updates| B8
+    
+    F5 -->|onSnapshot real-time updates| A9
+    F5 -->|onSnapshot real-time updates| B9
+    
+    A8 -.->|Optimistic local update| A6
+    B8 -.->|Optimistic local update| B6
+    
+    F3 -.->|Server reconciliation| A8
+    F3 -.->|Server reconciliation| B8
+    
+    style F1 fill:#FFA500
+    style F2 fill:#4285F4
+    style F3 fill:#34A853
+    style F4 fill:#34A853
+    style F5 fill:#34A853
+    style A1 fill:#61DAFB
+    style B1 fill:#61DAFB
