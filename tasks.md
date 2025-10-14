@@ -241,7 +241,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Canvas dimensions: 5,000 x 5,000 pixels (logical canvas size)
    - Add dark background
 
-2. - [ ] Implement pan functionality
+2. - [x] Implement pan functionality
 
    - Track mouse drag on stage
    - Update stage position with `useState`
