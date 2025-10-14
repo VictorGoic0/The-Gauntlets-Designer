@@ -1,11 +1,5 @@
 import { useEffect, useRef } from "react";
-import {
-  doc,
-  setDoc,
-  updateDoc,
-  serverTimestamp,
-  onDisconnect,
-} from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "./useAuth";
 import { getUserColor } from "../utils/userColors";
@@ -15,7 +9,7 @@ import { getUserColor } from "../utils/userColors";
  * - Writes presence data on mount
  * - Updates lastSeen every 30 seconds
  * - Sets isOnline to false on unmount
- * - Uses onDisconnect() to handle browser close/network disconnect
+ * - Cleanup handled via unmount and lastSeen timestamp filtering
  *
  * @param {boolean} enabled - Whether presence tracking is enabled
  */
@@ -46,10 +40,6 @@ export function usePresence(enabled = true) {
           isOnline: true,
           lastSeen: serverTimestamp(),
         });
-
-        // Set up onDisconnect to mark user offline when they disconnect
-        // Note: onDisconnect is a Realtime Database feature
-        // For Firestore, we'll rely on lastSeen timestamps and cleanup on unmount
       } catch (error) {
         console.error("Error initializing presence:", error);
       }

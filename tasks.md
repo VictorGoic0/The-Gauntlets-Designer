@@ -486,7 +486,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Collapsible panel (toggle button)
    - Use Tailwind for styling
 
-5. - [ ] Integrate presence panel
+5. - [x] Integrate presence panel
    - Update `src/pages/CanvasPage.jsx`
    - Add `PresencePanel` to layout
    - Position in top-right corner

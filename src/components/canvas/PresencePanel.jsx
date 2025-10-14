@@ -24,7 +24,10 @@ export default function PresencePanel() {
   };
 
   return (
-    <div className="absolute top-6 right-6 z-50 bg-gray-800 rounded-lg shadow-lg border border-gray-700 pointer-events-auto">
+    <div 
+      className="absolute z-50 bg-gray-800 rounded-lg shadow-lg border border-gray-700 pointer-events-auto"
+      style={{ top: '1.5rem', right: '1.5rem', left: 'auto' }}
+    >
       {/* Header with toggle button */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
         <div className="flex items-center gap-2">

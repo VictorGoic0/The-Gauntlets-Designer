@@ -33,6 +33,9 @@ export default function Canvas() {
   // Cursor tracking and syncing
   useCursorTracking(true);
   const remoteCursors = useCursorSync();
+  
+  // Presence tracking
+  usePresence(true);
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
