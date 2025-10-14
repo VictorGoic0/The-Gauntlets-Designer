@@ -93,7 +93,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
     - Import @testing-library/jest-dom
     - Mock Firebase (avoid real Firebase calls in tests)
 
-12. - [ ] Add test scripts to package.json
+12. - [x] Add test scripts to package.json
     ```json
     "test": "vitest",
     "test:ui": "vitest --ui",
