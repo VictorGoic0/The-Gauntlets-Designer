@@ -14,8 +14,8 @@ export default function Canvas() {
   } = useCanvas();
 
   const [stageSize, setStageSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: 0,
+    height: 0,
   });
 
   // Local UI state
@@ -23,23 +23,27 @@ export default function Canvas() {
   const [spacePressed, setSpacePressed] = useState(false);
 
   const stageRef = useRef(null);
+  const containerRef = useRef(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
   const CANVAS_HEIGHT = 5000;
 
-  // Update stage size on window resize
+  // Update stage size based on container dimensions
   useEffect(() => {
-    const handleResize = () => {
-      setStageSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+    const updateSize = () => {
+      if (containerRef.current) {
+        setStageSize({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight,
+        });
+      }
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
   }, []);
 
   // Handle spacebar for pan mode
@@ -136,34 +140,37 @@ export default function Canvas() {
 
   return (
     <div 
-      className="w-full h-screen overflow-hidden bg-gray-900"
+      ref={containerRef}
+      className="absolute inset-0 w-full h-full overflow-hidden bg-gray-900"
       style={{ cursor: spacePressed || isDragging ? 'grab' : 'default' }}
     >
-      <Stage
-        ref={stageRef}
-        width={stageSize.width}
-        height={stageSize.height}
-        x={stagePosition.x}
-        y={stagePosition.y}
-        scaleX={stageScale}
-        scaleY={stageScale}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onWheel={handleWheel}
-        className="bg-gray-900"
-      >
-        <Layer>
-          {/* Dark background rectangle covering the logical canvas */}
-          <Rect
-            x={0}
-            y={0}
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
-            fill="#1a1a1a"
-          />
-        </Layer>
-      </Stage>
+      {stageSize.width > 0 && (
+        <Stage
+          ref={stageRef}
+          width={stageSize.width}
+          height={stageSize.height}
+          x={stagePosition.x}
+          y={stagePosition.y}
+          scaleX={stageScale}
+          scaleY={stageScale}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onWheel={handleWheel}
+          className="bg-gray-900"
+        >
+          <Layer>
+            {/* Dark background rectangle covering the logical canvas */}
+            <Rect
+              x={0}
+              y={0}
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              fill="#1a1a1a"
+            />
+          </Layer>
+        </Stage>
+      )}
     </div>
   );
 }

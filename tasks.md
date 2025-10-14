@@ -261,7 +261,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Manage canvas state: zoom level, pan position, selected objects
    - Export `useCanvas` hook
 
-5. - [ ] Add zoom controls UI
+5. - [x] Add zoom controls UI
 
    - File: `src/components/canvas/ZoomControls.jsx`
    - Zoom in button
@@ -270,14 +270,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Display current zoom percentage
    - Position in corner with Tailwind
 
-6. - [ ] Create canvas page layout
+6. - [x] Create canvas page layout
 
    - File: `src/pages/CanvasPage.jsx`
    - Header with user info and sign out
    - Canvas component (full screen)
    - Zoom controls overlay
 
-7. - [ ] Update App.jsx routing
+7. - [x] Update App.jsx routing
    - Show CanvasPage after authentication
 
 **Unit Tests:**
