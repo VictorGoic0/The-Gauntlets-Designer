@@ -219,11 +219,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can sign in with Google account
-- [ ] Display name from Google account appears in header
-- [ ] Can sign out
-- [ ] Redirects work correctly (login page → canvas after sign-in)
-- [ ] `npm test` passes all auth tests
+- [x] Can sign in with Google account
+- [x] Display name from Google account appears in header
+- [x] Can sign out
+- [x] Redirects work correctly (login page → canvas after sign-in)
+- [x] `npm test` passes all auth tests
 
 ---
 
@@ -233,7 +233,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Create Canvas component
+1. - [x] Create Canvas component
 
    - File: `src/components/canvas/Canvas.jsx`
    - Import Konva: `Stage`, `Layer` from `react-konva`
@@ -241,27 +241,27 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Canvas dimensions: 5,000 x 5,000 pixels (logical canvas size)
    - Add dark background
 
-2. - [ ] Implement pan functionality
+2. - [x] Implement pan functionality
 
    - Track mouse drag on stage
    - Update stage position with `useState`
    - Use `onMouseDown`, `onMouseMove`, `onMouseUp` events
    - Implement drag mode (spacebar or middle mouse button)
 
-3. - [ ] Implement zoom functionality
+3. - [x] Implement zoom functionality
 
    - Listen to `onWheel` event on Stage
    - Update stage scale with `useState`
    - Zoom toward mouse cursor position
    - Clamp zoom level (min: 0.1, max: 5)
 
-4. - [ ] Create CanvasProvider context
+4. - [x] Create CanvasProvider context
 
    - File: `src/contexts/CanvasContext.jsx`
    - Manage canvas state: zoom level, pan position, selected objects
    - Export `useCanvas` hook
 
-5. - [ ] Add zoom controls UI
+5. - [x] Add zoom controls UI
 
    - File: `src/components/canvas/ZoomControls.jsx`
    - Zoom in button
@@ -270,32 +270,32 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Display current zoom percentage
    - Position in corner with Tailwind
 
-6. - [ ] Create canvas page layout
+6. - [x] Create canvas page layout
 
    - File: `src/pages/CanvasPage.jsx`
    - Header with user info and sign out
    - Canvas component (full screen)
    - Zoom controls overlay
 
-7. - [ ] Update App.jsx routing
+7. - [x] Update App.jsx routing
    - Show CanvasPage after authentication
 
 **Unit Tests:**
 
-8. - [ ] Test pan functionality
+8. - [x] Test pan functionality
 
    - File: `src/components/canvas/__tests__/Canvas.test.jsx`
    - Test stage position updates on drag
    - Test pan is constrained to valid bounds
 
-9. - [ ] Test zoom functionality
+9. - [x] Test zoom functionality
 
    - File: `src/components/canvas/__tests__/Canvas.test.jsx`
    - Test zoom level updates on wheel event
    - Test zoom is clamped between min/max
    - Test zoom centers on mouse position
 
-10. - [ ] Test CanvasContext
+10. - [x] Test CanvasContext
     - File: `src/contexts/__tests__/CanvasContext.test.jsx`
     - Test zoom/pan state management
     - Test canvas mode switching
@@ -315,12 +315,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Canvas renders full screen
-- [ ] Can pan by dragging (with spacebar or designated button)
-- [ ] Can zoom with scroll wheel
-- [ ] Zoom controls work
-- [ ] No performance issues
-- [ ] `npm test` passes all canvas tests
+- [x] Canvas renders full screen
+- [x] Can pan by dragging (with spacebar or designated button)
+- [x] Can zoom with scroll wheel
+- [x] Zoom controls work
+- [x] No performance issues
+- [x] `npm test` passes all canvas tests
 
 ---
 
