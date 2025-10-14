@@ -68,26 +68,26 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Environment variables needed
    - How to run locally
 
-8. - [ ] Initial Git setup
+8. - [x] Initial Git setup
    - Initialize git repo
    - Create `.gitignore` (include `.env.local`, `node_modules`, `dist`)
    - Initial commit
 
 **Testing Setup:**
 
-9. - [ ] Install testing dependencies
+9. - [x] Install testing dependencies
 
    ```bash
    npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
    ```
 
-10. - [ ] Create Vitest config
+10. - [x] Create Vitest config
 
     - File: `vitest.config.js`
     - Configure jsdom environment
     - Add test globals
 
-11. - [ ] Create test setup file
+11. - [x] Create test setup file
 
     - File: `src/test/setup.js`
     - Import @testing-library/jest-dom
