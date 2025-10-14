@@ -119,10 +119,10 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] `npm run dev` starts without errors
-- [ ] Tailwind classes work
-- [ ] No console errors
-- [ ] `npm test` passes
+- [x] `npm run dev` starts without errors
+- [x] Tailwind classes work
+- [x] No console errors
+- [x] `npm test` passes
 
 ---
 
@@ -132,12 +132,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Set up Firebase Authentication
+1. - [x] Set up Firebase Authentication
 
    - Enable Google Sign-In provider in Firebase Console
    - Configure authorized domains
 
-2. - [ ] Create AuthContext
+2. - [x] Create AuthContext
 
    - File: `src/contexts/AuthContext.jsx`
    - Manage auth state with `useState`
@@ -145,7 +145,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Export `useAuth` hook
    - Handle `onAuthStateChanged` listener
 
-3. - [ ] Create Login component
+3. - [x] Create Login component
 
    - File: `src/components/auth/Login.jsx`
    - Simple landing page with "Sign in with Google" button
@@ -153,27 +153,27 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Error message display
    - Use Tailwind for styling
 
-4. - [ ] Implement auth functions
+4. - [x] Implement auth functions
 
    - File: `src/lib/firebase.js`
    - `signInWithGoogle()` - uses GoogleAuthProvider
    - `signOutUser()`
    - User display name comes from Google account automatically
 
-5. - [ ] Create ProtectedRoute component
+5. - [x] Create ProtectedRoute component
 
    - File: `src/components/auth/ProtectedRoute.jsx`
    - Redirect to login if not authenticated
    - Show loading state while checking auth
 
-6. - [ ] Update App.jsx
+6. - [x] Update App.jsx
 
    - Wrap app with `AuthProvider`
    - Add routing logic (login page vs canvas)
    - Show login page if not authenticated
    - Redirect to canvas after successful Google Sign-In
 
-7. - [ ] Add sign out button
+7. - [x] Add sign out button
    - File: `src/components/ui/Header.jsx`
    - Display current user name (from Google account)
    - Sign out button
@@ -181,14 +181,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Unit Tests:**
 
-8. - [ ] Test auth context
+8. - [x] Test auth context
 
    - File: `src/contexts/__tests__/AuthContext.test.jsx`
    - Test AuthProvider renders children when authenticated
    - Test useAuth hook returns correct values
    - Mock Firebase auth functions
 
-9. - [ ] Test auth functions
+9. - [x] Test auth functions
    - File: `src/lib/__tests__/firebase.test.js`
    - Test signInWithGoogle initiates Google sign-in flow
    - Test signOutUser signs out user
@@ -196,7 +196,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Integration Tests:**
 
-10. - [ ] Test login flow
+10. - [x] Test login flow
     - File: `src/components/auth/__tests__/Login.integration.test.jsx`
     - Test Google Sign-In button triggers auth flow
     - Test error message display on failure
