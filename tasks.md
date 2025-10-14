@@ -368,7 +368,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Filter out current user's cursor
    - Implement cursor interpolation for smooth movement (target <50ms perceived latency)
 
-6. - [ ] Create Cursor component
+6. - [x] Create Cursor component
 
    - File: `src/components/canvas/Cursor.jsx`
    - Render SVG cursor shape with Konva `Group`
