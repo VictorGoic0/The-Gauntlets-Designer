@@ -219,11 +219,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can sign in with Google account
-- [ ] Display name from Google account appears in header
-- [ ] Can sign out
-- [ ] Redirects work correctly (login page → canvas after sign-in)
-- [ ] `npm test` passes all auth tests
+- [x] Can sign in with Google account
+- [x] Display name from Google account appears in header
+- [x] Can sign out
+- [x] Redirects work correctly (login page → canvas after sign-in)
+- [x] `npm test` passes all auth tests
 
 ---
 
@@ -233,7 +233,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Create Canvas component
+1. - [x] Create Canvas component
 
    - File: `src/components/canvas/Canvas.jsx`
    - Import Konva: `Stage`, `Layer` from `react-konva`

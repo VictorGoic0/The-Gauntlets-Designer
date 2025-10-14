@@ -1,23 +1,21 @@
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Header from "./components/ui/Header";
+import Canvas from "./components/canvas/Canvas";
 
-// Temporary Canvas placeholder component
-function CanvasPlaceholder() {
+// Canvas page component
+function CanvasPage() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <Header />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-gray-800 rounded-lg p-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Canvas Coming Soon!</h2>
-          <p className="text-gray-400 mb-2">
-            You're successfully authenticated.
-          </p>
-          <p className="text-gray-400">
-            The canvas will be implemented in PR #3.
-          </p>
-        </div>
-      </main>
+    <div className="relative w-full h-screen overflow-hidden bg-gray-900">
+      {/* Header positioned absolutely at top */}
+      <div className="absolute top-0 left-0 right-0 z-10">
+        <Header />
+      </div>
+      
+      {/* Canvas fills entire screen */}
+      <div className="w-full h-full">
+        <Canvas />
+      </div>
     </div>
   );
 }
@@ -26,7 +24,7 @@ function App() {
   return (
     <AuthProvider>
       <ProtectedRoute>
-        <CanvasPlaceholder />
+        <CanvasPage />
       </ProtectedRoute>
     </AuthProvider>
   );
