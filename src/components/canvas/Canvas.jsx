@@ -1,19 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import { Stage, Layer, Rect } from "react-konva";
+import { useCanvas } from "../../hooks/useCanvas";
 
 export default function Canvas() {
+  // Get canvas state from context
+  const {
+    stagePosition,
+    setStagePosition,
+    stageScale,
+    setStageScale,
+    MIN_SCALE,
+    MAX_SCALE,
+  } = useCanvas();
+
   const [stageSize, setStageSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
 
-  // Pan state
-  const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 });
+  // Local UI state
   const [isDragging, setIsDragging] = useState(false);
   const [spacePressed, setSpacePressed] = useState(false);
-
-  // Zoom state
-  const [stageScale, setStageScale] = useState(1);
 
   const stageRef = useRef(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
@@ -21,10 +28,6 @@ export default function Canvas() {
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
   const CANVAS_HEIGHT = 5000;
-
-  // Zoom constraints
-  const MIN_SCALE = 0.1;
-  const MAX_SCALE = 5;
 
   // Update stage size on window resize
   useEffect(() => {
