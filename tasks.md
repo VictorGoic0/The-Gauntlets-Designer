@@ -470,7 +470,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Set `isOnline: false` on unmount
    - Use `onDisconnect()` to set `isOnline: false` and update `lastSeen`
 
-3. - [ ] Create presence sync hook
+3. - [x] Create presence sync hook
 
    - File: `src/hooks/usePresenceSync.js`
    - Listen to presence collection with `onSnapshot`
