@@ -376,7 +376,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Use user's assigned color
    - Position based on cursor data
 
-7. - [ ] Integrate cursors into Canvas
+7. - [x] Integrate cursors into Canvas
    - Update `src/components/canvas/Canvas.jsx`
    - Use `useCursorTracking` hook
    - Use `useCursorSync` hook
