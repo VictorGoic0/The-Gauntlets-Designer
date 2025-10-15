@@ -545,33 +545,33 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Set up objects collection in Firestore
+1. - [x] Set up objects collection in Firestore
 
    - Collection: `/projects/shared-canvas/objects/{objectId}`
    - Hardcoded project ID: 'shared-canvas'
    - Fields: `type`, `x`, `y`, `width`, `height`, `fill`, `rotation`, `zIndex`, `createdBy`, `lastModifiedBy`, `lastModified` (server timestamp)
 
-2. - [ ] Create canvas mode state
+2. - [x] Create canvas mode state
 
    - Update `src/contexts/CanvasContext.jsx`
    - Add `canvasMode` state: 'select', 'rectangle', 'circle', 'text'
    - Add `setCanvasMode` function
 
-3. - [ ] Create Toolbar component
+3. - [x] Create Toolbar component
 
    - File: `src/components/canvas/Toolbar.jsx`
    - Buttons for each tool: Select, Rectangle, Circle, Text
    - Highlight active tool
    - Position on left side with Tailwind
 
-4. - [ ] Create Rectangle component
+4. - [x] Create Rectangle component
 
    - File: `src/components/canvas/shapes/Rectangle.jsx`
    - Render Konva `Rect` with props
    - Handle click for selection
    - Show selection border when selected
 
-5. - [ ] Implement rectangle creation
+5. - [x] Implement rectangle creation
 
    - Update `src/components/canvas/Canvas.jsx`
    - On stage click in 'rectangle' mode:
@@ -581,7 +581,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Write to Firestore immediately with `FieldValue.serverTimestamp()` for lastModified
    - Add to local state instantly (optimistic update)
 
-6. - [ ] Create object sync hook
+6. - [x] Create object sync hook
 
    - File: `src/hooks/useObjectSync.js`
    - Listen to `/projects/shared-canvas/objects` collection with `onSnapshot`
@@ -590,14 +590,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Handle create, update, delete operations
    - Use server timestamp to prevent stale updates
 
-7. - [ ] Render all rectangles
+7. - [x] Render all rectangles
 
    - Update `src/components/canvas/Canvas.jsx`
    - Use `useObjectSync` hook
    - Map through objects array
    - Render `Rectangle` component for each object
 
-8. - [ ] Implement selection
+8. - [x] Implement selection
    - Update `src/contexts/CanvasContext.jsx`
    - Add `selectedObjectIds` state (array for multi-select)
    - Add `selectObject`, `deselectObject`, `clearSelection` functions
