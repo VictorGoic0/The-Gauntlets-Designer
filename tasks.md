@@ -551,13 +551,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Hardcoded project ID: 'shared-canvas'
    - Fields: `type`, `x`, `y`, `width`, `height`, `fill`, `rotation`, `zIndex`, `createdBy`, `lastModifiedBy`, `lastModified` (server timestamp)
 
-2. - [ ] Create canvas mode state
+2. - [x] Create canvas mode state
 
    - Update `src/contexts/CanvasContext.jsx`
    - Add `canvasMode` state: 'select', 'rectangle', 'circle', 'text'
    - Add `setCanvasMode` function
 
-3. - [ ] Create Toolbar component
+3. - [x] Create Toolbar component
 
    - File: `src/components/canvas/Toolbar.jsx`
    - Buttons for each tool: Select, Rectangle, Circle, Text
@@ -597,7 +597,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Map through objects array
    - Render `Rectangle` component for each object
 
-8. - [ ] Implement selection
+8. - [x] Implement selection
    - Update `src/contexts/CanvasContext.jsx`
    - Add `selectedObjectIds` state (array for multi-select)
    - Add `selectObject`, `deselectObject`, `clearSelection` functions

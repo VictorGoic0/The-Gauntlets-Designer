@@ -3,6 +3,7 @@ import Header from "../components/ui/Header";
 import Canvas from "../components/canvas/Canvas";
 import ZoomControls from "../components/canvas/ZoomControls";
 import PresencePanel from "../components/canvas/PresencePanel";
+import Toolbar from "../components/canvas/Toolbar";
 
 export default function CanvasPage() {
   return (
@@ -14,6 +15,9 @@ export default function CanvasPage() {
         {/* Canvas fills remaining space */}
         <div className="flex-1 relative">
           <Canvas />
+          
+          {/* Toolbar overlay positioned in top-center */}
+          <Toolbar />
           
           {/* Presence panel overlay positioned in top-right corner */}
           <PresencePanel />
