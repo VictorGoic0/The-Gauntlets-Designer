@@ -4,6 +4,7 @@ import { useCanvas } from "../../hooks/useCanvas";
 import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
 import usePresence from "../../hooks/usePresence";
+import usePresenceSync from "../../hooks/usePresenceSync";
 import Cursor from "./Cursor";
 
 export default function Canvas() {
@@ -36,6 +37,12 @@ export default function Canvas() {
   
   // Presence tracking
   usePresence(true);
+  const onlineUsers = usePresenceSync();
+  
+  // Filter cursors to only show users who are in the presence list (online)
+  const visibleCursors = remoteCursors.filter((cursor) => {
+    return onlineUsers.some((user) => user.userId === cursor.userId);
+  });
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
@@ -184,7 +191,8 @@ export default function Canvas() {
       )}
 
       {/* Cursor overlay - HTML elements for simplicity */}
-      {remoteCursors.map((cursor) => (
+      {/* Only show cursors for users who are currently present/online */}
+      {visibleCursors.map((cursor) => (
         <Cursor
           key={cursor.userId}
           x={cursor.x}
