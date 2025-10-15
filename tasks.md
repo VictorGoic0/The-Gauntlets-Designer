@@ -651,11 +651,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can create rectangles by clicking
-- [ ] Rectangles appear in both browsers instantly
-- [ ] Can select/deselect rectangles
-- [ ] Selection state is visual only (not synced yet)
-- [ ] Multiple rectangles render without lag
+- [x] Can create rectangles by clicking
+- [x] Rectangles appear in both browsers instantly
+- [x] Can select/deselect rectangles
+- [x] Selection state is visual only (not synced yet)
+- [x] Multiple rectangles render without lag
 - [ ] `npm test` passes all object tests
 
 ---
@@ -666,7 +666,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Add drag handlers to Rectangle
+1. - [x] Add drag handlers to Rectangle
 
    - Update `src/components/canvas/shapes/Rectangle.jsx`
    - Make `draggable={true}` when selected
@@ -674,13 +674,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Add `onDragMove` handler (optional for smooth preview)
    - Add `onDragEnd` handler
 
-2. - [ ] Implement optimistic updates
+2. - [x] Implement optimistic updates
 
    - On drag start: update local state immediately
    - On drag move: update local position (no Firestore write yet)
    - On drag end: write final position to Firestore
 
-3. - [ ] Create object update utility
+3. - [x] Create object update utility
 
    - File: `src/utils/firestoreUtils.js`
    - Function: `updateObject(objectId, updates)` - uses hardcoded 'shared-canvas' project ID
@@ -689,14 +689,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Includes `lastModified: FieldValue.serverTimestamp()`
    - Includes `lastModifiedBy` userId
 
-4. - [ ] Implement optimistic deletion
+4. - [x] Implement optimistic deletion
 
    - File: `src/utils/firestoreUtils.js`
    - Delete from local state immediately
    - Delete from Firestore immediately
    - Deletion takes priority over any other operations (last-write-wins exception)
 
-5. - [ ] Handle remote updates during drag
+5. - [x] Handle remote updates during drag
 
    - Update `src/hooks/useObjectSync.js`
    - Don't override local object if currently being dragged
@@ -704,13 +704,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Implement last-write-wins for conflicts (except deletes)
    - Use server timestamp to determine which update is newer
 
-6. - [ ] Add visual feedback during drag
+6. - [x] Add visual feedback during drag
 
    - Show semi-transparent version while dragging
    - Snap back if drag is invalid
    - Disable drag when not in 'select' mode
 
-7. - [ ] Transform coordinates for pan/zoom
+7. - [x] Transform coordinates for pan/zoom
    - Update drag handlers to account for canvas transform
    - Convert screen coordinates to canvas coordinates
    - Ensure objects stay in correct position across zoom levels
@@ -763,14 +763,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can drag rectangles smoothly
-- [ ] Position updates in second browser within 100ms
-- [ ] No jittering or snapping
-- [ ] Works correctly at different zoom levels
-- [ ] Multiple users can move different objects simultaneously
-- [ ] Last write wins if two users move same object (based on server timestamp)
-- [ ] Delete key removes object immediately for all users (optimistic deletion)
-- [ ] Deletion takes priority over simultaneous moves
+- [x] Can drag rectangles smoothly
+- [x] Position updates in second browser within 100ms
+- [x] No jittering or snapping
+- [x] Works correctly at different zoom levels
+- [x] Multiple users can move different objects simultaneously
+- [x] Last write wins if two users move same object (based on server timestamp)
+- [x] Delete key removes object immediately for all users (optimistic deletion)
+- [x] Deletion takes priority over simultaneous moves
 - [ ] `npm test` passes all drag tests
 
 ---
