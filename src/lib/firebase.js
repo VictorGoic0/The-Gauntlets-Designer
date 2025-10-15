@@ -6,7 +6,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getDatabase } from "firebase/database";
+import { getDatabase, ref, set } from "firebase/database";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -42,6 +42,13 @@ export const signInWithGoogle = async () => {
 
 export const signOutUser = async () => {
   try {
+    // Remove presence before signing out
+    const user = auth.currentUser;
+    if (user) {
+      const presenceRef = ref(realtimeDb, `presence/shared-canvas/${user.uid}`);
+      await set(presenceRef, null);
+    }
+
     await signOut(auth);
   } catch (error) {
     console.error("Error signing out:", error);
