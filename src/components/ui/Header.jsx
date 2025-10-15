@@ -15,7 +15,7 @@ export default function Header() {
   return (
     <header className="bg-gray-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">CollabCanvas</h1>
+        <h1 className="text-2xl font-bold text-white">Goico's Artist</h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-300">
             Welcome, {currentUser?.displayName || "User"}
