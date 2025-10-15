@@ -995,18 +995,19 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Install Konva Transformer
+1. - [x] Install Konva Transformer
 
    - Already included with `react-konva`
 
-2. - [ ] Create TransformWrapper component
+2. - [x] Create TransformWrapper component
 
    - File: `src/components/canvas/TransformWrapper.jsx`
    - Wraps selected shape with Konva `Transformer`
    - Shows resize handles (corners and edges)
    - Shows rotation handle
+   - Note: Transformer already integrated directly in each shape component
 
-3. - [ ] Add transform handlers
+3. - [x] Add transform handlers
 
    - Update shape components (Rectangle, Circle, Text)
    - Add `onTransform` handler
@@ -1014,24 +1015,24 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Update local state during transform
    - Write to Firestore on transform end
 
-4. - [ ] Update object data structure
+4. - [x] Update object data structure
 
    - Add `rotation` field (already in data model)
-   - Add `scaleX`, `scaleY` fields
+   - Add `scaleX`, `scaleY` fields (not needed - scale reset to 1 after applying)
    - Update Firestore on transform end
 
-5. - [ ] Handle rotation sync
+5. - [x] Handle rotation sync
 
    - Update `useObjectSync` to apply rotation
    - Render shapes with rotation applied
 
-6. - [ ] Handle resize sync
+6. - [x] Handle resize sync
 
    - Update dimensions on resize
-   - Maintain aspect ratio option (shift key)
+   - Maintain aspect ratio option (shift key - Transformer default behavior)
 
-7. - [ ] Add keyboard shortcuts
-   - Delete key: delete selected objects
+7. - [x] Add keyboard shortcuts
+   - Delete key: delete selected objects (Backspace)
    - Escape key: deselect all
 
 **Unit Tests:**
@@ -1073,7 +1074,9 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Resize handles appear on selection
-- [ ] Can resize shapes
-- [ ] Can rotate shapes
-- [ ] Transforms sync across
+- [x] Resize handles appear on selection
+- [x] Can resize shapes
+- [x] Can rotate shapes
+- [x] Transforms sync across users
+- [x] Keyboard shortcuts work (Delete/Escape)
+- [x] Circle dragging works correctly
