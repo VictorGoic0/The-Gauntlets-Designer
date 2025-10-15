@@ -53,11 +53,14 @@ export default function Canvas() {
   usePresence(true);
   const onlineUsers = usePresenceSync();
   
-  // Object syncing
-  const objects = useObjectSync();
-  
   // Local state for object positions during drag (optimistic updates)
   const [localObjectPositions, setLocalObjectPositions] = useState({});
+  
+  // Track which object is currently being dragged for visual feedback
+  const [draggingObjectId, setDraggingObjectId] = useState(null);
+  
+  // Object syncing (pass dragging objects to prevent remote updates during drag)
+  const objects = useObjectSync(localObjectPositions);
   
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {
@@ -92,6 +95,31 @@ export default function Canvas() {
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
   }, []);
+
+  // Clear local positions when remote updates match
+  useEffect(() => {
+    setLocalObjectPositions((prev) => {
+      const updated = { ...prev };
+      let changed = false;
+      
+      Object.keys(prev).forEach((objectId) => {
+        const remoteObject = objects.find(obj => obj.id === objectId);
+        if (remoteObject) {
+          const localPos = prev[objectId];
+          // If remote position matches local (within 1px tolerance), clear local
+          if (
+            Math.abs(remoteObject.x - localPos.x) < 1 &&
+            Math.abs(remoteObject.y - localPos.y) < 1
+          ) {
+            delete updated[objectId];
+            changed = true;
+          }
+        }
+      });
+      
+      return changed ? updated : prev;
+    });
+  }, [objects]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -137,32 +165,38 @@ export default function Canvas() {
   };
 
   // Handle drag start
-  const handleObjectDragStart = () => {
-    // Currently no action needed on drag start
+  const handleObjectDragStart = (objectId) => {
+    setDraggingObjectId(objectId);
   };
 
   // Handle drag move - update local position (optimistic update)
-  const handleObjectDragMove = (objectId, newPosition) => {
+  const handleObjectDragMove = (objectId, newPosition, objectSize) => {
+    // Constrain position within canvas bounds
+    const constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - objectSize.width));
+    const constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - objectSize.height));
+    
     setLocalObjectPositions((prev) => ({
       ...prev,
-      [objectId]: newPosition,
+      [objectId]: { x: constrainedX, y: constrainedY },
     }));
   };
 
   // Handle drag end - write final position to Firestore
-  const handleObjectDragEnd = async (objectId, newPosition) => {
+  const handleObjectDragEnd = async (objectId, newPosition, objectSize) => {
+    setDraggingObjectId(null);
+    
+    // Constrain final position within canvas bounds
+    const constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - objectSize.width));
+    const constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - objectSize.height));
+    
     // Update object position using utility function
     await updateObject(objectId, {
-      x: newPosition.x,
-      y: newPosition.y,
+      x: constrainedX,
+      y: constrainedY,
     }, currentUser.uid);
     
-    // Clear local position
-    setLocalObjectPositions((prev) => {
-      const updated = { ...prev };
-      delete updated[objectId];
-      return updated;
-    });
+    // Keep local position until remote update arrives to prevent flicker
+    // The useEffect below will clear it when remote position matches
   };
 
   // Mouse event handlers for panning and shape creation
@@ -289,6 +323,7 @@ export default function Canvas() {
               if (obj.type === "rectangle") {
                 // Use local position if object is being dragged, otherwise use Firestore position
                 const position = localObjectPositions[obj.id] || { x: obj.x, y: obj.y };
+                const isDragging = draggingObjectId === obj.id;
                 
                 return (
                   <Rectangle
@@ -300,12 +335,15 @@ export default function Canvas() {
                       height: obj.height,
                       fill: obj.fill,
                       rotation: obj.rotation,
+                      opacity: isDragging ? 0.6 : 1, // Semi-transparent while dragging
                     }}
                     isSelected={isSelected(obj.id)}
                     onSelect={() => selectObject(obj.id)}
                     onDragStart={() => handleObjectDragStart(obj.id)}
-                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos)}
-                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos)}
+                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width, height: obj.height })}
+                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width, height: obj.height })}
+                    canvasWidth={CANVAS_WIDTH}
+                    canvasHeight={CANVAS_HEIGHT}
                   />
                 );
               }

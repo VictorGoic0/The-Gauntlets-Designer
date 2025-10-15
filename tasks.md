@@ -696,7 +696,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Delete from Firestore immediately
    - Deletion takes priority over any other operations (last-write-wins exception)
 
-5. - [ ] Handle remote updates during drag
+5. - [x] Handle remote updates during drag
 
    - Update `src/hooks/useObjectSync.js`
    - Don't override local object if currently being dragged
@@ -704,7 +704,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Implement last-write-wins for conflicts (except deletes)
    - Use server timestamp to determine which update is newer
 
-6. - [ ] Add visual feedback during drag
+6. - [x] Add visual feedback during drag
 
    - Show semi-transparent version while dragging
    - Snap back if drag is invalid

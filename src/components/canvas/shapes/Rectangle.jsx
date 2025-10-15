@@ -9,7 +9,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
  * - Shows selection border when selected
  * - Handles click for selection
  */
-export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd }) {
+export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, canvasWidth, canvasHeight }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
   const { canvasMode } = useCanvas();
@@ -56,6 +56,19 @@ export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStar
     }
   };
 
+  // Constrain drag within canvas bounds
+  const dragBoundFunc = (pos) => {
+    if (!canvasWidth || !canvasHeight) return pos;
+    
+    const width = shapeProps.width || 0;
+    const height = shapeProps.height || 0;
+    
+    return {
+      x: Math.max(0, Math.min(pos.x, canvasWidth - width)),
+      y: Math.max(0, Math.min(pos.y, canvasHeight - height)),
+    };
+  };
+
   return (
     <>
       <Rect
@@ -64,6 +77,7 @@ export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStar
         onClick={handleClick}
         onTap={handleClick}
         draggable={canvasMode === "select" && isSelected}
+        dragBoundFunc={dragBoundFunc}
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
