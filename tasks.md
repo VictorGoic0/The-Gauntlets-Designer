@@ -651,11 +651,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can create rectangles by clicking
-- [ ] Rectangles appear in both browsers instantly
-- [ ] Can select/deselect rectangles
-- [ ] Selection state is visual only (not synced yet)
-- [ ] Multiple rectangles render without lag
+- [x] Can create rectangles by clicking
+- [x] Rectangles appear in both browsers instantly
+- [x] Can select/deselect rectangles
+- [x] Selection state is visual only (not synced yet)
+- [x] Multiple rectangles render without lag
 - [ ] `npm test` passes all object tests
 
 ---
@@ -666,7 +666,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Add drag handlers to Rectangle
+1. - [x] Add drag handlers to Rectangle
 
    - Update `src/components/canvas/shapes/Rectangle.jsx`
    - Make `draggable={true}` when selected
@@ -674,13 +674,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Add `onDragMove` handler (optional for smooth preview)
    - Add `onDragEnd` handler
 
-2. - [ ] Implement optimistic updates
+2. - [x] Implement optimistic updates
 
    - On drag start: update local state immediately
    - On drag move: update local position (no Firestore write yet)
    - On drag end: write final position to Firestore
 
-3. - [ ] Create object update utility
+3. - [x] Create object update utility
 
    - File: `src/utils/firestoreUtils.js`
    - Function: `updateObject(objectId, updates)` - uses hardcoded 'shared-canvas' project ID
@@ -689,7 +689,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Includes `lastModified: FieldValue.serverTimestamp()`
    - Includes `lastModifiedBy` userId
 
-4. - [ ] Implement optimistic deletion
+4. - [x] Implement optimistic deletion
 
    - File: `src/utils/firestoreUtils.js`
    - Delete from local state immediately

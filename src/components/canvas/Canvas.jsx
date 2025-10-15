@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Stage, Layer, Rect } from "react-konva";
-import { collection, addDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useAuth } from "../../hooks/useAuth";
@@ -12,6 +12,7 @@ import useObjectSync from "../../hooks/useObjectSync";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
 import { createRectangle } from "../../utils/objectUtils";
+import { updateObject, deleteObjects } from "../../utils/firestoreUtils";
 
 export default function Canvas() {
   // Get canvas state from context
@@ -55,6 +56,9 @@ export default function Canvas() {
   // Object syncing
   const objects = useObjectSync();
   
+  // Local state for object positions during drag (optimistic updates)
+  const [localObjectPositions, setLocalObjectPositions] = useState({});
+  
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {
     return onlineUsers.some((user) => user.userId === cursor.userId);
@@ -63,6 +67,15 @@ export default function Canvas() {
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
   const CANVAS_HEIGHT = 5000;
+
+  // Delete selected objects from Firestore
+  const deleteSelectedObjects = useCallback(async () => {
+    // Delete all selected objects using utility function
+    await deleteObjects(selectedObjectIds);
+    
+    // Clear selection
+    clearSelection();
+  }, [selectedObjectIds, clearSelection]);
 
   // Update stage size based on container dimensions
   useEffect(() => {
@@ -110,41 +123,46 @@ export default function Canvas() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedObjectIds]);
+  }, [selectedObjectIds, deleteSelectedObjects]);
 
   // Create rectangle and sync to Firestore
   const createRectangleOnCanvas = async (x, y) => {
     const rectangleData = createRectangle(x, y, currentUser.uid);
     
-    try {
-      // Write to Firestore - useObjectSync will handle the real-time update
-      const docRef = await addDoc(
-        collection(db, "projects", "shared-canvas", "objects"),
-        rectangleData
-      );
-      console.log("Rectangle created:", docRef.id);
-    } catch (error) {
-      console.error("Error creating rectangle:", error);
-    }
+    // Write to Firestore - useObjectSync will handle the real-time update
+    await addDoc(
+      collection(db, "projects", "shared-canvas", "objects"),
+      rectangleData
+    );
   };
 
-  // Delete selected objects from Firestore
-  const deleteSelectedObjects = async () => {
-    try {
-      // Delete all selected objects
-      const deletePromises = selectedObjectIds.map((objectId) => {
-        const objectRef = doc(db, "projects", "shared-canvas", "objects", objectId);
-        return deleteDoc(objectRef);
-      });
-      
-      await Promise.all(deletePromises);
-      console.log("Deleted objects:", selectedObjectIds);
-      
-      // Clear selection
-      clearSelection();
-    } catch (error) {
-      console.error("Error deleting objects:", error);
-    }
+  // Handle drag start
+  const handleObjectDragStart = () => {
+    // Currently no action needed on drag start
+  };
+
+  // Handle drag move - update local position (optimistic update)
+  const handleObjectDragMove = (objectId, newPosition) => {
+    setLocalObjectPositions((prev) => ({
+      ...prev,
+      [objectId]: newPosition,
+    }));
+  };
+
+  // Handle drag end - write final position to Firestore
+  const handleObjectDragEnd = async (objectId, newPosition) => {
+    // Update object position using utility function
+    await updateObject(objectId, {
+      x: newPosition.x,
+      y: newPosition.y,
+    }, currentUser.uid);
+    
+    // Clear local position
+    setLocalObjectPositions((prev) => {
+      const updated = { ...prev };
+      delete updated[objectId];
+      return updated;
+    });
   };
 
   // Mouse event handlers for panning and shape creation
@@ -269,12 +287,15 @@ export default function Canvas() {
             {/* Render all canvas objects */}
             {objects.map((obj) => {
               if (obj.type === "rectangle") {
+                // Use local position if object is being dragged, otherwise use Firestore position
+                const position = localObjectPositions[obj.id] || { x: obj.x, y: obj.y };
+                
                 return (
                   <Rectangle
                     key={obj.id}
                     shapeProps={{
-                      x: obj.x,
-                      y: obj.y,
+                      x: position.x,
+                      y: position.y,
                       width: obj.width,
                       height: obj.height,
                       fill: obj.fill,
@@ -282,6 +303,9 @@ export default function Canvas() {
                     }}
                     isSelected={isSelected(obj.id)}
                     onSelect={() => selectObject(obj.id)}
+                    onDragStart={() => handleObjectDragStart(obj.id)}
+                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos)}
+                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos)}
                   />
                 );
               }
