@@ -1,11 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Stage, Layer, Rect } from "react-konva";
+import { collection, addDoc, doc, deleteDoc } from "firebase/firestore";
+import { db } from "../../lib/firebase";
 import { useCanvas } from "../../hooks/useCanvas";
+import { useAuth } from "../../hooks/useAuth";
 import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
 import usePresence from "../../hooks/usePresence";
 import usePresenceSync from "../../hooks/usePresenceSync";
+import useObjectSync from "../../hooks/useObjectSync";
 import Cursor from "./Cursor";
+import Rectangle from "./shapes/Rectangle";
+import { createRectangle } from "../../utils/objectUtils";
 
 export default function Canvas() {
   // Get canvas state from context
@@ -16,7 +22,14 @@ export default function Canvas() {
     setStageScale,
     MIN_SCALE,
     MAX_SCALE,
+    canvasMode,
+    clearSelection,
+    selectObject,
+    isSelected,
+    selectedObjectIds,
   } = useCanvas();
+  
+  const { currentUser } = useAuth();
 
   const [stageSize, setStageSize] = useState({
     width: 0,
@@ -38,6 +51,9 @@ export default function Canvas() {
   // Presence tracking
   usePresence(true);
   const onlineUsers = usePresenceSync();
+  
+  // Object syncing
+  const objects = useObjectSync();
   
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {
@@ -64,12 +80,18 @@ export default function Canvas() {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // Handle spacebar for pan mode
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === "Space" && !e.repeat) {
         e.preventDefault();
         setSpacePressed(true);
+      }
+      
+      // Delete selected objects on Backspace
+      if (e.code === "Backspace" && selectedObjectIds.length > 0) {
+        e.preventDefault();
+        deleteSelectedObjects();
       }
     };
 
@@ -88,11 +110,67 @@ export default function Canvas() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, []);
+  }, [selectedObjectIds]);
 
-  // Mouse event handlers for panning
+  // Create rectangle and sync to Firestore
+  const createRectangleOnCanvas = async (x, y) => {
+    const rectangleData = createRectangle(x, y, currentUser.uid);
+    
+    try {
+      // Write to Firestore - useObjectSync will handle the real-time update
+      const docRef = await addDoc(
+        collection(db, "projects", "shared-canvas", "objects"),
+        rectangleData
+      );
+      console.log("Rectangle created:", docRef.id);
+    } catch (error) {
+      console.error("Error creating rectangle:", error);
+    }
+  };
+
+  // Delete selected objects from Firestore
+  const deleteSelectedObjects = async () => {
+    try {
+      // Delete all selected objects
+      const deletePromises = selectedObjectIds.map((objectId) => {
+        const objectRef = doc(db, "projects", "shared-canvas", "objects", objectId);
+        return deleteDoc(objectRef);
+      });
+      
+      await Promise.all(deletePromises);
+      console.log("Deleted objects:", selectedObjectIds);
+      
+      // Clear selection
+      clearSelection();
+    } catch (error) {
+      console.error("Error deleting objects:", error);
+    }
+  };
+
+  // Mouse event handlers for panning and shape creation
   const handleMouseDown = (e) => {
     const isMiddleButton = e.evt.button === 1;
+    
+    // Check if clicking on the stage background or the dark background rect
+    const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background';
+    
+    if (clickedOnEmpty) {
+      // Clear selection when clicking on empty space
+      clearSelection();
+      
+      // Handle shape creation
+      if (canvasMode === "rectangle" && currentUser && !spacePressed && !isMiddleButton) {
+        const stage = stageRef.current;
+        const pointerPos = stage.getPointerPosition();
+        
+        // Convert screen coordinates to canvas coordinates
+        const canvasX = (pointerPos.x - stagePosition.x) / stageScale;
+        const canvasY = (pointerPos.y - stagePosition.y) / stageScale;
+        
+        createRectangleOnCanvas(canvasX, canvasY);
+        return;
+      }
+    }
     
     if (spacePressed || isMiddleButton) {
       e.evt.preventDefault();
@@ -185,7 +263,30 @@ export default function Canvas() {
               width={CANVAS_WIDTH}
               height={CANVAS_HEIGHT}
               fill="#1a1a1a"
+              name="background"
             />
+            
+            {/* Render all canvas objects */}
+            {objects.map((obj) => {
+              if (obj.type === "rectangle") {
+                return (
+                  <Rectangle
+                    key={obj.id}
+                    shapeProps={{
+                      x: obj.x,
+                      y: obj.y,
+                      width: obj.width,
+                      height: obj.height,
+                      fill: obj.fill,
+                      rotation: obj.rotation,
+                    }}
+                    isSelected={isSelected(obj.id)}
+                    onSelect={() => selectObject(obj.id)}
+                  />
+                );
+              }
+              return null;
+            })}
           </Layer>
         </Stage>
       )}
