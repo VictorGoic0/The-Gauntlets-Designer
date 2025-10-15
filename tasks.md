@@ -962,7 +962,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Render different components based on object type
    - Update `useObjectSync` to handle all types
 
-5. - [ ] Add shape-specific properties
+5. - [x] Add shape-specific properties
    - Update Firestore data model to include:
      - `radius` for circles
      - `text`, `fontSize`, `fontFamily` for text
@@ -981,11 +981,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can create circles
-- [ ] Can create text layers
-- [ ] All shapes sync across users
-- [ ] Can move all shape types
-- [ ] Can edit text by double-clicking
+- [x] Can create circles
+- [x] Can create text layers
+- [x] All shapes sync across users
+- [x] Can move all shape types
+- [x] Can edit text by double-clicking
 
 ---
 
