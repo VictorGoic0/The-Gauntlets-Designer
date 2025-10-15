@@ -806,12 +806,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Sync queued updates when reconnected
    - Use Firestore offline persistence: `enableIndexedDbPersistence(db)`
 
-5. - [ ] Add reconnection logic
+5. - [x] Add reconnection logic
 
    - Automatically handled by Firestore
    - Test by disconnecting network and reconnecting
 
-6. - [ ] Test state persistence scenarios
+6. - [x] Test state persistence scenarios
    - Create objects, refresh page → objects still there
    - Two users create objects, both leave, both return → objects still there
    - Create object while offline, reconnect → object syncs
@@ -855,11 +855,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Canvas loads with existing objects after refresh
-- [ ] Works offline (queues updates)
-- [ ] Syncs queued updates when reconnected
-- [ ] Connection status indicator works
-- [ ] No data loss on disconnect
+- [x] Canvas loads with existing objects after refresh
+- [x] Works offline (queues updates)
+- [x] Syncs queued updates when reconnected
+- [x] Connection status indicator works
+- [x] No data loss on disconnect
 - [ ] `npm test` passes all persistence tests
 
 ---
