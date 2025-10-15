@@ -5,7 +5,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getDatabase, ref, set } from "firebase/database";
 
 // Firebase configuration from environment variables
@@ -27,6 +27,17 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const realtimeDb = getDatabase(app);
+
+// Enable offline persistence for Firestore
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === "failed-precondition") {
+    // Multiple tabs open, persistence can only be enabled in one tab at a time
+    console.warn("Offline persistence failed: Multiple tabs open");
+  } else if (err.code === "unimplemented") {
+    // The current browser doesn't support offline persistence
+    console.warn("Offline persistence not supported by browser");
+  }
+});
 
 // Auth functions
 export const signInWithGoogle = async () => {

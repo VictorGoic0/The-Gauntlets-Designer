@@ -799,7 +799,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Display indicator: Connected (green) / Disconnected (red)
    - Position in header with Tailwind
 
-4. - [ ] Handle offline mode
+4. - [x] Handle offline mode
 
    - Update `src/hooks/useObjectSync.js`
    - Queue updates when offline

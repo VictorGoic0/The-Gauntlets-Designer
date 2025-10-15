@@ -9,6 +9,12 @@ import { useAuth } from "./useAuth";
  * Handles create, update, and delete operations in real-time.
  * Implements last-write-wins conflict resolution based on server timestamps.
  *
+ * Offline Support:
+ * - Firestore offline persistence is enabled in firebase.js
+ * - Writes are automatically queued when offline
+ * - Queued writes sync automatically when connection is restored
+ * - Reads come from local cache when offline
+ *
  * @param {Object} draggingObjectIds - Set or object with IDs of currently dragging objects
  * @returns {Object} { objects: Array, loading: boolean } - Canvas objects and loading state
  */
