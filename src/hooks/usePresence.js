@@ -1,15 +1,14 @@
 import { useEffect, useRef } from "react";
-import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { ref, set, onDisconnect, serverTimestamp } from "firebase/database";
+import { realtimeDb } from "../lib/firebase";
 import { useAuth } from "./useAuth";
 import { getUserColor } from "../utils/userColors";
 
 /**
- * Hook to manage user presence in Firestore.
+ * Hook to manage user presence in Realtime Database.
  * - Writes presence data on mount
- * - Updates lastSeen every 30 seconds
- * - Sets isOnline to false on unmount
- * - Cleanup handled via unmount and lastSeen timestamp filtering
+ * - Uses onDisconnect() to automatically remove presence when browser closes
+ * - Updates lastSeen timestamp periodically for activity tracking
  *
  * @param {boolean} enabled - Whether presence tracking is enabled
  */
@@ -22,18 +21,19 @@ export function usePresence(enabled = true) {
     if (!enabled || !currentUser) return;
 
     const userColor = getUserColor(currentUser.uid);
-    const presenceRef = doc(
-      db,
-      "projects",
-      "shared-canvas",
-      "presence",
-      currentUser.uid
+    const presenceRef = ref(
+      realtimeDb,
+      `presence/shared-canvas/${currentUser.uid}`
     );
 
     // Initialize presence data on mount
     const initializePresence = async () => {
       try {
-        await setDoc(presenceRef, {
+        // Set up onDisconnect to remove presence when user disconnects
+        await onDisconnect(presenceRef).remove();
+
+        // Write presence data
+        await set(presenceRef, {
           userName: currentUser.displayName || "Anonymous",
           userEmail: currentUser.email || "",
           userColor: userColor,
@@ -48,7 +48,10 @@ export function usePresence(enabled = true) {
     // Update lastSeen timestamp periodically
     const updatePresence = async () => {
       try {
-        await updateDoc(presenceRef, {
+        await set(presenceRef, {
+          userName: currentUser.displayName || "Anonymous",
+          userEmail: currentUser.email || "",
+          userColor: userColor,
           isOnline: true,
           lastSeen: serverTimestamp(),
         });
@@ -70,12 +73,9 @@ export function usePresence(enabled = true) {
         clearInterval(intervalRef.current);
       }
 
-      // Mark user as offline
-      updateDoc(presenceRef, {
-        isOnline: false,
-        lastSeen: serverTimestamp(),
-      }).catch((error) => {
-        console.error("Error marking user offline:", error);
+      // Remove presence (onDisconnect will also handle this automatically)
+      set(presenceRef, null).catch((error) => {
+        console.error("Error removing presence:", error);
       });
     };
   }, [enabled, currentUser]);

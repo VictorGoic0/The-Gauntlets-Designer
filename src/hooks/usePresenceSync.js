@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, query } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { ref, onValue } from "firebase/database";
+import { realtimeDb } from "../lib/firebase";
 import { useAuth } from "./useAuth";
 
 /**
- * Hook to sync user presence from Firestore.
- * Listens to all presence documents and returns list of online users.
- * Filters users by isOnline status and recent lastSeen timestamp.
+ * Hook to sync user presence from Realtime Database.
+ * Listens to all presence data and returns list of online users.
+ * Automatically filters out users who disconnect (removed by onDisconnect).
  *
  * @returns {Array} Array of online user presence objects
  */
@@ -14,51 +14,38 @@ export function usePresenceSync() {
   const { currentUser } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  // Consider users online if lastSeen is within the last 60 seconds
-  // (2x the update interval of 30s to account for network delays)
-  const ONLINE_THRESHOLD_MS = 60000;
-
   useEffect(() => {
     if (!currentUser) return;
 
-    // Create query for presence collection
-    const presenceRef = collection(db, "projects", "shared-canvas", "presence");
-    const presenceQuery = query(presenceRef);
+    // Reference to presence collection
+    const presenceRef = ref(realtimeDb, "presence/shared-canvas");
 
     // Listen to presence updates
-    const unsubscribe = onSnapshot(
-      presenceQuery,
+    const unsubscribe = onValue(
+      presenceRef,
       (snapshot) => {
         const users = [];
-        const now = Date.now();
+        const data = snapshot.val();
 
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const userId = doc.id;
+        if (data) {
+          Object.keys(data).forEach((userId) => {
+            const userData = data[userId];
 
-          // Check if user is marked as online
-          if (!data.isOnline) {
-            return;
-          }
+            // Skip if no data or not online
+            if (!userData || !userData.isOnline) {
+              return;
+            }
 
-          // Check if lastSeen is recent (within threshold)
-          // lastSeen is a Firestore Timestamp object
-          const lastSeenTime = data.lastSeen?.toMillis?.() || 0;
-          const isRecent = now - lastSeenTime < ONLINE_THRESHOLD_MS;
-
-          if (!isRecent) {
-            return;
-          }
-
-          users.push({
-            userId,
-            userName: data.userName,
-            userEmail: data.userEmail,
-            userColor: data.userColor,
-            isOnline: data.isOnline,
-            lastSeen: data.lastSeen,
+            users.push({
+              userId,
+              userName: userData.userName,
+              userEmail: userData.userEmail,
+              userColor: userData.userColor,
+              isOnline: userData.isOnline,
+              lastSeen: userData.lastSeen,
+            });
           });
-        });
+        }
 
         setOnlineUsers(users);
       },

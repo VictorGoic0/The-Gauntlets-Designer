@@ -14,6 +14,7 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_FIREBASE_MEASUREMENT_ID=G-your_measurement_id
+VITE_FIREBASE_DATABASE_URL=https://your-project-id-default-rtdb.firebaseio.com
 ```
 
 ### 2. Get Firebase Credentials
@@ -42,6 +43,16 @@ VITE_FIREBASE_MEASUREMENT_ID=G-your_measurement_id
 3. Start in **test mode** (or production mode with rules)
 4. Select a region close to your users
 5. Click "Enable"
+
+#### Realtime Database
+
+1. Go to **Build** → **Realtime Database**
+2. Click "Create Database"
+3. Select a region close to your users
+4. Start in **test mode** (or locked mode with rules)
+5. Click "Enable"
+6. Copy the database URL (looks like `https://your-project-id-default-rtdb.firebaseio.com`)
+7. Add it to your `.env.local` as `VITE_FIREBASE_DATABASE_URL`
 
 #### Security Rules
 
@@ -72,15 +83,16 @@ After deploying to Netlify:
 3. Go to **Site settings** → **Build & deploy** → **Environment variables**
 4. Click "Add a variable" for each of the following:
 
-| Variable Name                       | Example Value                  | Description              |
-| ----------------------------------- | ------------------------------ | ------------------------ |
-| `VITE_FIREBASE_API_KEY`             | `AIza...`                      | Your Firebase API key    |
-| `VITE_FIREBASE_AUTH_DOMAIN`         | `your-project.firebaseapp.com` | Firebase auth domain     |
-| `VITE_FIREBASE_PROJECT_ID`          | `your-project-id`              | Firebase project ID      |
-| `VITE_FIREBASE_STORAGE_BUCKET`      | `your-project.appspot.com`     | Firebase storage bucket  |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | `123456789`                    | Messaging sender ID      |
-| `VITE_FIREBASE_APP_ID`              | `1:123456789:web:abc123`       | Firebase app ID          |
-| `VITE_FIREBASE_MEASUREMENT_ID`      | `G-ABC123XYZ`                  | Analytics measurement ID |
+| Variable Name                       | Example Value                                         | Description              |
+| ----------------------------------- | ----------------------------------------------------- | ------------------------ |
+| `VITE_FIREBASE_API_KEY`             | `AIza...`                                             | Your Firebase API key    |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | `your-project.firebaseapp.com`                        | Firebase auth domain     |
+| `VITE_FIREBASE_PROJECT_ID`          | `your-project-id`                                     | Firebase project ID      |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | `your-project.appspot.com`                            | Firebase storage bucket  |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | `123456789`                                           | Messaging sender ID      |
+| `VITE_FIREBASE_APP_ID`              | `1:123456789:web:abc123`                              | Firebase app ID          |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | `G-ABC123XYZ`                                         | Analytics measurement ID |
+| `VITE_FIREBASE_DATABASE_URL`        | `https://your-project-id-default-rtdb.firebaseio.com` | Realtime Database URL    |
 
 ### 2. Configure Firebase for Production Domain
 
@@ -171,6 +183,7 @@ VITE_FIREBASE_STORAGE_BUCKET
 VITE_FIREBASE_MESSAGING_SENDER_ID
 VITE_FIREBASE_APP_ID
 VITE_FIREBASE_MEASUREMENT_ID
+VITE_FIREBASE_DATABASE_URL
 ```
 
 ### Commands

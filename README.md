@@ -51,6 +51,7 @@ A real-time collaborative canvas application built with React, Konva, and Fireba
 
    - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
    - Enable Firestore Database
+   - Enable Realtime Database (for presence tracking)
    - Enable Firebase Authentication (Google Sign-In provider)
    - Copy your Firebase configuration
 
@@ -66,6 +67,7 @@ A real-time collaborative canvas application built with React, Konva, and Fireba
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
    VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+   VITE_FIREBASE_DATABASE_URL=your_database_url
    ```
 
 5. **Run the development server**
@@ -133,6 +135,7 @@ A real-time collaborative canvas application built with React, Konva, and Fireba
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
    VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+   VITE_FIREBASE_DATABASE_URL=your_database_url
    ```
 
 5. **Configure Firebase for production**
@@ -197,6 +200,7 @@ The following environment variables are required:
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID       |
 | `VITE_FIREBASE_APP_ID`              | Firebase app ID                    |
 | `VITE_FIREBASE_MEASUREMENT_ID`      | Firebase measurement ID (optional) |
+| `VITE_FIREBASE_DATABASE_URL`        | Firebase Realtime Database URL     |
 
 ## Project Structure
 
