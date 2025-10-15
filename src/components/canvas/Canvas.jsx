@@ -11,6 +11,7 @@ import usePresenceSync from "../../hooks/usePresenceSync";
 import useObjectSync from "../../hooks/useObjectSync";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
+import LoadingState from "./LoadingState";
 import { createRectangle } from "../../utils/objectUtils";
 import { updateObject, deleteObjects } from "../../utils/firestoreUtils";
 
@@ -60,7 +61,7 @@ export default function Canvas() {
   const [draggingObjectId, setDraggingObjectId] = useState(null);
   
   // Object syncing (pass dragging objects to prevent remote updates during drag)
-  const objects = useObjectSync(localObjectPositions);
+  const { objects, loading } = useObjectSync(localObjectPositions);
   
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {
@@ -319,7 +320,7 @@ export default function Canvas() {
             />
             
             {/* Render all canvas objects */}
-            {objects.map((obj) => {
+            {!loading && objects.map((obj) => {
               if (obj.type === "rectangle") {
                 // Use local position if object is being dragged, otherwise use Firestore position
                 const position = localObjectPositions[obj.id] || { x: obj.x, y: obj.y };
@@ -352,6 +353,9 @@ export default function Canvas() {
           </Layer>
         </Stage>
       )}
+
+      {/* Loading state overlay */}
+      {loading && <LoadingState />}
 
       {/* Cursor overlay - HTML elements for simplicity */}
       {/* Only show cursors for users who are currently present/online */}

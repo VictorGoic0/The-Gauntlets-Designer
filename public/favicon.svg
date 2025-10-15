@@ -1,0 +1,63 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f0f0;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main background -->
+  <rect width="512" height="512" fill="url(#bgGrad)" rx="24"/>
+  
+  <!-- Outer frame -->
+  <g transform="translate(64, 64)" filter="url(#glow)">
+    <rect width="384" height="384" fill="none" stroke="url(#frameGrad)" stroke-width="8" rx="20"/>
+    <rect x="8" y="8" width="368" height="368" fill="#ffffff" rx="12"/>
+  </g>
+  
+  <!-- Inner frame/layer -->
+  <g transform="translate(96, 96)">
+    <rect width="320" height="320" fill="none" stroke="#e1e5e9" stroke-width="4" rx="16"/>
+    <rect x="8" y="8" width="304" height="304" fill="#f8f9ff" rx="12"/>
+  </g>
+  
+  <!-- Design elements -->
+  <!-- Artboard handle -->
+  <circle cx="128" cy="128" r="20" fill="#667eea" opacity="0.8"/>
+  <path d="M128 108 L128 148 M108 128 L148 128" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Prototype arrow -->
+  <g transform="translate(384, 128)">
+    <path d="M0 0 L-40 0" stroke="#764ba2" stroke-width="6" stroke-linecap="round"/>
+    <path d="M-40 0 L-32 8 M-40 0 L-32 -8" stroke="#764ba2" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Layer indicator dots -->
+  <circle cx="96" cy="384" r="8" fill="#667eea"/>
+  <circle cx="128" cy="384" r="8" fill="#764ba2"/>
+  <circle cx="160" cy="384" r="8" fill="#667eea"/>
+  
+  <!-- Subtle grid pattern -->
+  <g opacity="0.1" stroke="#ffffff" stroke-width="1">
+    <line x1="128" y1="192" x2="128" y2="320"/>
+    <line x1="192" y1="256" x2="320" y2="256"/>
+    <line x1="384" y1="192" x2="384" y2="320"/>
+  </g>
+  
+  <!-- Corner highlights -->
+  <circle cx="80" cy="80" r="16" fill="url(#frameGrad)" opacity="0.6"/>
+  <circle cx="432" cy="80" r="16" fill="url(#frameGrad)" opacity="0.6"/>
+  <circle cx="80" cy="432" r="16" fill="url(#frameGrad)" opacity="0.6"/>
+</svg>

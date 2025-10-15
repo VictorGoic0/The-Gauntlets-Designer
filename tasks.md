@@ -781,37 +781,37 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Implement Firestore persistence
+1. - [x] Implement Firestore persistence
 
    - Already handled by Firestore `onSnapshot` listeners
    - Verify objects persist when all users disconnect
 
-2. - [ ] Add loading state
+2. - [x] Add loading state
 
    - File: `src/components/canvas/LoadingState.jsx`
    - Show spinner while loading canvas data
    - Display "Loading canvas..." message
 
-3. - [ ] Create connection status indicator
+3. - [x] Create connection status indicator
 
    - File: `src/components/ui/ConnectionStatus.jsx`
    - Listen to Firestore connection state
    - Display indicator: Connected (green) / Disconnected (red)
    - Position in header with Tailwind
 
-4. - [ ] Handle offline mode
+4. - [x] Handle offline mode
 
    - Update `src/hooks/useObjectSync.js`
    - Queue updates when offline
    - Sync queued updates when reconnected
    - Use Firestore offline persistence: `enableIndexedDbPersistence(db)`
 
-5. - [ ] Add reconnection logic
+5. - [x] Add reconnection logic
 
    - Automatically handled by Firestore
    - Test by disconnecting network and reconnecting
 
-6. - [ ] Test state persistence scenarios
+6. - [x] Test state persistence scenarios
    - Create objects, refresh page → objects still there
    - Two users create objects, both leave, both return → objects still there
    - Create object while offline, reconnect → object syncs
@@ -855,11 +855,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Canvas loads with existing objects after refresh
-- [ ] Works offline (queues updates)
-- [ ] Syncs queued updates when reconnected
-- [ ] Connection status indicator works
-- [ ] No data loss on disconnect
+- [x] Canvas loads with existing objects after refresh
+- [x] Works offline (queues updates)
+- [x] Syncs queued updates when reconnected
+- [x] Connection status indicator works
+- [x] No data loss on disconnect
 - [ ] `npm test` passes all persistence tests
 
 ---

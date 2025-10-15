@@ -9,12 +9,19 @@ import { useAuth } from "./useAuth";
  * Handles create, update, and delete operations in real-time.
  * Implements last-write-wins conflict resolution based on server timestamps.
  *
+ * Offline Support:
+ * - Firestore offline persistence is enabled in firebase.js
+ * - Writes are automatically queued when offline
+ * - Queued writes sync automatically when connection is restored
+ * - Reads come from local cache when offline
+ *
  * @param {Object} draggingObjectIds - Set or object with IDs of currently dragging objects
- * @returns {Array} Array of canvas object data
+ * @returns {Object} { objects: Array, loading: boolean } - Canvas objects and loading state
  */
 export function useObjectSync(draggingObjectIds = {}) {
   const { currentUser } = useAuth();
   const [objects, setObjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Store current objects and pending remote updates
   const currentObjectsMap = useRef({});
@@ -93,9 +100,11 @@ export function useObjectSync(draggingObjectIds = {}) {
         objectsData.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
 
         setObjects(objectsData);
+        setLoading(false); // Data loaded successfully
       },
       (error) => {
         console.error("Error syncing objects:", error);
+        setLoading(false); // Stop loading even on error
       }
     );
 
@@ -105,7 +114,7 @@ export function useObjectSync(draggingObjectIds = {}) {
     };
   }, [currentUser, draggingObjectIds]);
 
-  return objects;
+  return { objects, loading };
 }
 
 export default useObjectSync;

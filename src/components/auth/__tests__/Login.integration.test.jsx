@@ -199,7 +199,7 @@ describe("Login Integration Tests", () => {
       render(<Login />);
 
       expect(
-        screen.getByText("Welcome to CollabCanvas")
+        screen.getByText("Welcome to Goico's Artist")
       ).toBeInTheDocument();
       expect(
         screen.getByText(/real-time collaborative canvas for creative teams/i)
