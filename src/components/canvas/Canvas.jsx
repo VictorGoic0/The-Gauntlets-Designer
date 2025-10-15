@@ -11,8 +11,10 @@ import usePresenceSync from "../../hooks/usePresenceSync";
 import useObjectSync from "../../hooks/useObjectSync";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
+import Circle from "./shapes/Circle";
+import Text from "./shapes/Text";
 import LoadingState from "./LoadingState";
-import { createRectangle } from "../../utils/objectUtils";
+import { createRectangle, createCircle, createText } from "../../utils/objectUtils";
 import { updateObject, deleteObjects } from "../../utils/firestoreUtils";
 
 export default function Canvas() {
@@ -154,14 +156,28 @@ export default function Canvas() {
     };
   }, [selectedObjectIds, deleteSelectedObjects]);
 
-  // Create rectangle and sync to Firestore
-  const createRectangleOnCanvas = async (x, y) => {
-    const rectangleData = createRectangle(x, y, currentUser.uid);
+  // Create shape on canvas and sync to Firestore
+  const createShapeOnCanvas = async (x, y, shapeType) => {
+    let shapeData;
+    
+    switch (shapeType) {
+      case "rectangle":
+        shapeData = createRectangle(x, y, currentUser.uid);
+        break;
+      case "circle":
+        shapeData = createCircle(x, y, currentUser.uid);
+        break;
+      case "text":
+        shapeData = createText(x, y, currentUser.uid);
+        break;
+      default:
+        return;
+    }
     
     // Write to Firestore - useObjectSync will handle the real-time update
     await addDoc(
       collection(db, "projects", "shared-canvas", "objects"),
-      rectangleData
+      shapeData
     );
   };
 
@@ -212,7 +228,8 @@ export default function Canvas() {
       clearSelection();
       
       // Handle shape creation
-      if (canvasMode === "rectangle" && currentUser && !spacePressed && !isMiddleButton) {
+      if ((canvasMode === "rectangle" || canvasMode === "circle" || canvasMode === "text") && 
+          currentUser && !spacePressed && !isMiddleButton) {
         const stage = stageRef.current;
         const pointerPos = stage.getPointerPosition();
         
@@ -220,7 +237,7 @@ export default function Canvas() {
         const canvasX = (pointerPos.x - stagePosition.x) / stageScale;
         const canvasY = (pointerPos.y - stagePosition.y) / stageScale;
         
-        createRectangleOnCanvas(canvasX, canvasY);
+        createShapeOnCanvas(canvasX, canvasY, canvasMode);
         return;
       }
     }
@@ -321,11 +338,11 @@ export default function Canvas() {
             
             {/* Render all canvas objects */}
             {!loading && objects.map((obj) => {
+              // Use local position if object is being dragged, otherwise use Firestore position
+              const position = localObjectPositions[obj.id] || { x: obj.x, y: obj.y };
+              const isDragging = draggingObjectId === obj.id;
+              
               if (obj.type === "rectangle") {
-                // Use local position if object is being dragged, otherwise use Firestore position
-                const position = localObjectPositions[obj.id] || { x: obj.x, y: obj.y };
-                const isDragging = draggingObjectId === obj.id;
-                
                 return (
                   <Rectangle
                     key={obj.id}
@@ -336,7 +353,7 @@ export default function Canvas() {
                       height: obj.height,
                       fill: obj.fill,
                       rotation: obj.rotation,
-                      opacity: isDragging ? 0.6 : 1, // Semi-transparent while dragging
+                      opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
                     onSelect={() => selectObject(obj.id)}
@@ -348,6 +365,57 @@ export default function Canvas() {
                   />
                 );
               }
+              
+              if (obj.type === "circle") {
+                return (
+                  <Circle
+                    key={obj.id}
+                    shapeProps={{
+                      x: position.x,
+                      y: position.y,
+                      radius: obj.radius,
+                      fill: obj.fill,
+                      rotation: obj.rotation,
+                      opacity: isDragging ? 0.6 : 1,
+                    }}
+                    isSelected={isSelected(obj.id)}
+                    onSelect={() => selectObject(obj.id)}
+                    onDragStart={() => handleObjectDragStart(obj.id)}
+                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { radius: obj.radius })}
+                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { radius: obj.radius })}
+                    canvasWidth={CANVAS_WIDTH}
+                    canvasHeight={CANVAS_HEIGHT}
+                  />
+                );
+              }
+              
+              if (obj.type === "text") {
+                return (
+                  <Text
+                    key={obj.id}
+                    shapeProps={{
+                      x: position.x,
+                      y: position.y,
+                      text: obj.text,
+                      fontSize: obj.fontSize,
+                      fontFamily: obj.fontFamily,
+                      width: obj.width,
+                      fill: obj.fill,
+                      rotation: obj.rotation,
+                      opacity: isDragging ? 0.6 : 1,
+                    }}
+                    isSelected={isSelected(obj.id)}
+                    onSelect={() => selectObject(obj.id)}
+                    onDragStart={() => handleObjectDragStart(obj.id)}
+                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width || 200, height: 50 })}
+                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width || 200, height: 50 })}
+                    onTextChange={(newText) => updateObject(obj.id, { text: newText }, currentUser.uid)}
+                    canvasWidth={CANVAS_WIDTH}
+                    canvasHeight={CANVAS_HEIGHT}
+                  />
+                );
+              }
+              
               return null;
             })}
           </Layer>
