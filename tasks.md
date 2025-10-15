@@ -710,7 +710,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Snap back if drag is invalid
    - Disable drag when not in 'select' mode
 
-7. - [ ] Transform coordinates for pan/zoom
+7. - [x] Transform coordinates for pan/zoom
    - Update drag handlers to account for canvas transform
    - Convert screen coordinates to canvas coordinates
    - Ensure objects stay in correct position across zoom levels
@@ -763,14 +763,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can drag rectangles smoothly
-- [ ] Position updates in second browser within 100ms
-- [ ] No jittering or snapping
-- [ ] Works correctly at different zoom levels
-- [ ] Multiple users can move different objects simultaneously
-- [ ] Last write wins if two users move same object (based on server timestamp)
-- [ ] Delete key removes object immediately for all users (optimistic deletion)
-- [ ] Deletion takes priority over simultaneous moves
+- [x] Can drag rectangles smoothly
+- [x] Position updates in second browser within 100ms
+- [x] No jittering or snapping
+- [x] Works correctly at different zoom levels
+- [x] Multiple users can move different objects simultaneously
+- [x] Last write wins if two users move same object (based on server timestamp)
+- [x] Delete key removes object immediately for all users (optimistic deletion)
+- [x] Deletion takes priority over simultaneous moves
 - [ ] `npm test` passes all drag tests
 
 ---

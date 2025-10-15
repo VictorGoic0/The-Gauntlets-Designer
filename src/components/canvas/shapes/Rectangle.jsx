@@ -57,6 +57,9 @@ export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStar
   };
 
   // Constrain drag within canvas bounds
+  // Note: pos is in canvas coordinates (not screen coordinates)
+  // Konva automatically handles coordinate transforms for shapes within the Stage
+  // This works correctly regardless of pan/zoom level
   const dragBoundFunc = (pos) => {
     if (!canvasWidth || !canvasHeight) return pos;
     
