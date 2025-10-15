@@ -530,11 +530,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Presence panel shows current user
-- [ ] Open second browser, both users appear
-- [ ] User count updates in real-time
-- [ ] User disappears when browser closes
-- [ ] Panel is collapsible
+- [x] Presence panel shows current user
+- [x] Open second browser, both users appear
+- [x] User count updates in real-time
+- [x] User disappears when browser closes
+- [x] Panel is collapsible
 - [ ] `npm test` passes all presence tests
 
 ---
