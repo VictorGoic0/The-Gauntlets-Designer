@@ -137,6 +137,12 @@ export default function Canvas() {
         e.preventDefault();
         deleteSelectedObjects();
       }
+      
+      // Deselect all on Escape
+      if (e.code === "Escape" && selectedObjectIds.length > 0) {
+        e.preventDefault();
+        clearSelection();
+      }
     };
 
     const handleKeyUp = (e) => {
@@ -189,8 +195,20 @@ export default function Canvas() {
   // Handle drag move - update local position (optimistic update)
   const handleObjectDragMove = (objectId, newPosition, objectSize) => {
     // Constrain position within canvas bounds
-    const constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - objectSize.width));
-    const constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - objectSize.height));
+    let constrainedX, constrainedY;
+    
+    if (objectSize.radius) {
+      // For circles: x,y is center position, so constrain using radius
+      const radius = objectSize.radius;
+      constrainedX = Math.max(radius, Math.min(newPosition.x, CANVAS_WIDTH - radius));
+      constrainedY = Math.max(radius, Math.min(newPosition.y, CANVAS_HEIGHT - radius));
+    } else {
+      // For rectangles/text: x,y is top-left corner, so constrain using width/height
+      const width = objectSize.width || 0;
+      const height = objectSize.height || 0;
+      constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - width));
+      constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - height));
+    }
     
     setLocalObjectPositions((prev) => ({
       ...prev,
@@ -203,8 +221,20 @@ export default function Canvas() {
     setDraggingObjectId(null);
     
     // Constrain final position within canvas bounds
-    const constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - objectSize.width));
-    const constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - objectSize.height));
+    let constrainedX, constrainedY;
+    
+    if (objectSize.radius) {
+      // For circles: x,y is center position, so constrain using radius
+      const radius = objectSize.radius;
+      constrainedX = Math.max(radius, Math.min(newPosition.x, CANVAS_WIDTH - radius));
+      constrainedY = Math.max(radius, Math.min(newPosition.y, CANVAS_HEIGHT - radius));
+    } else {
+      // For rectangles/text: x,y is top-left corner, so constrain using width/height
+      const width = objectSize.width || 0;
+      const height = objectSize.height || 0;
+      constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - width));
+      constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - height));
+    }
     
     // Update object position using utility function
     await updateObject(objectId, {
@@ -214,6 +244,21 @@ export default function Canvas() {
     
     // Keep local position until remote update arrives to prevent flicker
     // The useEffect below will clear it when remote position matches
+  };
+
+  // Handle transform (resize/rotate) - optimistic update
+  const handleObjectTransform = (objectId, transformData) => {
+    // Update local state immediately for responsive UX
+    setLocalObjectPositions((prev) => ({
+      ...prev,
+      [objectId]: { x: transformData.x, y: transformData.y },
+    }));
+  };
+
+  // Handle transform end - write final transform to Firestore
+  const handleObjectTransformEnd = async (objectId, transformData) => {
+    // Update Firestore with all transform properties
+    await updateObject(objectId, transformData, currentUser.uid);
   };
 
   // Mouse event handlers for panning and shape creation
@@ -360,6 +405,8 @@ export default function Canvas() {
                     onDragStart={() => handleObjectDragStart(obj.id)}
                     onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width, height: obj.height })}
                     onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width, height: obj.height })}
+                    onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
+                    onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
                     canvasWidth={CANVAS_WIDTH}
                     canvasHeight={CANVAS_HEIGHT}
                   />
@@ -383,6 +430,8 @@ export default function Canvas() {
                     onDragStart={() => handleObjectDragStart(obj.id)}
                     onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { radius: obj.radius })}
                     onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { radius: obj.radius })}
+                    onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
+                    onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
                     canvasWidth={CANVAS_WIDTH}
                     canvasHeight={CANVAS_HEIGHT}
                   />
@@ -409,6 +458,8 @@ export default function Canvas() {
                     onDragStart={() => handleObjectDragStart(obj.id)}
                     onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width || 200, height: 50 })}
                     onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width || 200, height: 50 })}
+                    onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
+                    onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
                     onTextChange={(newText) => updateObject(obj.id, { text: newText }, currentUser.uid)}
                     canvasWidth={CANVAS_WIDTH}
                     canvasHeight={CANVAS_HEIGHT}

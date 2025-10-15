@@ -18,7 +18,9 @@ export default function Text({
   onSelect, 
   onDragStart, 
   onDragMove, 
-  onDragEnd, 
+  onDragEnd,
+  onTransform,
+  onTransformEnd,
   onTextChange,
   canvasWidth, 
   canvasHeight 
@@ -83,6 +85,41 @@ export default function Text({
         x: node.x(),
         y: node.y(),
       });
+    }
+  };
+
+  const handleTransform = (e) => {
+    if (onTransform) {
+      const node = e.target;
+      onTransform({
+        x: node.x(),
+        y: node.y(),
+        width: node.width() * node.scaleX(),
+        fontSize: (shapeProps.fontSize || 16) * node.scaleY(),
+        rotation: node.rotation(),
+      });
+    }
+  };
+
+  const handleTransformEnd = (e) => {
+    if (onTransformEnd) {
+      const node = e.target;
+      const newWidth = node.width() * node.scaleX();
+      const newFontSize = (shapeProps.fontSize || 16) * node.scaleY();
+      
+      onTransformEnd({
+        x: node.x(),
+        y: node.y(),
+        width: newWidth,
+        fontSize: newFontSize,
+        rotation: node.rotation(),
+      });
+      
+      // Apply scale to actual dimensions and reset scale
+      node.width(newWidth);
+      node.fontSize(newFontSize);
+      node.scaleX(1);
+      node.scaleY(1);
     }
   };
 
@@ -199,6 +236,8 @@ export default function Text({
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
+        onTransform={handleTransform}
+        onTransformEnd={handleTransformEnd}
         // Visual feedback when selected
         strokeWidth={isSelected ? 2 : 0}
         stroke={isSelected ? "#3B82F6" : undefined}

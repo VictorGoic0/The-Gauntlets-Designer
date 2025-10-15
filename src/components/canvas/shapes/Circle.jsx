@@ -10,7 +10,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
  * - Handles click for selection
  * - Default radius: 50px
  */
-export default function Circle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, canvasWidth, canvasHeight }) {
+export default function Circle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, onTransform, onTransformEnd, canvasWidth, canvasHeight }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
   const { canvasMode } = useCanvas();
@@ -57,6 +57,41 @@ export default function Circle({ shapeProps, isSelected, onSelect, onDragStart, 
     }
   };
 
+  const handleTransform = (e) => {
+    if (onTransform) {
+      const node = e.target;
+      // For circles, scale affects the radius
+      const avgScale = (node.scaleX() + node.scaleY()) / 2;
+      onTransform({
+        x: node.x(),
+        y: node.y(),
+        radius: node.radius() * avgScale,
+        rotation: node.rotation(),
+      });
+    }
+  };
+
+  const handleTransformEnd = (e) => {
+    if (onTransformEnd) {
+      const node = e.target;
+      // For circles, scale affects the radius
+      const avgScale = (node.scaleX() + node.scaleY()) / 2;
+      const newRadius = node.radius() * avgScale;
+      
+      onTransformEnd({
+        x: node.x(),
+        y: node.y(),
+        radius: newRadius,
+        rotation: node.rotation(),
+      });
+      
+      // Apply scale to actual radius and reset scale
+      node.radius(newRadius);
+      node.scaleX(1);
+      node.scaleY(1);
+    }
+  };
+
   // Constrain drag within canvas bounds
   // Account for circle radius when constraining position
   const dragBoundFunc = (pos) => {
@@ -82,6 +117,8 @@ export default function Circle({ shapeProps, isSelected, onSelect, onDragStart, 
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
+        onTransform={handleTransform}
+        onTransformEnd={handleTransformEnd}
         // Visual feedback when selected
         strokeWidth={isSelected ? 2 : 0}
         stroke={isSelected ? "#3B82F6" : undefined}

@@ -9,7 +9,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
  * - Shows selection border when selected
  * - Handles click for selection
  */
-export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, canvasWidth, canvasHeight }) {
+export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, onTransform, onTransformEnd, canvasWidth, canvasHeight }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
   const { canvasMode } = useCanvas();
@@ -56,6 +56,41 @@ export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStar
     }
   };
 
+  const handleTransform = (e) => {
+    if (onTransform) {
+      const node = e.target;
+      onTransform({
+        x: node.x(),
+        y: node.y(),
+        width: node.width() * node.scaleX(),
+        height: node.height() * node.scaleY(),
+        rotation: node.rotation(),
+      });
+    }
+  };
+
+  const handleTransformEnd = (e) => {
+    if (onTransformEnd) {
+      const node = e.target;
+      const newWidth = node.width() * node.scaleX();
+      const newHeight = node.height() * node.scaleY();
+      
+      onTransformEnd({
+        x: node.x(),
+        y: node.y(),
+        width: newWidth,
+        height: newHeight,
+        rotation: node.rotation(),
+      });
+      
+      // Apply scale to actual dimensions and reset scale
+      node.width(newWidth);
+      node.height(newHeight);
+      node.scaleX(1);
+      node.scaleY(1);
+    }
+  };
+
   // Constrain drag within canvas bounds
   // Note: pos is in canvas coordinates (not screen coordinates)
   // Konva automatically handles coordinate transforms for shapes within the Stage
@@ -84,6 +119,8 @@ export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStar
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
+        onTransform={handleTransform}
+        onTransformEnd={handleTransformEnd}
         // Visual feedback when selected
         strokeWidth={isSelected ? 2 : 0}
         stroke={isSelected ? "#3B82F6" : undefined}
