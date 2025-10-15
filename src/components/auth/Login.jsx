@@ -23,7 +23,7 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-2xl">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Welcome to CollabCanvas
+            Welcome to Goico's Artist
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Real-time collaborative canvas for creative teams
