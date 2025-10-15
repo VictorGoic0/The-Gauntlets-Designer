@@ -10,11 +10,12 @@ import { useAuth } from "./useAuth";
  * Implements last-write-wins conflict resolution based on server timestamps.
  *
  * @param {Object} draggingObjectIds - Set or object with IDs of currently dragging objects
- * @returns {Array} Array of canvas object data
+ * @returns {Object} { objects: Array, loading: boolean } - Canvas objects and loading state
  */
 export function useObjectSync(draggingObjectIds = {}) {
   const { currentUser } = useAuth();
   const [objects, setObjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Store current objects and pending remote updates
   const currentObjectsMap = useRef({});
@@ -93,9 +94,11 @@ export function useObjectSync(draggingObjectIds = {}) {
         objectsData.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
 
         setObjects(objectsData);
+        setLoading(false); // Data loaded successfully
       },
       (error) => {
         console.error("Error syncing objects:", error);
+        setLoading(false); // Stop loading even on error
       }
     );
 
@@ -105,7 +108,7 @@ export function useObjectSync(draggingObjectIds = {}) {
     };
   }, [currentUser, draggingObjectIds]);
 
-  return objects;
+  return { objects, loading };
 }
 
 export default useObjectSync;

@@ -781,12 +781,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Implement Firestore persistence
+1. - [x] Implement Firestore persistence
 
    - Already handled by Firestore `onSnapshot` listeners
    - Verify objects persist when all users disconnect
 
-2. - [ ] Add loading state
+2. - [x] Add loading state
 
    - File: `src/components/canvas/LoadingState.jsx`
    - Show spinner while loading canvas data
