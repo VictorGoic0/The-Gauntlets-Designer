@@ -917,11 +917,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Deployed URL is accessible (requires user to deploy to Netlify)
-- [ ] Can sign up and sign in
-- [ ] Cursors sync across devices
-- [ ] Can create and move rectangles
-- [ ] State persists across page reloads
+- [x] Deployed URL is accessible (requires user to deploy to Netlify)
+- [x] Can sign up and sign in
+- [x] Cursors sync across devices
+- [x] Can create and move rectangles
+- [x] State persists across page reloads
 
 **🎯 MVP CHECKPOINT - ALL REQUIREMENTS MET**
 
@@ -933,14 +933,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Create Circle component
+1. - [x] Create Circle component
 
    - File: `src/components/canvas/shapes/Circle.jsx`
    - Render Konva `Circle` with props
    - Same selection and drag behavior as Rectangle
    - Default radius: 50px
 
-2. - [ ] Create Text component
+2. - [x] Create Text component
 
    - File: `src/components/canvas/shapes/Text.jsx`
    - Render Konva `Text` with props
@@ -948,13 +948,13 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Default text: "Double-click to edit"
    - Default fontSize: 16
 
-3. - [ ] Update Toolbar
+3. - [x] Update Toolbar
 
    - Update `src/components/canvas/Toolbar.jsx`
    - Add Circle tool button
    - Add Text tool button
 
-4. - [ ] Update Canvas to handle all shapes
+4. - [x] Update Canvas to handle all shapes
 
    - Update `src/components/canvas/Canvas.jsx`
    - Handle circle creation on click
@@ -962,7 +962,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Render different components based on object type
    - Update `useObjectSync` to handle all types
 
-5. - [ ] Add shape-specific properties
+5. - [x] Add shape-specific properties
    - Update Firestore data model to include:
      - `radius` for circles
      - `text`, `fontSize`, `fontFamily` for text
@@ -981,11 +981,11 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
-- [ ] Can create circles
-- [ ] Can create text layers
-- [ ] All shapes sync across users
-- [ ] Can move all shape types
-- [ ] Can edit text by double-clicking
+- [x] Can create circles
+- [x] Can create text layers
+- [x] All shapes sync across users
+- [x] Can move all shape types
+- [x] Can edit text by double-clicking
 
 ---
 
