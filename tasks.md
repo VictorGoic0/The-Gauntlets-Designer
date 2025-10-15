@@ -792,7 +792,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Show spinner while loading canvas data
    - Display "Loading canvas..." message
 
-3. - [ ] Create connection status indicator
+3. - [x] Create connection status indicator
 
    - File: `src/components/ui/ConnectionStatus.jsx`
    - Listen to Firestore connection state
