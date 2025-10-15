@@ -545,7 +545,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Set up objects collection in Firestore
+1. - [x] Set up objects collection in Firestore
 
    - Collection: `/projects/shared-canvas/objects/{objectId}`
    - Hardcoded project ID: 'shared-canvas'
