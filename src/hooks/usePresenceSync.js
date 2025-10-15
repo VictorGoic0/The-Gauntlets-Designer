@@ -6,13 +6,20 @@ import { useAuth } from "./useAuth";
 /**
  * Hook to sync user presence from Realtime Database.
  * Listens to all presence data and returns list of online users.
- * Automatically filters out users who disconnect (removed by onDisconnect).
+ *
+ * Users are filtered out if:
+ * 1. Browser closes/disconnects (removed automatically by onDisconnect)
+ * 2. Inactive for 60+ seconds (lastSeen timestamp check)
  *
  * @returns {Array} Array of online user presence objects
  */
 export function usePresenceSync() {
   const { currentUser } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState([]);
+
+  // Consider users online if lastSeen is within the last 60 seconds
+  // (2x the update interval of 30s to account for network delays)
+  const ONLINE_THRESHOLD_MS = 60000;
 
   useEffect(() => {
     if (!currentUser) return;
@@ -26,6 +33,7 @@ export function usePresenceSync() {
       (snapshot) => {
         const users = [];
         const data = snapshot.val();
+        const now = Date.now();
 
         if (data) {
           Object.keys(data).forEach((userId) => {
@@ -33,6 +41,15 @@ export function usePresenceSync() {
 
             // Skip if no data or not online
             if (!userData || !userData.isOnline) {
+              return;
+            }
+
+            // Check if lastSeen is recent (within threshold)
+            // lastSeen is a timestamp in milliseconds
+            const lastSeenTime = userData.lastSeen || 0;
+            const isRecent = now - lastSeenTime < ONLINE_THRESHOLD_MS;
+
+            if (!isRecent) {
               return;
             }
 
