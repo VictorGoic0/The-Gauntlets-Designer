@@ -85,9 +85,18 @@ export default function Canvas() {
   // Object syncing - sets up Firestore listener, writes to Firestore Store
   useObjectSync(activeObjectIds);
   
-  // Read objects and loading state from Firestore Store
-  const objects = useFirestoreStore((state) => state.objects.sorted);
+  // Read objects from Firestore Store (synced objects)
+  const firestoreObjects = useFirestoreStore((state) => state.objects.sorted);
   const loading = useFirestoreStore((state) => state.objects.isLoading);
+  
+  // Read optimistic objects data from Local Store (not yet synced)
+  // Return the data object itself to avoid recreating arrays
+  const optimisticObjectsData = useLocalStore((state) => state.optimisticObjects.data);
+  
+  // Combine Firestore objects and optimistic objects
+  const objects = useMemo(() => {
+    return [...firestoreObjects, ...Object.values(optimisticObjectsData)];
+  }, [firestoreObjects, optimisticObjectsData]);
   
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {

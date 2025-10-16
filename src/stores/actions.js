@@ -37,7 +37,8 @@ export const createShape = async (
 ) => {
   if (!currentUser) return;
 
-  const objectId = generateObjectId();
+  // Generate local ID for optimistic update
+  const localId = generateObjectId();
   let shapeData;
 
   // Create shape data based on type
@@ -55,19 +56,28 @@ export const createShape = async (
       return;
   }
 
-  // Optimistic update: Add to Firestore Store immediately
-  useFirestoreStore.getState().addObject(objectId, shapeData);
+  // Optimistic update: Add to Local Store immediately with isOptimistic flag
+  useLocalStore.getState().addOptimisticObject(localId, shapeData);
 
   try {
-    // Write to Firestore - the sync layer will handle real-time updates
-    await addDoc(collection(db, "projects", "shared-canvas", "objects"), {
-      ...shapeData,
-      id: objectId,
-    });
+    // Write to Firestore - addDoc returns the document reference
+    const docRef = await addDoc(
+      collection(db, "projects", "shared-canvas", "objects"),
+      {
+        ...shapeData,
+      }
+    );
+
+    // Get the Firestore-generated ID
+    const firestoreId = docRef.id;
+
+    // Reconcile: swap local ID → Firestore ID in Local Store
+    // The Firestore listener will pick up the object and add it to Firestore Store
+    useLocalStore.getState().reconcileObjectId(localId, firestoreId);
   } catch (error) {
     console.error("Error creating shape:", error);
-    // Remove from store on error
-    useFirestoreStore.getState().removeObject(objectId);
+    // Remove optimistic object on error
+    useLocalStore.getState().removeOptimisticObject(localId);
   }
 };
 
@@ -159,14 +169,20 @@ export const finishDrag = async (
     );
   }
 
-  // Write final position to Firestore
-  await useFirestoreStore
-    .getState()
-    .updateObjectInFirestore(
-      objectId,
-      { x: constrainedX, y: constrainedY },
-      currentUser.uid
-    );
+  // Check if object is still optimistic (not yet synced to Firestore)
+  const isOptimistic = useLocalStore.getState().isObjectOptimistic(objectId);
+
+  if (!isOptimistic) {
+    // Only write to Firestore if object exists there
+    // Optimistic objects will get their updates when they're created
+    await useFirestoreStore
+      .getState()
+      .updateObjectInFirestore(
+        objectId,
+        { x: constrainedX, y: constrainedY },
+        currentUser.uid
+      );
+  }
 
   // Keep local position until remote update arrives to prevent flicker
   // The sync layer will clear it when remote position matches
@@ -205,10 +221,16 @@ export const finishTransform = async (objectId, transformData, currentUser) => {
   // Clear transforming state
   useLocalStore.getState().setTransformingObjectId(null);
 
-  // Write final transform to Firestore
-  await useFirestoreStore
-    .getState()
-    .updateObjectInFirestore(objectId, transformData, currentUser.uid);
+  // Check if object is still optimistic (not yet synced to Firestore)
+  const isOptimistic = useLocalStore.getState().isObjectOptimistic(objectId);
+
+  if (!isOptimistic) {
+    // Only write to Firestore if object exists there
+    // Optimistic objects will get their updates when they're created
+    await useFirestoreStore
+      .getState()
+      .updateObjectInFirestore(objectId, transformData, currentUser.uid);
+  }
 
   // Keep local transform until remote update arrives to prevent snap-back
   // The sync layer will clear it when remote transform matches
@@ -246,21 +268,17 @@ export const deleteObjects = async (objectIds, currentUser) => {
 export const updateText = async (objectId, newText, currentUser) => {
   if (!currentUser) return;
 
-  // Optimistic update: Update text in Firestore Store immediately
-  const store = useFirestoreStore.getState();
-  const currentObject = store.objects.byId[objectId];
+  // Check if object is still optimistic (not yet synced to Firestore)
+  const isOptimistic = useLocalStore.getState().isObjectOptimistic(objectId);
 
-  if (currentObject) {
-    // Update the object in the store immediately for instant feedback
-    store.updateObject(objectId, { text: newText });
+  if (!isOptimistic) {
+    // Only write to Firestore if object exists there
+    // Text component handles local state during editing
+    await useFirestoreStore
+      .getState()
+      .updateObjectInFirestore(objectId, { text: newText }, currentUser.uid);
   }
-
-  // Write to Firestore asynchronously
-  await store.updateObjectInFirestore(
-    objectId,
-    { text: newText },
-    currentUser.uid
-  );
+  // For optimistic objects, text updates will be saved when the object is created in Firestore
 };
 
 /**
