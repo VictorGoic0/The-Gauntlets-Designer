@@ -1080,3 +1080,87 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [x] Transforms sync across users
 - [x] Keyboard shortcuts work (Delete/Escape)
 - [x] Circle dragging works correctly
+
+---
+
+## PR #12: Critical Bug Fixes for MVP
+
+**Goal**: Fix critical bugs affecting collaboration and text editing
+
+### Subtasks
+
+1. - [ ] Fix simultaneous drag conflict resolution
+
+   - Update `src/hooks/useObjectSync.js`
+   - Implement proper last-write-wins using server timestamps
+   - Ensure dragging same object by multiple users resolves correctly
+   - Most recent drag should win based on `lastModified` timestamp
+
+2. - [x] Add username/password authentication
+
+   - Update `src/lib/firebase.js`
+   - Add `signUpWithEmail(email, password, displayName)` function
+   - Add `signInWithEmail(email, password)` function
+   - Enable Email/Password provider in Firebase Console
+   - Create separate `/login` and `/signup` routes with react-router-dom
+   - Both pages include Google Sign-In option
+   - Add proper routing with AuthRedirect component
+
+3. - [ ] Fix text rotation issue for new text objects
+
+   - Update `src/components/canvas/shapes/Text.jsx`
+   - Debug why newly created text cannot be rotated
+   - Ensure Transformer properly attaches to text nodes
+   - Verify rotation property syncs correctly
+
+4. - [x] Fix text resize-then-rotate size snap issueThat worked and got rid of a lot of warnings.
+   - Update `src/components/canvas/shapes/Text.jsx`
+   - Fix text snapping back to old size after resize then rotate
+   - Ensure width/height properly updated after resize
+   - Apply scale to dimensions correctly before rotation
+
+5. - [x] Fix transform snap-back on second resize/rotate
+   - Update `src/components/canvas/Canvas.jsx`
+   - Fix transforms snapping back to old values on subsequent transforms
+   - Keep local transform state until Firestore confirms update (same pattern as drag)
+   - Pass transforming objects to `useObjectSync` to block remote updates during transform
+   - Add `useEffect` to auto-clear local transforms when remote matches
+
+6. - [x] Fix Konva NaN warnings for x, y, rotation attributes
+   - Update `src/components/canvas/Canvas.jsx`
+   - Add default values for all numeric properties before passing to Konva components
+   - Ensure x, y, rotation, width, height, radius, fontSize always have valid numbers
+   - Prevents "NaN is not a valid value" warnings spamming console
+
+**Files Created:**
+
+- `src/components/auth/SignUp.jsx`
+
+**Files Modified:**
+
+- `src/hooks/useObjectSync.js`
+- `src/lib/firebase.js`
+- `src/components/auth/Login.jsx`
+- `src/components/auth/ProtectedRoute.jsx`
+- `src/components/canvas/shapes/Text.jsx`
+- `src/components/canvas/Canvas.jsx`
+- `src/App.jsx`
+
+**Dependencies Added:**
+
+- `react-router-dom`
+
+**Test Before Merge:**
+
+- [ ] Two users can drag same object simultaneously - last one wins
+- [x] Can sign up with email/password
+- [x] Can sign in with email/password
+- [x] Display name shows correctly for email/password users
+- [x] Login and signup pages have proper centered container styling
+- [x] Google Sign-In works on both login and signup pages
+- [x] Routing works correctly (/login, /signup, /)
+- [ ] Newly created text can be rotated immediately
+- [x] Text maintains correct size after resize then rotate
+- [x] Multiple transforms in a row work without snap-back
+- [x] No NaN warnings in console when idle or interacting with shapes
+- [ ] All existing functionality still works

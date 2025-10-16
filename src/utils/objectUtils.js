@@ -88,6 +88,8 @@ export const createText = (x, y, userId, options = {}) => {
     y,
     text: options.text || "Double-click to edit",
     fontSize: options.fontSize || 16,
+    fontFamily: options.fontFamily || "Arial",
+    width: options.width || 200,
     fill: options.fill || "#FFFFFF", // Default white color
     rotation: 0,
     zIndex: options.zIndex || 0,

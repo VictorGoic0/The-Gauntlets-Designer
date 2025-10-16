@@ -1,28 +1,35 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signInWithEmail, signInWithGoogle } from "../../lib/firebase";
+import { signUpWithEmail, signInWithGoogle } from "../../lib/firebase";
 
-export default function Login() {
+export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleEmailSignIn = async (e) => {
+  const handleEmailSignUp = async (e) => {
     e.preventDefault();
+    
+    if (!displayName.trim()) {
+      setError("Please enter a display name");
+      return;
+    }
+    
     try {
       setError(null);
       setLoading(true);
-      await signInWithEmail(email, password);
+      await signUpWithEmail(email, password, displayName);
       // User will be redirected automatically by AuthContext
       navigate("/");
     } catch (error) {
       // Provide user-friendly error messages
-      if (error.code === "auth/user-not-found") {
-        setError("No account found with this email. Please sign up.");
-      } else if (error.code === "auth/wrong-password") {
-        setError("Incorrect password. Please try again.");
+      if (error.code === "auth/email-already-in-use") {
+        setError("This email is already registered. Please sign in instead.");
+      } else if (error.code === "auth/weak-password") {
+        setError("Password should be at least 6 characters.");
       } else if (error.code === "auth/invalid-email") {
         setError("Please enter a valid email address.");
       } else {
@@ -52,16 +59,32 @@ export default function Login() {
       <div style={{ width: '420px' }} className="space-y-6 p-8 bg-white rounded-xl shadow-2xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">
-            Welcome to Goico's Artist
+            Create your account
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Real-time collaborative canvas for creative teams
+            Join the collaborative canvas
           </p>
         </div>
 
         <div className="space-y-6">
-          {/* Email/Password Login Form */}
-          <form onSubmit={handleEmailSignIn} className="space-y-4">
+          {/* Email/Password Sign Up Form */}
+          <form onSubmit={handleEmailSignUp} className="space-y-4">
+            <div>
+              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
+                Display Name
+              </label>
+              <input
+                id="displayName"
+                name="displayName"
+                type="text"
+                required
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="John Doe"
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
@@ -87,12 +110,12 @@ export default function Login() {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your password"
+                placeholder="At least 6 characters"
               />
             </div>
 
@@ -103,7 +126,7 @@ export default function Login() {
                 style={{ width: '200px', height: '40px' }}
                 className="px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? "Signing in..." : "Sign in"}
+                {loading ? "Creating account..." : "Sign up"}
               </button>
             </div>
           </form>
@@ -167,7 +190,7 @@ export default function Login() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    Authentication Error
+                    Sign Up Error
                   </h3>
                   <div className="mt-2 text-sm text-red-700">{error}</div>
                 </div>
@@ -175,15 +198,15 @@ export default function Login() {
             </div>
           )}
 
-          {/* Link to Sign Up */}
+          {/* Link to Login */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <Link
-                to="/signup"
+                to="/login"
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                Sign up
+                Sign in
               </Link>
             </p>
           </div>
