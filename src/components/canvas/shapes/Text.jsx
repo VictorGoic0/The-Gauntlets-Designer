@@ -44,7 +44,7 @@ export default function Text({
       transformerRef.current.nodes([shapeRef.current]);
       transformerRef.current.getLayer().batchDraw();
     }
-  }, [isSelected]);
+  }, [isSelected, shapeProps.width, shapeProps.fontSize, editValue]);
 
   const handleClick = (e) => {
     // Only allow selection in select mode

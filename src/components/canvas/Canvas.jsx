@@ -59,6 +59,9 @@ export default function Canvas() {
   // Local state for object positions during drag (optimistic updates)
   const [localObjectPositions, setLocalObjectPositions] = useState({});
   
+  // Local state for object transforms during resize/rotate (optimistic updates)
+  const [localObjectTransforms, setLocalObjectTransforms] = useState({});
+  
   // Track which object is currently being dragged for visual feedback
   const [draggingObjectId, setDraggingObjectId] = useState(null);
   
@@ -249,9 +252,9 @@ export default function Canvas() {
   // Handle transform (resize/rotate) - optimistic update
   const handleObjectTransform = (objectId, transformData) => {
     // Update local state immediately for responsive UX
-    setLocalObjectPositions((prev) => ({
+    setLocalObjectTransforms((prev) => ({
       ...prev,
-      [objectId]: { x: transformData.x, y: transformData.y },
+      [objectId]: transformData,
     }));
   };
 
@@ -259,6 +262,13 @@ export default function Canvas() {
   const handleObjectTransformEnd = async (objectId, transformData) => {
     // Update Firestore with all transform properties
     await updateObject(objectId, transformData, currentUser.uid);
+    
+    // Clear local transform after Firestore update
+    setLocalObjectTransforms((prev) => {
+      const newTransforms = { ...prev };
+      delete newTransforms[objectId];
+      return newTransforms;
+    });
   };
 
   // Mouse event handlers for panning and shape creation
@@ -383,9 +393,14 @@ export default function Canvas() {
             
             {/* Render all canvas objects */}
             {!loading && objects.map((obj) => {
-              // Use local position if object is being dragged, otherwise use Firestore position
-              const position = localObjectPositions[obj.id] || { x: obj.x, y: obj.y };
+              // Use local transform if object is being transformed, otherwise use Firestore data
+              const localTransform = localObjectTransforms[obj.id];
+              const position = localTransform ? { x: localTransform.x, y: localTransform.y } : 
+                               (localObjectPositions[obj.id] || { x: obj.x, y: obj.y });
               const isDragging = draggingObjectId === obj.id;
+              
+              // Merge local transforms with Firestore data for optimistic updates
+              const mergedProps = localTransform ? { ...obj, ...localTransform } : obj;
               
               if (obj.type === "rectangle") {
                 return (
@@ -394,10 +409,10 @@ export default function Canvas() {
                     shapeProps={{
                       x: position.x,
                       y: position.y,
-                      width: obj.width,
-                      height: obj.height,
-                      fill: obj.fill,
-                      rotation: obj.rotation,
+                      width: mergedProps.width,
+                      height: mergedProps.height,
+                      fill: mergedProps.fill,
+                      rotation: mergedProps.rotation,
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
@@ -420,9 +435,9 @@ export default function Canvas() {
                     shapeProps={{
                       x: position.x,
                       y: position.y,
-                      radius: obj.radius,
-                      fill: obj.fill,
-                      rotation: obj.rotation,
+                      radius: mergedProps.radius,
+                      fill: mergedProps.fill,
+                      rotation: mergedProps.rotation,
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
@@ -445,12 +460,12 @@ export default function Canvas() {
                     shapeProps={{
                       x: position.x,
                       y: position.y,
-                      text: obj.text,
-                      fontSize: obj.fontSize,
-                      fontFamily: obj.fontFamily,
-                      width: obj.width,
-                      fill: obj.fill,
-                      rotation: obj.rotation,
+                      text: mergedProps.text,
+                      fontSize: mergedProps.fontSize,
+                      fontFamily: mergedProps.fontFamily,
+                      width: mergedProps.width,
+                      fill: mergedProps.fill,
+                      rotation: mergedProps.rotation,
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
