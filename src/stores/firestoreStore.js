@@ -268,6 +268,7 @@ const useFirestoreStore = create(
         ),
 
       // Firestore operations (async)
+      // Adds lastEditedAt timestamp for conflict resolution
       updateObjectInFirestore: async (objectId, updates, userId) => {
         try {
           const objectRef = doc(
@@ -279,7 +280,7 @@ const useFirestoreStore = create(
           );
           await updateDoc(objectRef, {
             ...updates,
-            lastModified: serverTimestamp(),
+            lastEditedAt: serverTimestamp(), // Epoch milliseconds for conflict resolution
             lastModifiedBy: userId,
           });
         } catch (error) {
