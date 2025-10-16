@@ -1,5 +1,5 @@
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import Login from "./Login";
 
 export default function ProtectedRoute({ children }) {
   const { currentUser, loading } = useAuth();
@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children }) {
 
   // Redirect to login if not authenticated
   if (!currentUser) {
-    return <Login />;
+    return <Navigate to="/login" replace />;
   }
 
   // Render protected content if authenticated

@@ -1096,12 +1096,15 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Ensure dragging same object by multiple users resolves correctly
    - Most recent drag should win based on `lastModified` timestamp
 
-2. - [ ] Add username/password authentication
+2. - [x] Add username/password authentication
 
    - Update `src/lib/firebase.js`
    - Add `signUpWithEmail(email, password, displayName)` function
    - Add `signInWithEmail(email, password)` function
    - Enable Email/Password provider in Firebase Console
+   - Create separate `/login` and `/signup` routes with react-router-dom
+   - Both pages include Google Sign-In option
+   - Add proper routing with AuthRedirect component
 
 3. - [ ] Fix text rotation issue for new text objects
 
@@ -1129,20 +1132,33 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Ensure x, y, rotation, width, height, radius, fontSize always have valid numbers
    - Prevents "NaN is not a valid value" warnings spamming console
 
+**Files Created:**
+
+- `src/components/auth/SignUp.jsx`
+
 **Files Modified:**
 
 - `src/hooks/useObjectSync.js`
 - `src/lib/firebase.js`
 - `src/components/auth/Login.jsx`
+- `src/components/auth/ProtectedRoute.jsx`
 - `src/components/canvas/shapes/Text.jsx`
 - `src/components/canvas/Canvas.jsx`
+- `src/App.jsx`
+
+**Dependencies Added:**
+
+- `react-router-dom`
 
 **Test Before Merge:**
 
 - [ ] Two users can drag same object simultaneously - last one wins
-- [ ] Can sign up with email/password
-- [ ] Can sign in with email/password
-- [ ] Display name shows correctly for email/password users
+- [x] Can sign up with email/password
+- [x] Can sign in with email/password
+- [x] Display name shows correctly for email/password users
+- [x] Login and signup pages have proper centered container styling
+- [x] Google Sign-In works on both login and signup pages
+- [x] Routing works correctly (/login, /signup, /)
 - [ ] Newly created text can be rotated immediately
 - [x] Text maintains correct size after resize then rotate
 - [x] Multiple transforms in a row work without snap-back
