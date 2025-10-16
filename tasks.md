@@ -1467,7 +1467,7 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Phase 7: Final Implementation**
 
-25. - [ ] **Final Task**: Implement conflict resolution with timestamps
+25. - [x] **Final Task**: Implement conflict resolution with timestamps
 
     **Phase 1: Add Edit Timestamps** ✅ COMPLETE
 
@@ -1477,36 +1477,33 @@ const objects = useFirestoreStore((state) => state.objects);
     - ✅ NOT added to creation or deletion
     - ✅ Timestamp format: Epoch/Unix timestamp in milliseconds
 
-    **Phase 2: Clean Up Timestamps**
+    **Phase 2: Clean Up Timestamps** ✅ COMPLETE
 
-    - Add `createdAt` timestamp on object creation
+    - ✅ Added `createdAt` timestamp on object creation
       - Set once with `serverTimestamp()` at creation
       - Never changes after creation
-    - Remove ambiguous `lastModified` field
-      - Currently set at creation but name implies it updates
+    - ✅ Removed ambiguous `lastModified` field
+      - Was set at creation but name implied it would update
       - Confusing and unnecessary with `createdAt` + `lastEditedAt`
-    - **Result:** Clean timestamp semantics
+    - ✅ Removed unused `createObjectUpdate()` function
+    - ✅ **Result:** Clean timestamp semantics
       - `createdAt` = when object was created (immutable)
       - `lastEditedAt` = when object was last edited (updates on edits)
 
-    **Implementation locations:**
+    **Phase 3: Implement Conflict Resolution** ✅ COMPLETE
 
-    - `src/utils/objectUtils.js`: Add `createdAt`, remove `lastModified` from creation functions
-
-    **Phase 3: Implement Conflict Resolution**
-
-    - **Last-write-wins strategy:**
+    - ✅ **Last-write-wins strategy implemented:**
       - When two users edit same object, compare `lastEditedAt` timestamps
-      - Keep the edit with the later timestamp
-      - Discard the edit with the earlier timestamp
-    - **Special cases:**
-      - Delete always wins (takes precedence over any edit)
+      - Keep the edit with the later timestamp (discard earlier timestamp)
+      - Falls back to `createdAt` if `lastEditedAt` doesn't exist yet
+    - ✅ **Special cases handled:**
+      - Delete always wins (takes precedence over any edit) - already implemented
       - Creation timestamp (`createdAt`) never changes
-
-    **Implementation locations:**
-
-    - `firestoreStore.js`: Update timestamp comparison in `setObjects()` to use `lastEditedAt`
-    - Test with two browser windows editing simultaneously
+      - Pending updates tracked during drag operations
+    - ✅ **Implementation:**
+      - Updated `firestoreStore.js` `setObjects()` to use `lastEditedAt` for comparison
+      - Improved conflict resolution comments for clarity
+    - **Testing:** Ready to test with two browser windows editing simultaneously
 
 **Files to Create:**
 
