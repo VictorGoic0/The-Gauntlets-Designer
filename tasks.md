@@ -1321,7 +1321,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Update all components that use selection to use useLocalStore() (ZERO local state)
    - Remove old selection state from CanvasContext
 
-9. - [ ] Migrate dragging state
+9. - [x] Migrate dragging state
    - Move localObjectPositions to Local Store
    - Track actively dragging objects in Local Store
    - Update drag handlers to use central actions (ZERO local state in shape components)

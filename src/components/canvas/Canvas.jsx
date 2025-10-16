@@ -10,6 +10,7 @@ import usePresence from "../../hooks/usePresence";
 import usePresenceSync from "../../hooks/usePresenceSync";
 import useObjectSync from "../../hooks/useObjectSync";
 import useLocalStore from "../../stores/localStore";
+import * as actions from "../../stores/actions";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
 import Circle from "./shapes/Circle";
@@ -36,6 +37,10 @@ export default function Canvas() {
   const selectObject = useLocalStore((state) => state.selectObject);
   const isSelected = useLocalStore((state) => state.isSelected);
   
+  // Get dragging state from Local Store
+  const localObjectPositions = useLocalStore((state) => state.dragging.localObjectPositions);
+  const draggingObjectId = useLocalStore((state) => state.dragging.draggingObjectId);
+  
   const { currentUser } = useAuth();
 
   const [stageSize, setStageSize] = useState({
@@ -59,14 +64,8 @@ export default function Canvas() {
   usePresence(true);
   const onlineUsers = usePresenceSync();
   
-  // Local state for object positions during drag (optimistic updates)
-  const [localObjectPositions, setLocalObjectPositions] = useState({});
-  
   // Local state for object transforms during resize/rotate (optimistic updates)
   const [localObjectTransforms, setLocalObjectTransforms] = useState({});
-  
-  // Track which object is currently being dragged for visual feedback
-  const [draggingObjectId, setDraggingObjectId] = useState(null);
   
   // Track which object is currently being transformed for visual feedback
   const [_transformingObjectId, setTransformingObjectId] = useState(null);
@@ -100,13 +99,9 @@ export default function Canvas() {
     // Delete all selected objects using utility function
     await deleteObjects(selectedObjectIds);
     
-    // Clear local state for deleted objects
-    setLocalObjectPositions((prev) => {
-      const updated = { ...prev };
-      selectedObjectIds.forEach((id) => {
-        delete updated[id];
-      });
-      return updated;
+    // Clear local state for deleted objects using store actions
+    selectedObjectIds.forEach((id) => {
+      useLocalStore.getState().clearLocalObjectPosition(id);
     });
     
     setLocalObjectTransforms((prev) => {
@@ -141,35 +136,28 @@ export default function Canvas() {
   // Clean up local positions for deleted objects and when remote matches
   useEffect(() => {
     const existingObjectIds = new Set(objects.map((obj) => obj.id));
+    const store = useLocalStore.getState();
+    const currentLocalPositions = store.dragging.localObjectPositions;
     
-    setLocalObjectPositions((prev) => {
-      const updated = { ...prev };
-      let changed = false;
+    Object.keys(currentLocalPositions).forEach((objectId) => {
+      // If object was deleted remotely, remove local position
+      if (!existingObjectIds.has(objectId)) {
+        store.clearLocalObjectPosition(objectId);
+        return;
+      }
       
-      Object.keys(prev).forEach((objectId) => {
-        // If object was deleted remotely, remove local position
-        if (!existingObjectIds.has(objectId)) {
-          delete updated[objectId];
-          changed = true;
-          return;
+      // If object exists and not being dragged, check if remote matches
+      const remoteObject = objects.find(obj => obj.id === objectId);
+      if (remoteObject) {
+        const localPos = currentLocalPositions[objectId];
+        // If remote position matches local (within 1px tolerance), clear local
+        if (
+          Math.abs(remoteObject.x - localPos.x) < 1 &&
+          Math.abs(remoteObject.y - localPos.y) < 1
+        ) {
+          store.clearLocalObjectPosition(objectId);
         }
-        
-        // If object exists and not being dragged, check if remote matches
-        const remoteObject = objects.find(obj => obj.id === objectId);
-        if (remoteObject) {
-          const localPos = prev[objectId];
-          // If remote position matches local (within 1px tolerance), clear local
-          if (
-            Math.abs(remoteObject.x - localPos.x) < 1 &&
-            Math.abs(remoteObject.y - localPos.y) < 1
-          ) {
-            delete updated[objectId];
-            changed = true;
-          }
-        }
-      });
-      
-      return changed ? updated : prev;
+      }
     });
   }, [objects]);
 
@@ -297,63 +285,19 @@ export default function Canvas() {
     );
   };
 
-  // Handle drag start
+  // Handle drag start - use central action
   const handleObjectDragStart = (objectId) => {
-    setDraggingObjectId(objectId);
+    actions.startDrag(objectId);
   };
 
-  // Handle drag move - update local position (optimistic update)
+  // Handle drag move - use central action
   const handleObjectDragMove = (objectId, newPosition, objectSize) => {
-    // Constrain position within canvas bounds
-    let constrainedX, constrainedY;
-    
-    if (objectSize.radius) {
-      // For circles: x,y is center position, so constrain using radius
-      const radius = objectSize.radius;
-      constrainedX = Math.max(radius, Math.min(newPosition.x, CANVAS_WIDTH - radius));
-      constrainedY = Math.max(radius, Math.min(newPosition.y, CANVAS_HEIGHT - radius));
-    } else {
-      // For rectangles/text: x,y is top-left corner, so constrain using width/height
-      const width = objectSize.width || 0;
-      const height = objectSize.height || 0;
-      constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - width));
-      constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - height));
-    }
-    
-    setLocalObjectPositions((prev) => ({
-      ...prev,
-      [objectId]: { x: constrainedX, y: constrainedY },
-    }));
+    actions.moveObject(objectId, newPosition, objectSize);
   };
 
-  // Handle drag end - write final position to Firestore
+  // Handle drag end - use central action
   const handleObjectDragEnd = async (objectId, newPosition, objectSize) => {
-    setDraggingObjectId(null);
-    
-    // Constrain final position within canvas bounds
-    let constrainedX, constrainedY;
-    
-    if (objectSize.radius) {
-      // For circles: x,y is center position, so constrain using radius
-      const radius = objectSize.radius;
-      constrainedX = Math.max(radius, Math.min(newPosition.x, CANVAS_WIDTH - radius));
-      constrainedY = Math.max(radius, Math.min(newPosition.y, CANVAS_HEIGHT - radius));
-    } else {
-      // For rectangles/text: x,y is top-left corner, so constrain using width/height
-      const width = objectSize.width || 0;
-      const height = objectSize.height || 0;
-      constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - width));
-      constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - height));
-    }
-    
-    // Update object position using utility function
-    await updateObject(objectId, {
-      x: constrainedX,
-      y: constrainedY,
-    }, currentUser.uid);
-    
-    // Keep local position until remote update arrives to prevent flicker
-    // The useEffect below will clear it when remote position matches
+    await actions.finishDrag(objectId, newPosition, objectSize, currentUser);
   };
 
   // Handle transform (resize/rotate) - optimistic update
