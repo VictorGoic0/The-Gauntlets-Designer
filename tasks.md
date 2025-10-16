@@ -1326,7 +1326,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Track actively dragging objects in Local Store
    - Update drag handlers to use central actions (ZERO local state in shape components)
 
-10. - [ ] Migrate transform state
+10. - [x] Migrate transform state
     - Move localObjectTransforms to Local Store
     - Track actively transforming objects in Local Store
     - Update transform handlers to use central actions (ZERO local state in shape components)

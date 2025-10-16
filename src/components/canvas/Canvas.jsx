@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { useCanvas } from "../../hooks/useCanvas";
 import { useAuth } from "../../hooks/useAuth";
 import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
@@ -41,6 +40,9 @@ export default function Canvas() {
   const localObjectPositions = useLocalStore((state) => state.dragging.localObjectPositions);
   const draggingObjectId = useLocalStore((state) => state.dragging.draggingObjectId);
   
+  // Get transform state from Local Store
+  const localObjectTransforms = useLocalStore((state) => state.transforms.localObjectTransforms);
+  
   const { currentUser } = useAuth();
 
   const [stageSize, setStageSize] = useState({
@@ -63,12 +65,6 @@ export default function Canvas() {
   // Presence tracking
   usePresence(true);
   const onlineUsers = usePresenceSync();
-  
-  // Local state for object transforms during resize/rotate (optimistic updates)
-  const [localObjectTransforms, setLocalObjectTransforms] = useState({});
-  
-  // Track which object is currently being transformed for visual feedback
-  const [_transformingObjectId, setTransformingObjectId] = useState(null);
   
   // Combine dragging and transforming objects to prevent remote updates during user actions
   // Use useMemo to create stable reference that only changes when actual IDs change
@@ -102,14 +98,7 @@ export default function Canvas() {
     // Clear local state for deleted objects using store actions
     selectedObjectIds.forEach((id) => {
       useLocalStore.getState().clearLocalObjectPosition(id);
-    });
-    
-    setLocalObjectTransforms((prev) => {
-      const updated = { ...prev };
-      selectedObjectIds.forEach((id) => {
-        delete updated[id];
-      });
-      return updated;
+      useLocalStore.getState().clearLocalObjectTransform(id);
     });
     
     // Clear selection
@@ -164,61 +153,54 @@ export default function Canvas() {
   // Clean up local transforms for deleted objects and when remote matches
   useEffect(() => {
     const existingObjectIds = new Set(objects.map((obj) => obj.id));
+    const store = useLocalStore.getState();
+    const currentLocalTransforms = store.transforms.localObjectTransforms;
     
-    setLocalObjectTransforms((prev) => {
-      const updated = { ...prev };
-      let changed = false;
+    Object.keys(currentLocalTransforms).forEach((objectId) => {
+      // If object was deleted remotely, remove local transform
+      if (!existingObjectIds.has(objectId)) {
+        store.clearLocalObjectTransform(objectId);
+        return;
+      }
       
-      Object.keys(prev).forEach((objectId) => {
-        // If object was deleted remotely, remove local transform
-        if (!existingObjectIds.has(objectId)) {
-          delete updated[objectId];
-          changed = true;
-          return;
+      // If object exists, check if remote transform matches local (within tolerance)
+      const remoteObject = objects.find(obj => obj.id === objectId);
+      if (remoteObject) {
+        const localTransform = currentLocalTransforms[objectId];
+        // Check if remote transform matches local (within tolerance)
+        let matches = true;
+        
+        // Check position
+        if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
+          matches = false;
+        }
+        if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
+          matches = false;
         }
         
-        // If object exists, check if remote transform matches local (within tolerance)
-        const remoteObject = objects.find(obj => obj.id === objectId);
-        if (remoteObject) {
-          const localTransform = prev[objectId];
-          // Check if remote transform matches local (within tolerance)
-          let matches = true;
-          
-          // Check position
-          if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
-            matches = false;
-          }
-          if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
-            matches = false;
-          }
-          
-          // Check dimensions (1px tolerance)
-          if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
-            matches = false;
-          }
-          if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
-            matches = false;
-          }
-          if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
-            matches = false;
-          }
-          if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
-            matches = false;
-          }
-          
-          // Check rotation (0.5 degree tolerance)
-          if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
-            matches = false;
-          }
-          
-          if (matches) {
-            delete updated[objectId];
-            changed = true;
-          }
+        // Check dimensions (1px tolerance)
+        if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
+          matches = false;
         }
-      });
-      
-      return changed ? updated : prev;
+        if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
+          matches = false;
+        }
+        if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
+          matches = false;
+        }
+        if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
+          matches = false;
+        }
+        
+        // Check rotation (0.5 degree tolerance)
+        if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
+          matches = false;
+        }
+        
+        if (matches) {
+          store.clearLocalObjectTransform(objectId);
+        }
+      }
     });
   }, [objects]);
 
@@ -300,26 +282,14 @@ export default function Canvas() {
     await actions.finishDrag(objectId, newPosition, objectSize, currentUser);
   };
 
-  // Handle transform (resize/rotate) - optimistic update
+  // Handle transform (resize/rotate) - use central action
   const handleObjectTransform = (objectId, transformData) => {
-    // Track that this object is being transformed
-    setTransformingObjectId(objectId);
-    
-    // Update local state immediately for responsive UX
-    setLocalObjectTransforms((prev) => ({
-      ...prev,
-      [objectId]: transformData,
-    }));
+    actions.transformObject(objectId, transformData);
   };
 
-  // Handle transform end - write final transform to Firestore
+  // Handle transform end - use central action
   const handleObjectTransformEnd = async (objectId, transformData) => {
-    // Update Firestore with all transform properties
-    await updateObject(objectId, transformData, currentUser.uid);
-    
-    // Keep local transform until remote update arrives to prevent snap-back
-    // The useEffect above will clear it when remote transform matches
-    setTransformingObjectId(null);
+    await actions.finishTransform(objectId, transformData, currentUser);
   };
 
   // Mouse event handlers for panning and shape creation

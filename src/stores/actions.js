@@ -186,6 +186,9 @@ export const startTransform = (objectId) => {
  * @param {Object} transformData - Transform data (x, y, width, height, rotation, etc.)
  */
 export const transformObject = (objectId, transformData) => {
+  // Track that this object is being transformed
+  useLocalStore.getState().setTransformingObjectId(objectId);
+
   // Update local store immediately for responsive UX
   useLocalStore.getState().setLocalObjectTransform(objectId, transformData);
 };
