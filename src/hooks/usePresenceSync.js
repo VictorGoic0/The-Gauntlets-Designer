@@ -26,7 +26,7 @@ export function usePresenceSync() {
     if (!currentUser) return;
 
     // Reference to presence collection
-    const presenceRef = ref(realtimeDb, "presence/shared-canvas");
+    const presenceRef = ref(realtimeDb, "presence");
 
     // Listen to presence updates
     const unsubscribe = onValue(

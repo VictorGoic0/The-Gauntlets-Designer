@@ -96,7 +96,7 @@ export const signOutUser = async () => {
     // Remove presence before signing out
     const user = auth.currentUser;
     if (user) {
-      const presenceRef = ref(realtimeDb, `presence/shared-canvas/${user.uid}`);
+      const presenceRef = ref(realtimeDb, `presence/${user.uid}`);
       await set(presenceRef, null);
     }
 

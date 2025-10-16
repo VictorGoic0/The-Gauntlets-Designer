@@ -19,7 +19,7 @@ export function useCursorSync() {
     if (!currentUser) return;
 
     // Create reference to cursors in Realtime Database
-    const cursorsRef = ref(realtimeDb, "projects/shared-canvas/cursors");
+    const cursorsRef = ref(realtimeDb, "cursors");
 
     // Listen to cursor updates
     const unsubscribe = onValue(
