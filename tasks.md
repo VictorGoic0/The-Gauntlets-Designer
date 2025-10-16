@@ -1080,3 +1080,55 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [x] Transforms sync across users
 - [x] Keyboard shortcuts work (Delete/Escape)
 - [x] Circle dragging works correctly
+
+---
+
+## PR #12: Critical Bug Fixes for MVP
+
+**Goal**: Fix critical bugs affecting collaboration and text editing
+
+### Subtasks
+
+1. - [ ] Fix simultaneous drag conflict resolution
+
+   - Update `src/hooks/useObjectSync.js`
+   - Implement proper last-write-wins using server timestamps
+   - Ensure dragging same object by multiple users resolves correctly
+   - Most recent drag should win based on `lastModified` timestamp
+
+2. - [ ] Add username/password authentication
+
+   - Update `src/lib/firebase.js`
+   - Add `signUpWithEmail(email, password, displayName)` function
+   - Add `signInWithEmail(email, password)` function
+   - Enable Email/Password provider in Firebase Console
+
+3. - [ ] Fix text rotation issue for new text objects
+
+   - Update `src/components/canvas/shapes/Text.jsx`
+   - Debug why newly created text cannot be rotated
+   - Ensure Transformer properly attaches to text nodes
+   - Verify rotation property syncs correctly
+
+4. - [x] Fix text resize-then-rotate size snap issue
+   - Update `src/components/canvas/shapes/Text.jsx`
+   - Fix text snapping back to old size after resize then rotate
+   - Ensure width/height properly updated after resize
+   - Apply scale to dimensions correctly before rotation
+
+**Files Modified:**
+
+- `src/hooks/useObjectSync.js`
+- `src/lib/firebase.js`
+- `src/components/auth/Login.jsx`
+- `src/components/canvas/shapes/Text.jsx`
+
+**Test Before Merge:**
+
+- [ ] Two users can drag same object simultaneously - last one wins
+- [ ] Can sign up with email/password
+- [ ] Can sign in with email/password
+- [ ] Display name shows correctly for email/password users
+- [ ] Newly created text can be rotated immediately
+- [ ] Text maintains correct size after resize then rotate
+- [ ] All existing functionality still works
