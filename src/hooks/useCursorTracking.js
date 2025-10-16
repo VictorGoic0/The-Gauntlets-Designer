@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
-import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { ref, set, onDisconnect, serverTimestamp } from "firebase/database";
+import { realtimeDb } from "../lib/firebase";
 import { useAuth } from "./useAuth";
 import { getUserColor } from "../utils/userColors";
 
 /**
- * Hook to track local cursor position and sync to Firestore.
+ * Hook to track local cursor position and sync to Realtime Database.
  * Throttles updates to 45ms (~22 updates/second) for performance
  * while maintaining <50ms perceived latency.
  * Automatically cleans up cursor on unmount and browser close.
@@ -22,13 +22,13 @@ export function useCursorTracking(enabled = true) {
     if (!enabled || !currentUser) return;
 
     const userColor = getUserColor(currentUser.uid);
-    const cursorRef = doc(
-      db,
-      "projects",
-      "shared-canvas",
-      "cursors",
-      currentUser.uid
+    const cursorRef = ref(
+      realtimeDb,
+      `projects/shared-canvas/cursors/${currentUser.uid}`
     );
+
+    // Set up automatic cleanup on disconnect
+    onDisconnect(cursorRef).remove();
 
     const handleMouseMove = async (e) => {
       const now = Date.now();
@@ -47,8 +47,8 @@ export function useCursorTracking(enabled = true) {
       lastUpdateRef.current = now;
 
       try {
-        // Write cursor position to Firestore
-        await setDoc(cursorRef, {
+        // Write cursor position to Realtime Database
+        await set(cursorRef, {
           x: cursorPositionRef.current.x,
           y: cursorPositionRef.current.y,
           userName: currentUser.displayName || "Anonymous",
@@ -67,8 +67,8 @@ export function useCursorTracking(enabled = true) {
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
 
-      // Remove cursor document from Firestore
-      deleteDoc(cursorRef).catch((error) => {
+      // Remove cursor from Realtime Database
+      set(cursorRef, null).catch((error) => {
         console.error("Error removing cursor:", error);
       });
     };

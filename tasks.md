@@ -1176,12 +1176,14 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Fix simultaneous drag conflict resolution
+1. - [x] Fix simultaneous drag conflict resolution ✅ COMPLETE
 
-   - Update `src/hooks/useObjectSync.js`
-   - Implement proper last-write-wins using server timestamps
-   - Ensure dragging same object by multiple users resolves correctly
-   - Most recent drag should win based on `lastModified` timestamp
+   - ✅ Implemented in PR #14 State Management Refactor
+   - ✅ Added `lastEditedAt` timestamps to all edit operations
+   - ✅ Implemented last-write-wins strategy in `firestoreStore.js`
+   - ✅ Pending updates tracked during active drag/transform
+   - ✅ Timestamp comparison resolves conflicts correctly
+   - ✅ Most recent edit wins based on `lastEditedAt` timestamp
 
 2. - [ ] Fix text rotation issue for new text objects
 
@@ -1190,15 +1192,45 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Ensure Transformer properly attaches to text nodes
    - Verify rotation property syncs correctly
 
+3. - [x] Move cursor sync to Realtime Database ✅ COMPLETE
+
+   - **Goal**: Migrate cursor position storage from Firestore to Realtime Database
+   - **Why**: Realtime Database is optimized for high-frequency updates (cursor movements)
+   - **Implementation completed:**
+     - ✅ Updated `src/hooks/useCursorTracking.js` to write to Realtime Database
+       - Changed from Firestore `doc()`/`setDoc()` to Realtime DB `ref()`/`set()`
+       - Implemented `onDisconnect().remove()` for automatic cleanup on disconnect
+       - Manual cleanup with `set(cursorRef, null)` on unmount
+       - Uses Realtime DB `serverTimestamp()` for lastSeen
+     - ✅ Updated `src/hooks/useCursorSync.js` to read from Realtime Database
+       - Changed from Firestore `onSnapshot()` to Realtime DB `onValue()`
+       - Properly handles snapshot.val() object structure
+       - Maintains filtering of current user's cursor
+     - ✅ Updated `src/lib/firebase.js` with required Realtime DB imports
+       - Added: `onValue`, `onDisconnect`, `serverTimestamp`
+     - ✅ Database path: `/projects/shared-canvas/cursors/{userId}`
+     - ✅ Store structure: `{ x, y, userName, userColor, lastSeen }`
+   - **Preserved (unchanged):**
+     - ✅ Presence logic (cursors still filtered based on online users)
+     - ✅ Cursor rendering logic in `Canvas.jsx`
+     - ✅ Presence Store structure
+     - ✅ Throttling (45ms updates)
+
 **Files Modified:**
 
-- `src/hooks/useObjectSync.js`
-- `src/components/canvas/shapes/Text.jsx`
+- `src/stores/firestoreStore.js` (conflict resolution - completed in PR #14)
+- `src/components/canvas/shapes/Text.jsx` (pending)
+- `src/hooks/useCursorTracking.js` (cursor sync to Realtime DB - completed)
+- `src/hooks/useCursorSync.js` (cursor sync to Realtime DB - completed)
+- `src/lib/firebase.js` (added Realtime DB imports - completed)
 
 **Test Before Merge:**
 
-- [ ] Two users can drag same object simultaneously - last one wins
+- [x] Two users can drag same object simultaneously - last one wins (fixed in PR #14)
 - [ ] Newly created text can be rotated immediately
+- [ ] Cursor updates are smooth and real-time via Realtime Database
+- [ ] Cursors only visible for online users (presence filtering still works)
+- [ ] Cursor cleanup works on disconnect
 - [ ] All existing functionality still works
 
 ---
