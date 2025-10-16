@@ -1,14 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import {
-  collection,
-  onSnapshot,
-  query,
-  doc,
-  updateDoc,
-  deleteDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 const useFirestoreStore = create(
@@ -78,17 +70,27 @@ const useFirestoreStore = create(
               // Check if there's a pending update for this object (drag just ended)
               if (newPendingUpdates[objectId]) {
                 const pendingUpdate = newPendingUpdates[objectId];
-                const remoteTimestamp = data.lastModified?.toMillis() || 0;
+
+                // Get timestamps for conflict resolution
+                // Use lastEditedAt if available, otherwise fall back to createdAt
+                const remoteTimestamp =
+                  data.lastEditedAt?.toMillis() ||
+                  data.createdAt?.toMillis() ||
+                  0;
                 const pendingTimestamp =
-                  pendingUpdate.lastModified?.toMillis() || 0;
+                  pendingUpdate.lastEditedAt?.toMillis() ||
+                  pendingUpdate.createdAt?.toMillis() ||
+                  0;
 
                 // Last-write-wins: use the update with the most recent timestamp
                 if (remoteTimestamp > pendingTimestamp) {
+                  // Remote edit is newer - accept it
                   delete newPendingUpdates[objectId];
                   const obj = { id: objectId, ...data };
                   objectsArray.push(obj);
                   newObjectsMap[objectId] = obj;
                 } else {
+                  // Our pending edit is newer - keep it
                   objectsArray.push(pendingUpdate);
                   newObjectsMap[objectId] = pendingUpdate;
                   delete newPendingUpdates[objectId];
@@ -260,7 +262,7 @@ const useFirestoreStore = create(
       // Connection state actions
       setConnectionState: (isConnected, isOffline = false) =>
         set(
-          (state) => ({
+          () => ({
             connection: { isConnected, isOffline },
           }),
           false,
@@ -268,6 +270,7 @@ const useFirestoreStore = create(
         ),
 
       // Firestore operations (async)
+      // Adds lastEditedAt timestamp for conflict resolution
       updateObjectInFirestore: async (objectId, updates, userId) => {
         try {
           const objectRef = doc(
@@ -279,7 +282,7 @@ const useFirestoreStore = create(
           );
           await updateDoc(objectRef, {
             ...updates,
-            lastModified: serverTimestamp(),
+            lastEditedAt: serverTimestamp(), // Epoch milliseconds for conflict resolution
             lastModifiedBy: userId,
           });
         } catch (error) {

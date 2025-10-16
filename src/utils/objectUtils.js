@@ -14,8 +14,9 @@ import { serverTimestamp } from "firebase/firestore";
  * - rotation: number (degrees)
  * - zIndex: number
  * - createdBy: string (userId)
+ * - createdAt: Firestore server timestamp (when object was created, never changes)
  * - lastModifiedBy: string (userId)
- * - lastModified: Firestore server timestamp
+ * - lastEditedAt: Firestore server timestamp (when object was last edited, updates on edits)
  */
 
 /**
@@ -45,8 +46,8 @@ export const createRectangle = (x, y, userId, options = {}) => {
     rotation: 0,
     zIndex: options.zIndex || 0,
     createdBy: userId,
+    createdAt: serverTimestamp(), // When object was created (never changes)
     lastModifiedBy: userId,
-    lastModified: serverTimestamp(),
   };
 };
 
@@ -68,8 +69,8 @@ export const createCircle = (x, y, userId, options = {}) => {
     rotation: 0,
     zIndex: options.zIndex || 0,
     createdBy: userId,
+    createdAt: serverTimestamp(), // When object was created (never changes)
     lastModifiedBy: userId,
-    lastModified: serverTimestamp(),
   };
 };
 
@@ -94,21 +95,7 @@ export const createText = (x, y, userId, options = {}) => {
     rotation: 0,
     zIndex: options.zIndex || 0,
     createdBy: userId,
+    createdAt: serverTimestamp(), // When object was created (never changes)
     lastModifiedBy: userId,
-    lastModified: serverTimestamp(),
-  };
-};
-
-/**
- * Update an object's properties
- * @param {Object} updates - Properties to update
- * @param {string} userId - User ID who is modifying the object
- * @returns {Object} Update object with lastModified timestamp
- */
-export const createObjectUpdate = (updates, userId) => {
-  return {
-    ...updates,
-    lastModifiedBy: userId,
-    lastModified: serverTimestamp(),
   };
 };
