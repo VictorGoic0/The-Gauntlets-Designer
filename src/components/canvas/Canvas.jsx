@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Stage, Layer, Rect } from "react-konva";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
 import { useAuth } from "../../hooks/useAuth";
 import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
@@ -17,8 +15,6 @@ import Rectangle from "./shapes/Rectangle";
 import Circle from "./shapes/Circle";
 import Text from "./shapes/Text";
 import LoadingState from "./LoadingState";
-import { createRectangle, createCircle, createText } from "../../utils/objectUtils";
-import { updateObject, deleteObjects } from "../../utils/firestoreUtils";
 
 export default function Canvas() {
   // Get canvas view state from Local Store (zoom, pan)
@@ -104,18 +100,15 @@ export default function Canvas() {
 
   // Delete selected objects from Firestore
   const deleteSelectedObjects = useCallback(async () => {
-    // Delete all selected objects using utility function
-    await deleteObjects(selectedObjectIds);
+    // Delete all selected objects using central action (includes optimistic updates)
+    await actions.deleteObjects(selectedObjectIds, currentUser);
     
     // Clear local state for deleted objects using store actions
     selectedObjectIds.forEach((id) => {
       useLocalStore.getState().clearLocalObjectPosition(id);
       useLocalStore.getState().clearLocalObjectTransform(id);
     });
-    
-    // Clear selection
-    clearSelection();
-  }, [selectedObjectIds, clearSelection]);
+  }, [selectedObjectIds, currentUser]);
 
   // Update stage size based on container dimensions
   useEffect(() => {
@@ -254,31 +247,6 @@ export default function Canvas() {
     };
   }, [selectedObjectIds, deleteSelectedObjects, clearSelection]);
 
-  // Create shape on canvas and sync to Firestore
-  const createShapeOnCanvas = async (x, y, shapeType) => {
-    let shapeData;
-    
-    switch (shapeType) {
-      case "rectangle":
-        shapeData = createRectangle(x, y, currentUser.uid);
-        break;
-      case "circle":
-        shapeData = createCircle(x, y, currentUser.uid);
-        break;
-      case "text":
-        shapeData = createText(x, y, currentUser.uid);
-        break;
-      default:
-        return;
-    }
-    
-    // Write to Firestore - useObjectSync will handle the real-time update
-    await addDoc(
-      collection(db, "projects", "shared-canvas", "objects"),
-      shapeData
-    );
-  };
-
   // Handle drag start - use central action
   const handleObjectDragStart = (objectId) => {
     actions.startDrag(objectId);
@@ -325,7 +293,8 @@ export default function Canvas() {
         const canvasX = (pointerPos.x - stagePosition.x) / stageScale;
         const canvasY = (pointerPos.y - stagePosition.y) / stageScale;
         
-        createShapeOnCanvas(canvasX, canvasY, canvasMode);
+        // Use central action for shape creation (includes optimistic updates)
+        actions.createShape(canvasX, canvasY, canvasMode, currentUser);
         return;
       }
     }
@@ -513,7 +482,7 @@ export default function Canvas() {
                     onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width || 200, height: 50 })}
                     onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
                     onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
-                    onTextChange={(newText) => updateObject(obj.id, { text: newText }, currentUser.uid)}
+                    onTextChange={(newText) => actions.updateText(obj.id, newText, currentUser)}
                     canvasWidth={CANVAS_WIDTH}
                     canvasHeight={CANVAS_HEIGHT}
                   />

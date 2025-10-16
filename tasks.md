@@ -1391,21 +1391,50 @@ const objects = useFirestoreStore((state) => state.objects);
     - ✅ All remaining hooks are actively used (useAuth, useCursorSync, etc.)
     - ✅ No prop drilling issues (event handlers passed directly parent → child)
 
-18. - [ ] Refactor hooks to use stores
-    - Update useObjectSync to work with Firestore Store
-    - Update useCursorSync to work with Presence Store
-    - Update usePresenceSync to work with Presence Store
-    - Simplify hook logic
+18. - [x] Refactor hooks to use stores
+    - ✅ **useObjectSync** → Writes to Firestore Store (no local state, no return value)
+      - Before: ~120 lines with useState/useRef
+      - After: ~58 lines, writes to `useFirestoreStore.getState().setObjects()`
+    - ✅ **useCursorSync** → Writes to Presence Store (no local state, no return value)
+      - Writes to `usePresenceStore.getState().setRemoteCursors()`
+    - ✅ **usePresenceSync** → Writes to Presence Store (no local state, no return value)
+      - Writes to `usePresenceStore.getState().setOnlineUsers()`
+    - ✅ All hooks simplified: Set up listener → Write to store → Cleanup
+    - ✅ Components read from stores instead of hook return values
+    - Note: Completed in Phase 3 (Tasks 11-13)
 
-19. - [ ] Remove duplicate state management code
-    - Delete scattered useState calls
-    - Remove manual sync logic
-    - Clean up useEffect chains
+19. - [x] Remove duplicate state management code
+    - ✅ **Removed duplicate shape creation**: Deleted `createShapeOnCanvas` from Canvas.jsx
+      - Canvas now uses `actions.createShape` (includes optimistic updates)
+    - ✅ **Created updateText action**: Added to actions.js with optimistic updates
+      - Replaces direct `updateObject` calls from firestoreUtils
+    - ✅ **Consolidated delete operations**: Canvas now uses `actions.deleteObjects`
+      - Includes optimistic updates + proper store management
+    - ✅ **Deleted firestoreUtils.js**: All operations moved to actions.js/stores
+      - Before: Direct Firestore calls scattered in components
+      - After: Centralized actions with optimistic updates
+    - ✅ **Verified useState calls**: All remaining useState are appropriate
+      - Canvas: stageSize, isDragging, spacePressed (local UI state) ✅
+      - Text: isEditing, editValue (text editing UX) ✅
+      - PresencePanel: isCollapsed (UI only) ✅
+    - ✅ **Verified useEffect chains**: All necessary and non-duplicated
+      - Keyboard shortcuts, window resize, optimistic update reconciliation ✅
+    - ✅ **No manual sync logic remaining**: All handled by hooks → stores pattern
 
-20. - [ ] Add store DevTools
-    - Enable Redux DevTools extension for Zustand
-    - Add store snapshots for debugging
-    - Test time-travel debugging
+20. - [x] Add store DevTools
+    - ✅ Redux DevTools already enabled on all stores via `devtools` middleware
+    - ✅ **Local Store** named `"local-store"` - Canvas view, selection, optimistic drag/transform
+    - ✅ **Firestore Store** named `"firestore-store"` - Synced objects, loading state
+    - ✅ **Presence Store** named `"presence-store"` - Online users, cursors
+    - ✅ **No additional packages needed** - devtools is built into Zustand
+    - ✅ **Features Available**:
+      - State inspection (see current store state)
+      - Action history (see all dispatched actions)
+      - Time-travel debugging (jump to previous states)
+      - Diff view (see what changed)
+      - State export/import (save/load snapshots)
+    - **How to Use**: Open browser DevTools → Redux tab → Select store from dropdown
+    - Note: Already implemented in initial store setup
 
 **Phase 6: Verification**
 

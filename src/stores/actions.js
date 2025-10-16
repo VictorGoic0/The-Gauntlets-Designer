@@ -238,6 +238,32 @@ export const deleteObjects = async (objectIds, currentUser) => {
 };
 
 /**
+ * Update text content of a text object
+ * @param {string} objectId - ID of the text object
+ * @param {string} newText - New text content
+ * @param {Object} currentUser - Current user object
+ */
+export const updateText = async (objectId, newText, currentUser) => {
+  if (!currentUser) return;
+
+  // Optimistic update: Update text in Firestore Store immediately
+  const store = useFirestoreStore.getState();
+  const currentObject = store.objects.byId[objectId];
+
+  if (currentObject) {
+    // Update the object in the store immediately for instant feedback
+    store.updateObject(objectId, { text: newText });
+  }
+
+  // Write to Firestore asynchronously
+  await store.updateObjectInFirestore(
+    objectId,
+    { text: newText },
+    currentUser.uid
+  );
+};
+
+/**
  * Select an object
  * @param {string} objectId - ID of the object to select
  */
@@ -378,6 +404,7 @@ export const actions = {
   transformObject,
   finishTransform,
   deleteObjects,
+  updateText,
 
   // Selection operations
   selectObject,
