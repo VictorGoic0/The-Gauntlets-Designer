@@ -1333,7 +1333,7 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Phase 3: Migrate Firestore-Synced State**
 
-11. - [ ] Migrate canvas objects
+11. - [x] Migrate canvas objects
     - Move objects array to Firestore Store
     - Update useObjectSync to write to Firestore Store
     - Update Canvas.jsx to read from useFirestoreStore() (ZERO local state)
@@ -1346,7 +1346,7 @@ const objects = useFirestoreStore((state) => state.objects);
     - Maintain existing filtering logic (only show cursors for online users)
     - Keep all existing functionality working (cursor visibility, real-time updates, filtering)
 
-13. - [ ] Migrate presence data
+13. - [x] Migrate presence data
     - Move online users to Presence Store
     - Update usePresenceSync to write to Presence Store
     - Update PresencePanel.jsx to read from usePresenceStore() (ZERO local state)

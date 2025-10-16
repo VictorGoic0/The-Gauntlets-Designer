@@ -1,21 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ref, onValue } from "firebase/database";
 import { realtimeDb } from "../lib/firebase";
 import { useAuth } from "./useAuth";
+import usePresenceStore from "../stores/presenceStore";
 
 /**
- * Hook to sync user presence from Realtime Database.
- * Listens to all presence data and returns list of online users.
+ * Hook to sync user presence from Realtime Database to Presence Store.
+ * Listens to all presence data and writes to store.
  *
  * Users are filtered out if:
  * 1. Browser closes/disconnects (removed automatically by onDisconnect)
  * 2. Inactive for 60+ seconds (lastSeen timestamp check)
  *
- * @returns {Array} Array of online user presence objects
+ * This hook sets up the Realtime Database listener and writes to Presence Store.
+ * Components should read presence data from usePresenceStore.
  */
 export function usePresenceSync() {
   const { currentUser } = useAuth();
-  const [onlineUsers, setOnlineUsers] = useState([]);
 
   // Consider users online if lastSeen is within the last 60 seconds
   // (2x the update interval of 30s to account for network delays)
@@ -64,10 +65,12 @@ export function usePresenceSync() {
           });
         }
 
-        setOnlineUsers(users);
+        // Write to Presence Store
+        usePresenceStore.getState().setOnlineUsers(users);
       },
       (error) => {
         console.error("Error syncing presence:", error);
+        usePresenceStore.getState().setPresenceError(error);
       }
     );
 
@@ -76,8 +79,6 @@ export function usePresenceSync() {
       unsubscribe();
     };
   }, [currentUser]);
-
-  return onlineUsers;
 }
 
 export default usePresenceSync;

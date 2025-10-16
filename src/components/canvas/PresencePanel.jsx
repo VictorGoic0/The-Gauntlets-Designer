@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { usePresenceSync } from "../../hooks/usePresenceSync";
+import usePresenceSync from "../../hooks/usePresenceSync";
+import usePresenceStore from "../../stores/presenceStore";
 
 /**
  * PresencePanel component displays a list of online users.
@@ -10,7 +11,12 @@ import { usePresenceSync } from "../../hooks/usePresenceSync";
  * - Shows total count of online users
  */
 export default function PresencePanel() {
-  const onlineUsers = usePresenceSync();
+  // Set up presence listener (writes to store)
+  usePresenceSync();
+  
+  // Read online users from Presence Store
+  const onlineUsers = usePresenceStore((state) => state.presence.onlineUsers);
+  
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Get user initials from name

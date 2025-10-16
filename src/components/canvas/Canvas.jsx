@@ -10,6 +10,7 @@ import usePresenceSync from "../../hooks/usePresenceSync";
 import useObjectSync from "../../hooks/useObjectSync";
 import useLocalStore from "../../stores/localStore";
 import usePresenceStore from "../../stores/presenceStore";
+import useFirestoreStore from "../../stores/firestoreStore";
 import * as actions from "../../stores/actions";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
@@ -65,10 +66,13 @@ export default function Canvas() {
   
   // Presence tracking
   usePresence(true);
-  const onlineUsers = usePresenceSync();
+  usePresenceSync(); // Sets up Realtime DB listener, writes to Presence Store
   
   // Read remote cursors from Presence Store
   const remoteCursors = usePresenceStore((state) => state.cursors.remoteCursors);
+  
+  // Read online users from Presence Store
+  const onlineUsers = usePresenceStore((state) => state.presence.onlineUsers);
   
   // Combine dragging and transforming objects to prevent remote updates during user actions
   // Use useMemo to create stable reference that only changes when actual IDs change
@@ -82,8 +86,12 @@ export default function Canvas() {
     };
   }, [localObjectPositions, localObjectTransforms]);
   
-  // Object syncing (pass active objects to prevent remote updates during drag/transform)
-  const { objects, loading } = useObjectSync(activeObjectIds);
+  // Object syncing - sets up Firestore listener, writes to Firestore Store
+  useObjectSync(activeObjectIds);
+  
+  // Read objects and loading state from Firestore Store
+  const objects = useFirestoreStore((state) => state.objects.sorted);
+  const loading = useFirestoreStore((state) => state.objects.isLoading);
   
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {

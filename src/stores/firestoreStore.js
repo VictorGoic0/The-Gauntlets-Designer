@@ -41,21 +41,22 @@ const useFirestoreStore = create(
       currentObjectsMap: {},
 
       // Actions for objects
-      setObjects: (objectsData, draggingObjectIds = {}) =>
+      setObjects: (snapshotDocs, draggingObjectIds = {}) =>
         set(
           (state) => {
             const draggingIds = Object.keys(draggingObjectIds);
             const newObjectsMap = {};
             const objectsArray = [];
+            const newPendingUpdates = { ...state.pendingUpdates };
 
-            objectsData.forEach((doc) => {
+            snapshotDocs.forEach((doc) => {
               const data = doc.data();
               const objectId = doc.id;
 
               // If this object is currently being dragged
               if (draggingIds.includes(objectId)) {
                 // Store the remote update for later
-                state.pendingUpdates[objectId] = {
+                newPendingUpdates[objectId] = {
                   id: objectId,
                   ...data,
                 };
@@ -75,22 +76,22 @@ const useFirestoreStore = create(
               }
 
               // Check if there's a pending update for this object (drag just ended)
-              if (state.pendingUpdates[objectId]) {
-                const pendingUpdate = state.pendingUpdates[objectId];
+              if (newPendingUpdates[objectId]) {
+                const pendingUpdate = newPendingUpdates[objectId];
                 const remoteTimestamp = data.lastModified?.toMillis() || 0;
                 const pendingTimestamp =
                   pendingUpdate.lastModified?.toMillis() || 0;
 
                 // Last-write-wins: use the update with the most recent timestamp
                 if (remoteTimestamp > pendingTimestamp) {
-                  delete state.pendingUpdates[objectId];
+                  delete newPendingUpdates[objectId];
                   const obj = { id: objectId, ...data };
                   objectsArray.push(obj);
                   newObjectsMap[objectId] = obj;
                 } else {
                   objectsArray.push(pendingUpdate);
                   newObjectsMap[objectId] = pendingUpdate;
-                  delete state.pendingUpdates[objectId];
+                  delete newPendingUpdates[objectId];
                 }
               } else {
                 const obj = { id: objectId, ...data };
@@ -112,6 +113,7 @@ const useFirestoreStore = create(
                 error: null,
               },
               currentObjectsMap: newObjectsMap,
+              pendingUpdates: newPendingUpdates,
             };
           },
           false,
