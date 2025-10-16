@@ -65,8 +65,20 @@ export default function Canvas() {
   // Track which object is currently being dragged for visual feedback
   const [draggingObjectId, setDraggingObjectId] = useState(null);
   
-  // Object syncing (pass dragging objects to prevent remote updates during drag)
-  const { objects, loading } = useObjectSync(localObjectPositions);
+  // Track which object is currently being transformed for visual feedback
+  const [transformingObjectId, setTransformingObjectId] = useState(null);
+  
+  // Combine dragging and transforming objects to prevent remote updates during user actions
+  const activeObjectIds = {
+    ...localObjectPositions,
+    ...Object.keys(localObjectTransforms).reduce((acc, id) => {
+      acc[id] = true;
+      return acc;
+    }, {}),
+  };
+  
+  // Object syncing (pass active objects to prevent remote updates during drag/transform)
+  const { objects, loading } = useObjectSync(activeObjectIds);
   
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {
@@ -117,6 +129,57 @@ export default function Canvas() {
             Math.abs(remoteObject.x - localPos.x) < 1 &&
             Math.abs(remoteObject.y - localPos.y) < 1
           ) {
+            delete updated[objectId];
+            changed = true;
+          }
+        }
+      });
+      
+      return changed ? updated : prev;
+    });
+  }, [objects]);
+
+  // Clear local transforms when remote updates match
+  useEffect(() => {
+    setLocalObjectTransforms((prev) => {
+      const updated = { ...prev };
+      let changed = false;
+      
+      Object.keys(prev).forEach((objectId) => {
+        const remoteObject = objects.find(obj => obj.id === objectId);
+        if (remoteObject) {
+          const localTransform = prev[objectId];
+          // Check if remote transform matches local (within tolerance)
+          let matches = true;
+          
+          // Check position
+          if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
+            matches = false;
+          }
+          if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
+            matches = false;
+          }
+          
+          // Check dimensions (1px tolerance)
+          if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
+            matches = false;
+          }
+          if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
+            matches = false;
+          }
+          if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
+            matches = false;
+          }
+          if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
+            matches = false;
+          }
+          
+          // Check rotation (0.5 degree tolerance)
+          if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
+            matches = false;
+          }
+          
+          if (matches) {
             delete updated[objectId];
             changed = true;
           }
@@ -251,6 +314,9 @@ export default function Canvas() {
 
   // Handle transform (resize/rotate) - optimistic update
   const handleObjectTransform = (objectId, transformData) => {
+    // Track that this object is being transformed
+    setTransformingObjectId(objectId);
+    
     // Update local state immediately for responsive UX
     setLocalObjectTransforms((prev) => ({
       ...prev,
@@ -263,12 +329,9 @@ export default function Canvas() {
     // Update Firestore with all transform properties
     await updateObject(objectId, transformData, currentUser.uid);
     
-    // Clear local transform after Firestore update
-    setLocalObjectTransforms((prev) => {
-      const newTransforms = { ...prev };
-      delete newTransforms[objectId];
-      return newTransforms;
-    });
+    // Keep local transform until remote update arrives to prevent snap-back
+    // The useEffect above will clear it when remote transform matches
+    setTransformingObjectId(null);
   };
 
   // Mouse event handlers for panning and shape creation

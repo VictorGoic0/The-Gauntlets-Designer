@@ -1116,12 +1116,20 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Ensure width/height properly updated after resize
    - Apply scale to dimensions correctly before rotation
 
+5. - [x] Fix transform snap-back on second resize/rotate
+   - Update `src/components/canvas/Canvas.jsx`
+   - Fix transforms snapping back to old values on subsequent transforms
+   - Keep local transform state until Firestore confirms update (same pattern as drag)
+   - Pass transforming objects to `useObjectSync` to block remote updates during transform
+   - Add `useEffect` to auto-clear local transforms when remote matches
+
 **Files Modified:**
 
 - `src/hooks/useObjectSync.js`
 - `src/lib/firebase.js`
 - `src/components/auth/Login.jsx`
 - `src/components/canvas/shapes/Text.jsx`
+- `src/components/canvas/Canvas.jsx`
 
 **Test Before Merge:**
 
@@ -1130,5 +1138,6 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [ ] Can sign in with email/password
 - [ ] Display name shows correctly for email/password users
 - [ ] Newly created text can be rotated immediately
-- [ ] Text maintains correct size after resize then rotate
+- [x] Text maintains correct size after resize then rotate
+- [x] Multiple transforms in a row work without snap-back
 - [ ] All existing functionality still works
