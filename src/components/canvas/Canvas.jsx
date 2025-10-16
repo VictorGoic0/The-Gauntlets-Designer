@@ -40,6 +40,7 @@ export default function Canvas() {
   
   // Get transform state from Local Store
   const localObjectTransforms = useLocalStore((state) => state.transforms.localObjectTransforms);
+  const transformingObjectId = useLocalStore((state) => state.transforms.transformingObjectId);
   
   const { currentUser } = useAuth();
 
@@ -70,17 +71,19 @@ export default function Canvas() {
   // Read online users from Presence Store
   const onlineUsers = usePresenceStore((state) => state.presence.onlineUsers);
   
-  // Combine dragging and transforming objects to prevent remote updates during user actions
-  // Use useMemo to create stable reference that only changes when actual IDs change
+  // Only mark objects as "active" if they're CURRENTLY being manipulated
+  // This prevents remote updates during the actual drag/transform
+  // Local overlays can persist after the action ends without blocking remote updates
   const activeObjectIds = useMemo(() => {
-    return {
-      ...localObjectPositions,
-      ...Object.keys(localObjectTransforms).reduce((acc, id) => {
-        acc[id] = true;
-        return acc;
-      }, {}),
-    };
-  }, [localObjectPositions, localObjectTransforms]);
+    const active = {};
+    if (draggingObjectId) {
+      active[draggingObjectId] = true;
+    }
+    if (transformingObjectId) {
+      active[transformingObjectId] = true;
+    }
+    return active;
+  }, [draggingObjectId, transformingObjectId]);
   
   // Object syncing - sets up Firestore listener, writes to Firestore Store
   useObjectSync(activeObjectIds);
@@ -135,7 +138,6 @@ export default function Canvas() {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // Clear local positions when remote updates match
   // Clean up local positions for deleted objects and when remote matches
   useEffect(() => {
     const existingObjectIds = new Set(objects.map((obj) => obj.id));
@@ -149,20 +151,22 @@ export default function Canvas() {
         return;
       }
       
-      // If object exists and not being dragged, check if remote matches
-      const remoteObject = objects.find(obj => obj.id === objectId);
-      if (remoteObject) {
-        const localPos = currentLocalPositions[objectId];
-        // If remote position matches local (within 1px tolerance), clear local
-        if (
-          Math.abs(remoteObject.x - localPos.x) < 1 &&
-          Math.abs(remoteObject.y - localPos.y) < 1
-        ) {
-          store.clearLocalObjectPosition(objectId);
+      // If object exists and not currently being dragged, check if remote matches
+      if (draggingObjectId !== objectId) {
+        const remoteObject = objects.find(obj => obj.id === objectId);
+        if (remoteObject) {
+          const localPos = currentLocalPositions[objectId];
+          // If remote position matches local (within 1px tolerance), clear local
+          if (
+            Math.abs(remoteObject.x - localPos.x) < 1 &&
+            Math.abs(remoteObject.y - localPos.y) < 1
+          ) {
+            store.clearLocalObjectPosition(objectId);
+          }
         }
       }
     });
-  }, [objects]);
+  }, [objects, draggingObjectId]);
 
   // Clean up local transforms for deleted objects and when remote matches
   useEffect(() => {
@@ -177,46 +181,48 @@ export default function Canvas() {
         return;
       }
       
-      // If object exists, check if remote transform matches local (within tolerance)
-      const remoteObject = objects.find(obj => obj.id === objectId);
-      if (remoteObject) {
-        const localTransform = currentLocalTransforms[objectId];
-        // Check if remote transform matches local (within tolerance)
-        let matches = true;
-        
-        // Check position
-        if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
-          matches = false;
-        }
-        if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
-          matches = false;
-        }
-        
-        // Check dimensions (1px tolerance)
-        if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
-          matches = false;
-        }
-        if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
-          matches = false;
-        }
-        if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
-          matches = false;
-        }
-        if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
-          matches = false;
-        }
-        
-        // Check rotation (0.5 degree tolerance)
-        if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
-          matches = false;
-        }
-        
-        if (matches) {
-          store.clearLocalObjectTransform(objectId);
+      // If object exists and not currently being transformed, check if remote matches
+      if (transformingObjectId !== objectId) {
+        const remoteObject = objects.find(obj => obj.id === objectId);
+        if (remoteObject) {
+          const localTransform = currentLocalTransforms[objectId];
+          // Check if remote transform matches local (within tolerance)
+          let matches = true;
+          
+          // Check position (1px tolerance)
+          if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
+            matches = false;
+          }
+          if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
+            matches = false;
+          }
+          
+          // Check dimensions (1px tolerance)
+          if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
+            matches = false;
+          }
+          if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
+            matches = false;
+          }
+          if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
+            matches = false;
+          }
+          if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
+            matches = false;
+          }
+          
+          // Check rotation (0.5 degree tolerance)
+          if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
+            matches = false;
+          }
+          
+          if (matches) {
+            store.clearLocalObjectTransform(objectId);
+          }
         }
       }
     });
-  }, [objects]);
+  }, [objects, transformingObjectId]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
