@@ -1353,26 +1353,32 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Phase 4: Implement Unified Sync Logic**
 
-14. - [ ] Create unified Firestore sync layer
-    - File: `src/services/firestoreSync.js`
-    - Handle all Firestore listeners in one place
-    - Update Firestore Store when data changes
-    - Implement optimistic updates pattern
+14. - [x] Create unified Firestore sync layer
+    - Pattern: Hooks → Stores → Components (unified via stores, not service class)
+    - ✅ useObjectSync writes to Firestore Store
+    - ✅ useCursorSync writes to Presence Store
+    - ✅ usePresenceSync writes to Presence Store
+    - ✅ All components read from stores (no scattered useState)
+    - ✅ Single source of truth: Zustand stores
 
-15. - [ ] Implement optimistic updates pattern
-    - Define standard pattern for optimistic updates
-    - Update local store immediately for instant feedback
-    - Queue Firestore writes asynchronously
-    - Assume Firestore writes always succeed (no rollback for MVP)
+15. - [x] Implement optimistic updates pattern
+    - ✅ Pattern: Update local → Write remote → Sync reconciles
+    - ✅ moveObject: Updates Local Store immediately, then Firestore
+    - ✅ transformObject: Updates Local Store immediately, then Firestore
+    - ✅ deleteObjects: Removes from store immediately, then Firestore
+    - ✅ Prevents flicker: Local state cleared when remote matches
+    - ✅ Documented in src/stores/OPTIMISTIC_UPDATES.md
 
-16. - [ ] Update component store access patterns
-
-- Implement hybrid approach: mostly zero local state with minimal exceptions
-- **Zero Local State Components**: Canvas, Toolbar, Rectangle, Circle, Cursor, PresencePanel, ZoomControls, Header
-- **Minimal Local State Components**: Text (for typing), Login/SignUp (form validation)
-- Implement selective subscriptions to prevent unnecessary re-renders
-- Components subscribe only to specific state slices they need
-- Clear separation of concerns - no hooks combining multiple stores
+16. - [x] Update component store access patterns
+    - ✅ Hybrid approach: Zero local state except where UX requires it
+    - ✅ **Zero Local State**: Canvas, Toolbar, Rectangle, Circle, Cursor, PresencePanel, ZoomControls, Header
+    - ✅ **Minimal Local State**: Text (editing only), Login/SignUp (form validation only)
+    - ✅ **Selective Subscriptions**: `useLocalStore((state) => state.canvas.mode)` - subscribes to specific slice only
+    - ✅ **Examples**:
+      - Toolbar: Subscribes only to `canvas.mode`
+      - Canvas: Subscribes only to `objects.sorted` and `objects.isLoading`
+      - PresencePanel: Subscribes only to `presence.onlineUsers`
+    - ✅ No component subscribes to entire store (prevents unnecessary re-renders)
 
 **Phase 5: Cleanup and Refactor**
 
