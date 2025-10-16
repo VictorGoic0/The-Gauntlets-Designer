@@ -1339,10 +1339,12 @@ const objects = useFirestoreStore((state) => state.objects);
     - Update Canvas.jsx to read from useFirestoreStore() (ZERO local state)
     - Remove old objects state
 
-12. - [ ] Migrate cursor data
-    - Move remote cursors to Presence Store
-    - Update useCursorSync to write to Presence Store
-    - Update Cursor.jsx to read from usePresenceStore() (ZERO local state)
+12. - [x] Migrate cursor data to Presence Store
+    - Keep Firestore as backend
+    - Update useCursorSync hook to write cursor data to Presence Store instead of local useState
+    - Update Canvas.jsx to read cursors from Presence Store using selective subscription
+    - Maintain existing filtering logic (only show cursors for online users)
+    - Keep all existing functionality working (cursor visibility, real-time updates, filtering)
 
 13. - [ ] Migrate presence data
     - Move online users to Presence Store

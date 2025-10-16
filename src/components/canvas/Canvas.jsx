@@ -9,6 +9,7 @@ import usePresence from "../../hooks/usePresence";
 import usePresenceSync from "../../hooks/usePresenceSync";
 import useObjectSync from "../../hooks/useObjectSync";
 import useLocalStore from "../../stores/localStore";
+import usePresenceStore from "../../stores/presenceStore";
 import * as actions from "../../stores/actions";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
@@ -60,11 +61,14 @@ export default function Canvas() {
 
   // Cursor tracking and syncing
   useCursorTracking(true);
-  const remoteCursors = useCursorSync();
+  useCursorSync(); // Sets up Firestore listener, writes to Presence Store
   
   // Presence tracking
   usePresence(true);
   const onlineUsers = usePresenceSync();
+  
+  // Read remote cursors from Presence Store
+  const remoteCursors = usePresenceStore((state) => state.cursors.remoteCursors);
   
   // Combine dragging and transforming objects to prevent remote updates during user actions
   // Use useMemo to create stable reference that only changes when actual IDs change
