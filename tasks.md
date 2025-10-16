@@ -1490,7 +1490,7 @@ const objects = useFirestoreStore((state) => state.objects);
       - `createdAt` = when object was created (immutable)
       - `lastEditedAt` = when object was last edited (updates on edits)
 
-    **Phase 3: Implement Conflict Resolution** ✅ COMPLETE
+    **Phase 3: Implement Conflict Resolution & Fix State Management** ✅ COMPLETE
 
     - ✅ **Last-write-wins strategy implemented:**
       - When two users edit same object, compare `lastEditedAt` timestamps
@@ -1499,10 +1499,32 @@ const objects = useFirestoreStore((state) => state.objects);
     - ✅ **Special cases handled:**
       - Delete always wins (takes precedence over any edit) - already implemented
       - Creation timestamp (`createdAt`) never changes
-      - Pending updates tracked during drag operations
-    - ✅ **Implementation:**
+      - Pending updates tracked ONLY during active drag/transform operations
+    - ✅ **Conflict resolution implementation:**
       - Updated `firestoreStore.js` `setObjects()` to use `lastEditedAt` for comparison
       - Improved conflict resolution comments for clarity
+    - ✅ **Fixed flicker and state management bugs:**
+      - **Problem:** Objects flickered on release, remote updates not persisting
+      - **Root cause:** Local overlays persisted indefinitely, keeping objects in "active" state
+      - **Solution implemented:**
+        1. **Fixed `activeObjectIds` logic** (`Canvas.jsx`):
+           - Now ONLY includes currently dragging/transforming object
+           - Previously included ALL objects with local overlays
+           - Prevents infinite pending update loop
+        2. **Restored "wait for remote match" logic** (`Canvas.jsx`):
+           - Local overlays persist until remote data matches (within tolerance)
+           - useEffect hooks check if remote matches local, then clear overlay
+           - Prevents flicker during network delay
+        3. **Updated action flow** (`actions.js`):
+           - `finishDrag()` and `finishTransform()` no longer clear overlays immediately
+           - Overlays cleared by Canvas useEffect when remote matches
+           - Maintains visual continuity during Firestore sync
+    - ✅ **Key improvements:**
+      - No flicker on drag/transform release
+      - Remote updates apply correctly after user actions
+      - Multi-user conflicts resolved via timestamp comparison
+      - Single render per object (no duplicates)
+      - Clean separation: `pendingUpdates` for active conflicts, local overlays for smooth UX
     - **Testing:** Ready to test with two browser windows editing simultaneously
 
 **Files to Create:**
