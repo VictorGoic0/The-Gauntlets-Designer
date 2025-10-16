@@ -1277,22 +1277,22 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Phase 1: Setup and Core Structure**
 
-1. - [ ] Install Zustand dependency
+1. - [x] Install Zustand dependency
    - Run: `npm install zustand`
 
-2. - [ ] Create Local State Store
+2. - [x] Create Local State Store
    - File: `src/stores/localStore.js`
    - Define initial state shape (canvas, ui)
    - Create actions/setters for all local state
    - Implement canvas mode, zoom, pan, selection, dragging state
 
-3. - [ ] Create Firestore State Store
+3. - [x] Create Firestore State Store
    - File: `src/stores/firestoreStore.js`
    - Define initial state shape (objects, isLoading, lastSyncTime)
    - Create actions/setters for Firestore-synced state
    - Implement object CRUD operations
 
-4. - [ ] Create Presence State Store
+4. - [x] Create Presence State Store
    - File: `src/stores/presenceStore.js`
    - Define initial state shape (onlineUsers, remoteCursors, connectionStatus)
    - Create actions/setters for presence data
