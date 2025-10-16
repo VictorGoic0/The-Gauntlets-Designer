@@ -30,7 +30,7 @@ Build the foundational infrastructure for real-time collaborative design, provin
 
 - **Platform**: Firebase
   - **Firestore**: Real-time database for canvas state and object sync
-  - **Firebase Auth**: Google Sign-In only (MVP)
+  - **Firebase Auth**: Google Sign-In and Email/Password authentication
   - **Firebase Hosting**: Optional alternative to Netlify
 - **Real-time Sync**: Firestore listeners (onSnapshot)
 - **Development**: Direct against live Firebase (no emulator for MVP)
@@ -42,7 +42,7 @@ Build the foundational infrastructure for real-time collaborative design, provin
 - **Conflict resolution**: Last-write-wins with optimistic deletion (deletes take priority)
 - **Project Model**: Single shared canvas (hardcoded project ID) for entire application
 - **Canvas Dimensions**: 5,000 x 5,000 pixels
-- **Cursor Update Throttle**: 100ms (10 updates/second per user)
+- **Cursor Update Throttle**: 45ms (~22 updates/second per user for <50ms perceived latency)
 
 ---
 
@@ -69,8 +69,9 @@ Build the foundational infrastructure for real-time collaborative design, provin
 
 ✅ **User System**
 
-- Google Sign-In authentication only
-- Users have display names from Google account
+- Google Sign-In authentication (primary)
+- Email/password authentication (secondary)
+- Users have display names from Google account or custom names
 - Single shared canvas accessible to all authenticated users
 
 ✅ **Deployment**
@@ -130,7 +131,7 @@ Build the foundational infrastructure for real-time collaborative design, provin
 **Multiplayer Cursors**
 
 - Show all connected users' cursor positions
-- Throttled updates: 100ms (10 updates/second per user)
+- Throttled updates: 45ms (~22 updates/second per user)
 - Update cursor position <50ms perceived latency with interpolation
 - Display user name label near cursor
 - Unique color per user (randomly assigned from 10 predefined colors)
@@ -317,82 +318,82 @@ service cloud.firestore {
 
 ## Build Strategy & Timeline
 
-### Phase 1: Foundation (Hours 0-8) - Priority: CRITICAL
+### Phase 1: Foundation (Hours 0-8) - Priority: CRITICAL ✅ COMPLETED
 
 **Goal**: Get multiplayer cursors syncing
 
-- [ ] Set up React + Vite project
-- [ ] Set up Firebase project (Auth + Firestore)
-- [ ] Configure Firestore security rules for shared canvas (auth required)
-- [ ] Implement Google Sign-In authentication only
-- [ ] Create simple landing page with Google Sign-In button
-- [ ] Create basic 5,000x5,000px canvas with Konva.js
-- [ ] Implement cursor tracking locally
-- [ ] Sync cursor positions to Firestore (throttled to 100ms)
-- [ ] Implement cursor cleanup with Firebase onDisconnect()
-- [ ] Display multiplayer cursors with names and unique colors
-- [ ] Deploy to Netlify
+- [x] Set up React + Vite project
+- [x] Set up Firebase project (Auth + Firestore)
+- [x] Configure Firestore security rules for shared canvas (auth required)
+- [x] Implement Google Sign-In authentication only
+- [x] Create simple landing page with Google Sign-In button
+- [x] Create basic 5,000x5,000px canvas with Konva.js
+- [x] Implement cursor tracking locally
+- [x] Sync cursor positions to Firestore (throttled to 45ms for <50ms perceived latency)
+- [x] Implement cursor cleanup with Firebase onDisconnect()
+- [x] Display multiplayer cursors with names and unique colors
+- [x] Deploy to Netlify
 
-**Checkpoint**: Two cursors moving in real-time across two browsers with <50ms perceived latency
+**Checkpoint**: ✅ Two cursors moving in real-time across two browsers with <50ms perceived latency
 
 ---
 
-### Phase 2: Object Sync (Hours 8-16) - Priority: CRITICAL
+### Phase 2: Object Sync (Hours 8-16) - Priority: CRITICAL ✅ COMPLETED
 
 **Goal**: Get shape creation and movement syncing
 
-- [ ] Add rectangle creation to canvas
-- [ ] Save rectangles to Firestore with server timestamps on creation
-- [ ] Listen to shared canvas objects collection and render all rectangles
-- [ ] Implement drag-to-move with Konva
-- [ ] Update Firestore on object position changes with server timestamps
-- [ ] Add optimistic updates (local changes instant)
-- [ ] Implement optimistic deletion (delete locally + Firestore immediately)
-- [ ] Handle create/update/delete operations with last-write-wins
+- [x] Add rectangle creation to canvas
+- [x] Save rectangles to Firestore with server timestamps on creation
+- [x] Listen to shared canvas objects collection and render all rectangles
+- [x] Implement drag-to-move with Konva
+- [x] Update Firestore on object position changes with server timestamps
+- [x] Add optimistic updates (local changes instant)
+- [x] Implement optimistic deletion (delete locally + Firestore immediately)
+- [x] Handle create/update/delete operations with last-write-wins
 
-**Checkpoint**: Two users can create, move, and delete rectangles; both see updates instantly
+**Checkpoint**: ✅ Two users can create, move, and delete rectangles; both see updates instantly
 
 ---
 
-### Phase 3: MVP Feature Complete (Hours 16-24) - Priority: HIGH
+### Phase 3: MVP Feature Complete (Hours 16-24) - Priority: HIGH ✅ COMPLETED
 
 **Goal**: Meet all MVP requirements
 
-- [ ] Add presence system with onDisconnect() cleanup
-- [ ] Add pan and zoom controls for 5,000x5,000 canvas
-- [ ] Implement state persistence (reload test on shared canvas)
-- [ ] Verify conflict resolution working (last-write-wins + deletion priority)
-- [ ] Handle disconnects gracefully with Firebase onDisconnect()
-- [ ] Performance testing (30 FPS check with 200+ objects, <50ms cursor latency)
-- [ ] Bug fixes and polish
-- [ ] Final MVP deployment and multi-browser testing
+- [x] Add presence system with onDisconnect() cleanup
+- [x] Add pan and zoom controls for 5,000x5,000 canvas
+- [x] Implement state persistence (reload test on shared canvas)
+- [x] Verify conflict resolution working (last-write-wins + deletion priority)
+- [x] Handle disconnects gracefully with Firebase onDisconnect()
+- [x] Performance testing (30 FPS check with 200+ objects, <50ms cursor latency)
+- [x] Bug fixes and polish
+- [x] Final MVP deployment and multi-browser testing
 
-**Checkpoint**: Submit MVP - all hard requirements met
+**Checkpoint**: ✅ Submit MVP - all hard requirements met
 
 ---
 
-### Phase 4: Additional Shapes (Days 2-3) - Priority: MEDIUM
+### Phase 4: Additional Shapes (Days 2-3) - Priority: MEDIUM ✅ COMPLETED
 
 **Goal**: Support multiple shape types
 
-- [ ] Add circle shape
-- [ ] Add line/path shape
-- [ ] Add text layers with basic formatting
-- [ ] Implement shape-specific properties (stroke, fill)
-- [ ] Test sync with mixed shape types
+- [x] Add circle shape
+- [x] Add text layers with basic formatting
+- [x] Implement shape-specific properties (stroke, fill)
+- [x] Test sync with mixed shape types
+- [ ] Add line/path shape (deferred)
 
 ---
 
-### Phase 5: Transformations (Days 3-4) - Priority: MEDIUM
+### Phase 5: Transformations (Days 3-4) - Priority: MEDIUM ✅ COMPLETED
 
 **Goal**: Full object manipulation
 
-- [ ] Add resize handles to shapes
-- [ ] Add rotation handles
-- [ ] Implement multi-select (Shift+click)
-- [ ] Implement drag-to-select box
-- [ ] Add delete and duplicate commands
-- [ ] Add keyboard shortcuts
+- [x] Add resize handles to shapes
+- [x] Add rotation handles
+- [x] Add delete and duplicate commands
+- [x] Add keyboard shortcuts (Delete/Escape)
+- [ ] Implement multi-select (Shift+click) (deferred)
+- [ ] Implement drag-to-select box (deferred)
 
 ---
 
@@ -408,7 +409,303 @@ service cloud.firestore {
 
 ---
 
-### Phase 7: Polish & Performance (Days 5-7) - Priority: MEDIUM
+### Phase 7: Critical Bug Fixes (Current) - Priority: HIGH
+
+**Goal**: Fix remaining collaboration bugs and edge cases
+
+- [ ] Fix simultaneous drag conflict resolution
+- [ ] Fix text rotation issue for new text objects
+- [ ] Add email/password authentication (completed)
+- [ ] Fix text editing race conditions (completed)
+- [ ] Fix transform snap-back issues (completed)
+- [ ] Fix Konva NaN warnings (completed)
+
+---
+
+### Phase 8: State Management Refactor (Next) - Priority: HIGH
+
+**Goal**: Refactor state management into centralized store pattern
+
+**Proposed Architecture**: Three separate Zustand stores with clear boundaries
+
+#### Store Structure
+
+**1. Firestore State Store** - Source of truth for persisted data
+
+- Canvas objects (rectangles, circles, text)
+- All data that needs to sync across users
+- Server timestamps for conflict resolution
+- Structure:
+
+```javascript
+{
+  objects: {
+    [objectId]: {
+      type: 'rectangle' | 'circle' | 'text',
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      rotation: number,
+      fill: string,
+      text: string, // for text objects
+      fontSize: number, // for text objects
+      zIndex: number,
+      createdBy: string,
+      lastModifiedBy: string,
+      lastModified: timestamp
+    }
+  },
+  isLoading: boolean,
+  lastSyncTime: timestamp
+}
+```
+
+**2. Presence State Store** - Real-time user presence data
+
+- Online users list
+- User cursors
+- Connection status
+- Auto-cleanup via onDisconnect()
+- Structure:
+
+```javascript
+{
+  onlineUsers: {
+    [userId]: {
+      userName: string,
+      userEmail: string,
+      userColor: string,
+      isOnline: boolean,
+      lastSeen: timestamp
+    }
+  },
+  remoteCursors: {
+    [userId]: {
+      x: number,
+      y: number,
+      userName: string,
+      userColor: string,
+      lastSeen: timestamp
+    }
+  },
+  connectionStatus: 'connected' | 'disconnected' | 'connecting'
+}
+```
+
+**3. Local State Store** - Client-side immediate state
+
+- Canvas view state (zoom, pan, mode)
+- Selection state (selected objects)
+- Active operations (dragging, transforming)
+- UI state (toolbar, panels)
+- Structure:
+
+```javascript
+{
+  canvas: {
+    mode: 'select' | 'rectangle' | 'circle' | 'text',
+    zoom: number,
+    pan: { x: number, y: number },
+    selectedObjectIds: string[],
+    activeDrag: { objectId: string, startPos: {x: number, y: number} } | null,
+    activeTransform: { objectId: string, type: 'resize' | 'rotate' } | null
+  },
+  ui: {
+    toolbarVisible: boolean,
+    presencePanelCollapsed: boolean,
+    loadingStates: {
+      [operation: string]: boolean
+    }
+  }
+}
+```
+
+#### Store Communication Pattern
+
+**Multi-Store Action Pattern**: Actions can affect multiple stores directly
+
+- Each store has its own actions/methods
+- Actions are dispatched through a central action dispatcher
+- One action can update multiple stores when appropriate
+- Optimistic updates for immediate user feedback
+
+**Action Flow Example**:
+
+```javascript
+// Central action dispatcher
+const actions = {
+  moveObject: (objectId, newPosition) => {
+    // 1. Update local state immediately (optimistic update)
+    useLocalStore.getState().setObjectPosition(objectId, newPosition);
+
+    // 2. Mark as actively dragging
+    useLocalStore.getState().setActiveDrag(objectId);
+
+    // 3. Queue Firestore update
+    useFirestoreStore.getState().queueUpdate(objectId, {
+      x: newPosition.x,
+      y: newPosition.y,
+      lastModified: FieldValue.serverTimestamp(),
+    });
+  },
+
+  finishDrag: (objectId) => {
+    // 1. Clear active drag state
+    useLocalStore.getState().clearActiveDrag();
+
+    // 2. Commit final position to Firestore
+    const finalPosition = useLocalStore.getState().getObjectPosition(objectId);
+    useFirestoreStore.getState().commitUpdate(objectId, finalPosition);
+  },
+};
+```
+
+**Optimistic Updates Strategy**:
+
+- Local state updates immediately for instant user feedback
+- Firestore writes are queued and executed asynchronously
+- Assumes Firestore writes always succeed (no rollback for MVP)
+- Remote updates from other users override local optimistic state when they arrive
+
+#### Store Access Pattern
+
+**Direct Store Subscription**: Components subscribe to specific stores directly
+
+- Each component subscribes only to the stores it needs
+- Clear separation of concerns - no hooks combining data from multiple stores
+- Simple and predictable data flow
+- Easy to debug which store a component depends on
+
+**Example Component Usage**:
+
+```javascript
+// Canvas component subscribes to both stores
+const Canvas = () => {
+  const { objects } = useFirestoreStore(); // Get synced objects
+  const { canvas, ui } = useLocalStore(); // Get local state
+
+  return (
+    <Stage>
+      {objects.map((obj) => (
+        <Shape key={obj.id} {...obj} />
+      ))}
+    </Stage>
+  );
+};
+
+// Toolbar component only needs local state
+const Toolbar = () => {
+  const { canvas } = useLocalStore(); // Only local state
+  const { setMode } = useLocalStore();
+
+  return (
+    <div>
+      <button onClick={() => setMode("rectangle")}>Rectangle</button>
+    </div>
+  );
+};
+
+// Presence panel only needs presence state
+const PresencePanel = () => {
+  const { onlineUsers } = usePresenceStore(); // Only presence state
+
+  return (
+    <div>
+      {onlineUsers.map((user) => (
+        <UserAvatar key={user.id} {...user} />
+      ))}
+    </div>
+  );
+};
+```
+
+**Benefits**:
+
+- Clear dependencies - you know exactly which stores each component uses
+- No complex data combining logic
+- Easy to optimize - components only re-render when their specific stores change
+- Simple to test - mock only the stores the component actually uses
+
+#### Component State Strategy
+
+**Hybrid Approach**: Mostly zero local state with minimal exceptions
+
+**Zero Local State Components** (Write directly to stores):
+
+- `Canvas.jsx` - All canvas interactions go to stores
+- `Toolbar.jsx` - Tool selection goes to Local Store
+- `Rectangle.jsx` - Drag/transform actions go to stores
+- `Circle.jsx` - Drag/transform actions go to stores
+- `Cursor.jsx` - Cursor rendering from Presence Store
+- `PresencePanel.jsx` - User list from Presence Store
+- `ZoomControls.jsx` - Zoom actions go to Local Store
+- `Header.jsx` - User info from Auth context
+
+**Minimal Local State Components** (Specific UX requirements):
+
+- `Text.jsx` - Local state for text input while typing, store on save
+- `Login.jsx` - Form validation states
+- `SignUp.jsx` - Form validation states
+- Any future modal/tooltip components - Temporary UI states
+
+**State Flow Pattern**:
+
+```javascript
+// Zero local state component
+const Canvas = () => {
+  const { objects } = useFirestoreStore();
+  const { canvas } = useLocalStore();
+
+  const handleDrag = (id, pos) => {
+    actions.moveObject(id, pos); // Direct to stores
+  };
+
+  return (
+    <Stage>
+      {objects.map((obj) => (
+        <Shape key={obj.id} {...obj} />
+      ))}
+    </Stage>
+  );
+};
+
+// Minimal local state component
+const TextEditor = () => {
+  const [localText, setLocalText] = useState(""); // Only for typing
+  const { text, updateText } = useFirestoreStore();
+
+  const handleSave = () => {
+    updateText(localText); // Write to store on save
+    setLocalText(""); // Clear local state
+  };
+
+  return <textarea value={localText} onChange={setLocalText} />;
+};
+```
+
+**Benefits**:
+
+- Cleaner architecture - most state in stores
+- Better debugging - centralized state management
+- Simpler components - just read and call actions
+- Flexibility - add local state only when UX requires it
+
+#### Implementation Plan
+
+- [ ] Choose state management approach (Zustand recommended)
+- [ ] Create Local State Store (canvas mode, zoom, pan, selection, dragging)
+- [ ] Create Firestore State Store (objects, cursors, presence)
+- [ ] Create Presence State Store (online users, cursors, connection)
+- [ ] Migrate all canvas state to centralized stores
+- [ ] Implement unified sync logic
+- [ ] Remove old context providers and scattered state management
+- [ ] Add store DevTools and debugging capabilities
+- [ ] **Final Task**: Implement conflict resolution (last-write-wins with server timestamps)
+
+---
+
+### Phase 9: Polish & Performance (Days 5-7) - Priority: MEDIUM
 
 **Goal**: Optimize and stabilize
 
@@ -448,14 +745,44 @@ service cloud.firestore {
 
 ## Questions Resolved
 
-- ✅ **User authentication method**: Google Sign-In only (MVP)
+- ✅ **User authentication method**: Google Sign-In (primary) + Email/Password (secondary)
 - ✅ **Project model**: Single shared canvas accessible to all authenticated users (hardcoded project ID: 'shared-canvas')
-- ✅ **Landing page**: Simple page with Google Sign-In button → redirect to canvas
+- ✅ **Landing page**: Login/signup pages with Google Sign-In and email/password options → redirect to canvas
 - ✅ **Canvas dimensions**: 5,000 x 5,000 pixels
 - ✅ **Cursor colors**: 10 predefined colors assigned randomly per user
-- ✅ **Cursor throttle**: 100ms updates with <50ms perceived latency via interpolation
+- ✅ **Cursor throttle**: 45ms updates with <50ms perceived latency via interpolation
 - ✅ **Conflict resolution**: Last-write-wins with optimistic deletion (deletes take priority)
 - ✅ **Development environment**: Direct against live Firebase (no emulator for MVP)
+- ✅ **State management**: Currently React hooks + Context API (planned refactor to centralized store)
+
+---
+
+## Current Status (Updated)
+
+**MVP Status**: ✅ COMPLETED - All core requirements met
+
+**Completed Features**:
+
+- ✅ Multiplayer cursors with <50ms perceived latency
+- ✅ Real-time object sync (rectangles, circles, text)
+- ✅ Pan and zoom functionality
+- ✅ Object transformations (move, resize, rotate)
+- ✅ Presence system
+- ✅ State persistence
+- ✅ Google Sign-In and Email/Password authentication
+- ✅ Deployed and publicly accessible
+
+**Current Focus**: Bug fixes and state management refactor
+
+- PR #13: Remaining bug fixes (simultaneous drag conflicts, text rotation)
+- PR #14: State management refactor (centralized store pattern)
+
+**Next Priorities**:
+
+- Fix remaining collaboration edge cases
+- Implement centralized state management
+- Add multi-select and advanced selection features
+- Layer management system
 
 ---
 

@@ -1,18 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "./useAuth";
+import usePresenceStore from "../stores/presenceStore";
 
 /**
- * Hook to sync remote cursor positions from Firestore.
+ * Hook to sync remote cursor positions from Firestore to Presence Store.
  * Listens to all cursors in the shared canvas and filters out current user.
  * Cursors are removed via cleanup in useCursorTracking when users disconnect.
  *
- * @returns {Array} Array of remote cursor objects
+ * This hook sets up the Firestore listener and writes to Presence Store.
+ * Components should read cursor data from usePresenceStore.
  */
 export function useCursorSync() {
   const { currentUser } = useAuth();
-  const [remoteCursors, setRemoteCursors] = useState([]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -46,10 +47,12 @@ export function useCursorSync() {
           });
         });
 
-        setRemoteCursors(cursors);
+        // Write to Presence Store
+        usePresenceStore.getState().setRemoteCursors(cursors);
       },
       (error) => {
         console.error("Error syncing cursors:", error);
+        usePresenceStore.getState().setCursorsError(error);
       }
     );
 
@@ -58,8 +61,6 @@ export function useCursorSync() {
       unsubscribe();
     };
   }, [currentUser]);
-
-  return remoteCursors;
 }
 
 export default useCursorSync;

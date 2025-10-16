@@ -1,6 +1,6 @@
 import { Rect, Transformer } from "react-konva";
 import { useRef, useEffect } from "react";
-import { useCanvas } from "../../../hooks/useCanvas";
+import useLocalStore from "../../../stores/localStore";
 
 /**
  * Rectangle shape component
@@ -12,7 +12,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
 export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, onTransform, onTransformEnd, canvasWidth, canvasHeight }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
-  const { canvasMode } = useCanvas();
+  const canvasMode = useLocalStore((state) => state.canvas.mode);
 
   useEffect(() => {
     if (isSelected && transformerRef.current && shapeRef.current) {

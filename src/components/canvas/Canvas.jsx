@@ -1,37 +1,45 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Stage, Layer, Rect } from "react-konva";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
-import { useCanvas } from "../../hooks/useCanvas";
 import { useAuth } from "../../hooks/useAuth";
 import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
 import usePresence from "../../hooks/usePresence";
 import usePresenceSync from "../../hooks/usePresenceSync";
 import useObjectSync from "../../hooks/useObjectSync";
+import useLocalStore from "../../stores/localStore";
+import usePresenceStore from "../../stores/presenceStore";
+import useFirestoreStore from "../../stores/firestoreStore";
+import * as actions from "../../stores/actions";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
 import Circle from "./shapes/Circle";
 import Text from "./shapes/Text";
 import LoadingState from "./LoadingState";
-import { createRectangle, createCircle, createText } from "../../utils/objectUtils";
-import { updateObject, deleteObjects } from "../../utils/firestoreUtils";
 
 export default function Canvas() {
-  // Get canvas state from context
-  const {
-    stagePosition,
-    setStagePosition,
-    stageScale,
-    setStageScale,
-    MIN_SCALE,
-    MAX_SCALE,
-    canvasMode,
-    clearSelection,
-    selectObject,
-    isSelected,
-    selectedObjectIds,
-  } = useCanvas();
+  // Get canvas view state from Local Store (zoom, pan)
+  const stagePosition = useLocalStore((state) => state.canvas.stagePosition);
+  const stageScale = useLocalStore((state) => state.canvas.stageScale);
+  const MIN_SCALE = useLocalStore((state) => state.canvas.MIN_SCALE);
+  const MAX_SCALE = useLocalStore((state) => state.canvas.MAX_SCALE);
+  const setStagePosition = useLocalStore((state) => state.setStagePosition);
+  const setStageScale = useLocalStore((state) => state.setStageScale);
+
+  // Get canvas mode state from Local Store (tool selection)
+  const canvasMode = useLocalStore((state) => state.canvas.mode);
+
+  // Get selection state from Local Store
+  const selectedObjectIds = useLocalStore((state) => state.selection.selectedObjectIds);
+  const clearSelection = useLocalStore((state) => state.clearSelection);
+  const selectObject = useLocalStore((state) => state.selectObject);
+  const isSelected = useLocalStore((state) => state.isSelected);
+  
+  // Get dragging state from Local Store
+  const localObjectPositions = useLocalStore((state) => state.dragging.localObjectPositions);
+  const draggingObjectId = useLocalStore((state) => state.dragging.draggingObjectId);
+  
+  // Get transform state from Local Store
+  const localObjectTransforms = useLocalStore((state) => state.transforms.localObjectTransforms);
   
   const { currentUser } = useAuth();
 
@@ -50,23 +58,17 @@ export default function Canvas() {
 
   // Cursor tracking and syncing
   useCursorTracking(true);
-  const remoteCursors = useCursorSync();
+  useCursorSync(); // Sets up Firestore listener, writes to Presence Store
   
   // Presence tracking
   usePresence(true);
-  const onlineUsers = usePresenceSync();
+  usePresenceSync(); // Sets up Realtime DB listener, writes to Presence Store
   
-  // Local state for object positions during drag (optimistic updates)
-  const [localObjectPositions, setLocalObjectPositions] = useState({});
+  // Read remote cursors from Presence Store
+  const remoteCursors = usePresenceStore((state) => state.cursors.remoteCursors);
   
-  // Local state for object transforms during resize/rotate (optimistic updates)
-  const [localObjectTransforms, setLocalObjectTransforms] = useState({});
-  
-  // Track which object is currently being dragged for visual feedback
-  const [draggingObjectId, setDraggingObjectId] = useState(null);
-  
-  // Track which object is currently being transformed for visual feedback
-  const [_transformingObjectId, setTransformingObjectId] = useState(null);
+  // Read online users from Presence Store
+  const onlineUsers = usePresenceStore((state) => state.presence.onlineUsers);
   
   // Combine dragging and transforming objects to prevent remote updates during user actions
   // Use useMemo to create stable reference that only changes when actual IDs change
@@ -80,8 +82,21 @@ export default function Canvas() {
     };
   }, [localObjectPositions, localObjectTransforms]);
   
-  // Object syncing (pass active objects to prevent remote updates during drag/transform)
-  const { objects, loading } = useObjectSync(activeObjectIds);
+  // Object syncing - sets up Firestore listener, writes to Firestore Store
+  useObjectSync(activeObjectIds);
+  
+  // Read objects from Firestore Store (synced objects)
+  const firestoreObjects = useFirestoreStore((state) => state.objects.sorted);
+  const loading = useFirestoreStore((state) => state.objects.isLoading);
+  
+  // Read optimistic objects data from Local Store (not yet synced)
+  // Return the data object itself to avoid recreating arrays
+  const optimisticObjectsData = useLocalStore((state) => state.optimisticObjects.data);
+  
+  // Combine Firestore objects and optimistic objects
+  const objects = useMemo(() => {
+    return [...firestoreObjects, ...Object.values(optimisticObjectsData)];
+  }, [firestoreObjects, optimisticObjectsData]);
   
   // Filter cursors to only show users who are in the presence list (online)
   const visibleCursors = remoteCursors.filter((cursor) => {
@@ -94,29 +109,15 @@ export default function Canvas() {
 
   // Delete selected objects from Firestore
   const deleteSelectedObjects = useCallback(async () => {
-    // Delete all selected objects using utility function
-    await deleteObjects(selectedObjectIds);
+    // Delete all selected objects using central action (includes optimistic updates)
+    await actions.deleteObjects(selectedObjectIds, currentUser);
     
-    // Clear local state for deleted objects
-    setLocalObjectPositions((prev) => {
-      const updated = { ...prev };
-      selectedObjectIds.forEach((id) => {
-        delete updated[id];
-      });
-      return updated;
+    // Clear local state for deleted objects using store actions
+    selectedObjectIds.forEach((id) => {
+      useLocalStore.getState().clearLocalObjectPosition(id);
+      useLocalStore.getState().clearLocalObjectTransform(id);
     });
-    
-    setLocalObjectTransforms((prev) => {
-      const updated = { ...prev };
-      selectedObjectIds.forEach((id) => {
-        delete updated[id];
-      });
-      return updated;
-    });
-    
-    // Clear selection
-    clearSelection();
-  }, [selectedObjectIds, clearSelection]);
+  }, [selectedObjectIds, currentUser]);
 
   // Update stage size based on container dimensions
   useEffect(() => {
@@ -138,96 +139,82 @@ export default function Canvas() {
   // Clean up local positions for deleted objects and when remote matches
   useEffect(() => {
     const existingObjectIds = new Set(objects.map((obj) => obj.id));
+    const store = useLocalStore.getState();
+    const currentLocalPositions = store.dragging.localObjectPositions;
     
-    setLocalObjectPositions((prev) => {
-      const updated = { ...prev };
-      let changed = false;
+    Object.keys(currentLocalPositions).forEach((objectId) => {
+      // If object was deleted remotely, remove local position
+      if (!existingObjectIds.has(objectId)) {
+        store.clearLocalObjectPosition(objectId);
+        return;
+      }
       
-      Object.keys(prev).forEach((objectId) => {
-        // If object was deleted remotely, remove local position
-        if (!existingObjectIds.has(objectId)) {
-          delete updated[objectId];
-          changed = true;
-          return;
+      // If object exists and not being dragged, check if remote matches
+      const remoteObject = objects.find(obj => obj.id === objectId);
+      if (remoteObject) {
+        const localPos = currentLocalPositions[objectId];
+        // If remote position matches local (within 1px tolerance), clear local
+        if (
+          Math.abs(remoteObject.x - localPos.x) < 1 &&
+          Math.abs(remoteObject.y - localPos.y) < 1
+        ) {
+          store.clearLocalObjectPosition(objectId);
         }
-        
-        // If object exists and not being dragged, check if remote matches
-        const remoteObject = objects.find(obj => obj.id === objectId);
-        if (remoteObject) {
-          const localPos = prev[objectId];
-          // If remote position matches local (within 1px tolerance), clear local
-          if (
-            Math.abs(remoteObject.x - localPos.x) < 1 &&
-            Math.abs(remoteObject.y - localPos.y) < 1
-          ) {
-            delete updated[objectId];
-            changed = true;
-          }
-        }
-      });
-      
-      return changed ? updated : prev;
+      }
     });
   }, [objects]);
 
   // Clean up local transforms for deleted objects and when remote matches
   useEffect(() => {
     const existingObjectIds = new Set(objects.map((obj) => obj.id));
+    const store = useLocalStore.getState();
+    const currentLocalTransforms = store.transforms.localObjectTransforms;
     
-    setLocalObjectTransforms((prev) => {
-      const updated = { ...prev };
-      let changed = false;
+    Object.keys(currentLocalTransforms).forEach((objectId) => {
+      // If object was deleted remotely, remove local transform
+      if (!existingObjectIds.has(objectId)) {
+        store.clearLocalObjectTransform(objectId);
+        return;
+      }
       
-      Object.keys(prev).forEach((objectId) => {
-        // If object was deleted remotely, remove local transform
-        if (!existingObjectIds.has(objectId)) {
-          delete updated[objectId];
-          changed = true;
-          return;
+      // If object exists, check if remote transform matches local (within tolerance)
+      const remoteObject = objects.find(obj => obj.id === objectId);
+      if (remoteObject) {
+        const localTransform = currentLocalTransforms[objectId];
+        // Check if remote transform matches local (within tolerance)
+        let matches = true;
+        
+        // Check position
+        if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
+          matches = false;
+        }
+        if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
+          matches = false;
         }
         
-        // If object exists, check if remote transform matches local (within tolerance)
-        const remoteObject = objects.find(obj => obj.id === objectId);
-        if (remoteObject) {
-          const localTransform = prev[objectId];
-          // Check if remote transform matches local (within tolerance)
-          let matches = true;
-          
-          // Check position
-          if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
-            matches = false;
-          }
-          if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
-            matches = false;
-          }
-          
-          // Check dimensions (1px tolerance)
-          if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
-            matches = false;
-          }
-          if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
-            matches = false;
-          }
-          if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
-            matches = false;
-          }
-          if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
-            matches = false;
-          }
-          
-          // Check rotation (0.5 degree tolerance)
-          if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
-            matches = false;
-          }
-          
-          if (matches) {
-            delete updated[objectId];
-            changed = true;
-          }
+        // Check dimensions (1px tolerance)
+        if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
+          matches = false;
         }
-      });
-      
-      return changed ? updated : prev;
+        if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
+          matches = false;
+        }
+        if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
+          matches = false;
+        }
+        if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
+          matches = false;
+        }
+        
+        // Check rotation (0.5 degree tolerance)
+        if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
+          matches = false;
+        }
+        
+        if (matches) {
+          store.clearLocalObjectTransform(objectId);
+        }
+      }
     });
   }, [objects]);
 
@@ -269,110 +256,29 @@ export default function Canvas() {
     };
   }, [selectedObjectIds, deleteSelectedObjects, clearSelection]);
 
-  // Create shape on canvas and sync to Firestore
-  const createShapeOnCanvas = async (x, y, shapeType) => {
-    let shapeData;
-    
-    switch (shapeType) {
-      case "rectangle":
-        shapeData = createRectangle(x, y, currentUser.uid);
-        break;
-      case "circle":
-        shapeData = createCircle(x, y, currentUser.uid);
-        break;
-      case "text":
-        shapeData = createText(x, y, currentUser.uid);
-        break;
-      default:
-        return;
-    }
-    
-    // Write to Firestore - useObjectSync will handle the real-time update
-    await addDoc(
-      collection(db, "projects", "shared-canvas", "objects"),
-      shapeData
-    );
-  };
-
-  // Handle drag start
+  // Handle drag start - use central action
   const handleObjectDragStart = (objectId) => {
-    setDraggingObjectId(objectId);
+    actions.startDrag(objectId);
   };
 
-  // Handle drag move - update local position (optimistic update)
+  // Handle drag move - use central action
   const handleObjectDragMove = (objectId, newPosition, objectSize) => {
-    // Constrain position within canvas bounds
-    let constrainedX, constrainedY;
-    
-    if (objectSize.radius) {
-      // For circles: x,y is center position, so constrain using radius
-      const radius = objectSize.radius;
-      constrainedX = Math.max(radius, Math.min(newPosition.x, CANVAS_WIDTH - radius));
-      constrainedY = Math.max(radius, Math.min(newPosition.y, CANVAS_HEIGHT - radius));
-    } else {
-      // For rectangles/text: x,y is top-left corner, so constrain using width/height
-      const width = objectSize.width || 0;
-      const height = objectSize.height || 0;
-      constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - width));
-      constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - height));
-    }
-    
-    setLocalObjectPositions((prev) => ({
-      ...prev,
-      [objectId]: { x: constrainedX, y: constrainedY },
-    }));
+    actions.moveObject(objectId, newPosition, objectSize);
   };
 
-  // Handle drag end - write final position to Firestore
+  // Handle drag end - use central action
   const handleObjectDragEnd = async (objectId, newPosition, objectSize) => {
-    setDraggingObjectId(null);
-    
-    // Constrain final position within canvas bounds
-    let constrainedX, constrainedY;
-    
-    if (objectSize.radius) {
-      // For circles: x,y is center position, so constrain using radius
-      const radius = objectSize.radius;
-      constrainedX = Math.max(radius, Math.min(newPosition.x, CANVAS_WIDTH - radius));
-      constrainedY = Math.max(radius, Math.min(newPosition.y, CANVAS_HEIGHT - radius));
-    } else {
-      // For rectangles/text: x,y is top-left corner, so constrain using width/height
-      const width = objectSize.width || 0;
-      const height = objectSize.height || 0;
-      constrainedX = Math.max(0, Math.min(newPosition.x, CANVAS_WIDTH - width));
-      constrainedY = Math.max(0, Math.min(newPosition.y, CANVAS_HEIGHT - height));
-    }
-    
-    // Update object position using utility function
-    await updateObject(objectId, {
-      x: constrainedX,
-      y: constrainedY,
-    }, currentUser.uid);
-    
-    // Keep local position until remote update arrives to prevent flicker
-    // The useEffect below will clear it when remote position matches
+    await actions.finishDrag(objectId, newPosition, objectSize, currentUser);
   };
 
-  // Handle transform (resize/rotate) - optimistic update
+  // Handle transform (resize/rotate) - use central action
   const handleObjectTransform = (objectId, transformData) => {
-    // Track that this object is being transformed
-    setTransformingObjectId(objectId);
-    
-    // Update local state immediately for responsive UX
-    setLocalObjectTransforms((prev) => ({
-      ...prev,
-      [objectId]: transformData,
-    }));
+    actions.transformObject(objectId, transformData);
   };
 
-  // Handle transform end - write final transform to Firestore
+  // Handle transform end - use central action
   const handleObjectTransformEnd = async (objectId, transformData) => {
-    // Update Firestore with all transform properties
-    await updateObject(objectId, transformData, currentUser.uid);
-    
-    // Keep local transform until remote update arrives to prevent snap-back
-    // The useEffect above will clear it when remote transform matches
-    setTransformingObjectId(null);
+    await actions.finishTransform(objectId, transformData, currentUser);
   };
 
   // Mouse event handlers for panning and shape creation
@@ -396,7 +302,8 @@ export default function Canvas() {
         const canvasX = (pointerPos.x - stagePosition.x) / stageScale;
         const canvasY = (pointerPos.y - stagePosition.y) / stageScale;
         
-        createShapeOnCanvas(canvasX, canvasY, canvasMode);
+        // Use central action for shape creation (includes optimistic updates)
+        actions.createShape(canvasX, canvasY, canvasMode, currentUser);
         return;
       }
     }
@@ -584,7 +491,7 @@ export default function Canvas() {
                     onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width || 200, height: 50 })}
                     onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
                     onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
-                    onTextChange={(newText) => updateObject(obj.id, { text: newText }, currentUser.uid)}
+                    onTextChange={(newText) => actions.updateText(obj.id, newText, currentUser)}
                     canvasWidth={CANVAS_WIDTH}
                     canvasHeight={CANVAS_HEIGHT}
                   />

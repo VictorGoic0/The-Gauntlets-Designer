@@ -1097,14 +1097,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Added cleanup in sync effects to remove deleted objects from `localObjectPositions` and `localObjectTransforms`
    - Ensures Firestore is source of truth and local state is cleaned up when objects are deleted
 
-2. - [ ] Fix simultaneous drag conflict resolution
-
-   - Update `src/hooks/useObjectSync.js`
-   - Implement proper last-write-wins using server timestamps
-   - Ensure dragging same object by multiple users resolves correctly
-   - Most recent drag should win based on `lastModified` timestamp
-
-3. - [x] Add username/password authentication
+2. - [x] Add username/password authentication
 
    - Update `src/lib/firebase.js`
    - Add `signUpWithEmail(email, password, displayName)` function
@@ -1114,34 +1107,27 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Both pages include Google Sign-In option
    - Add proper routing with AuthRedirect component
 
-4. - [x] Fix text editing not working (textarea kept being destroyed)
+3. - [x] Fix text editing not working (textarea kept being destroyed)
 
    - Update `src/components/canvas/shapes/Text.jsx`
    - Used refs for `onTextChange` and `isEditing` to prevent useEffect from re-running on every Canvas render
    - Fixed race condition where exiting edit mode would overwrite new text with old text from Firestore
    - Text editing now works consistently and edits sync properly
 
-5. - [ ] Fix text rotation issue for new text objects
-
-   - Update `src/components/canvas/shapes/Text.jsx`
-   - Debug why newly created text cannot be rotated
-   - Ensure Transformer properly attaches to text nodes
-   - Verify rotation property syncs correctly
-
-6. - [x] Fix text resize-then-rotate size snap issue
+4. - [x] Fix text resize-then-rotate size snap issue
    - Update `src/components/canvas/shapes/Text.jsx`
    - Fix text snapping back to old size after resize then rotate
    - Ensure width/height properly updated after resize
    - Apply scale to dimensions correctly before rotation
 
-7. - [x] Fix transform snap-back on second resize/rotate
+5. - [x] Fix transform snap-back on second resize/rotate
    - Update `src/components/canvas/Canvas.jsx`
    - Fix transforms snapping back to old values on subsequent transforms
    - Keep local transform state until Firestore confirms update (same pattern as drag)
    - Pass transforming objects to `useObjectSync` to block remote updates during transform
    - Add `useEffect` to auto-clear local transforms when remote matches
 
-8. - [x] Fix Konva NaN warnings for x, y, rotation attributes
+6. - [x] Fix Konva NaN warnings for x, y, rotation attributes
    - Update `src/components/canvas/Canvas.jsx`
    - Add default values for all numeric properties before passing to Konva components
    - Ensure x, y, rotation, width, height, radius, fontSize always have valid numbers
@@ -1170,7 +1156,6 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [x] Objects deleted on one device disappear on all other devices immediately
 - [x] Deleted objects are removed from Firestore (verified in console)
 - [x] Local state properly cleaned up when objects deleted remotely
-- [ ] Two users can drag same object simultaneously - last one wins
 - [x] Can sign up with email/password
 - [x] Can sign in with email/password
 - [x] Display name shows correctly for email/password users
@@ -1179,8 +1164,369 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [x] Routing works correctly (/login, /signup, /)
 - [x] Text editing works - can type in textarea and changes persist
 - [x] Text edits sync to Firestore and appear immediately (no refresh needed)
-- [ ] Newly created text can be rotated immediately
 - [x] Text maintains correct size after resize then rotate
 - [x] Multiple transforms in a row work without snap-back
 - [x] No NaN warnings in console when idle or interacting with shapes
+
+---
+
+## PR #13: Remaining Bug Fixes
+
+**Goal**: Fix remaining collaboration bugs and edge cases
+
+### Subtasks
+
+1. - [ ] Fix simultaneous drag conflict resolution
+
+   - Update `src/hooks/useObjectSync.js`
+   - Implement proper last-write-wins using server timestamps
+   - Ensure dragging same object by multiple users resolves correctly
+   - Most recent drag should win based on `lastModified` timestamp
+
+2. - [ ] Fix text rotation issue for new text objects
+
+   - Update `src/components/canvas/shapes/Text.jsx`
+   - Debug why newly created text cannot be rotated
+   - Ensure Transformer properly attaches to text nodes
+   - Verify rotation property syncs correctly
+
+**Files Modified:**
+
+- `src/hooks/useObjectSync.js`
+- `src/components/canvas/shapes/Text.jsx`
+
+**Test Before Merge:**
+
+- [ ] Two users can drag same object simultaneously - last one wins
+- [ ] Newly created text can be rotated immediately
 - [ ] All existing functionality still works
+
+---
+
+## PR #14: State Management Refactor (Central Store)
+
+**Goal**: Refactor state management into a centralized store pattern to eliminate race conditions and simplify state synchronization
+
+### Problem Statement
+
+Current issues with distributed state management:
+
+- Multiple sources of truth causing race conditions
+- Complex synchronization logic scattered across hooks
+- Difficult to debug state inconsistencies
+- Manual optimistic update patterns repeated for each feature
+- Local state and Firestore state intertwined
+
+### Proposed Solution
+
+Implement a central store pattern with two distinct domains:
+
+1. **Local State Store** - Client-side, immediate state
+
+   - Canvas mode (select, rectangle, circle, text)
+   - Zoom level and pan position
+   - Selected object IDs
+   - Currently dragging/transforming objects
+   - Local cursor position
+   - UI state (toolbar visibility, panel collapse states)
+
+2. **Firestore State Store** - Synchronized, source-of-truth state
+   - All canvas objects (rectangles, circles, text)
+   - Remote user cursors
+   - Presence data (who's online)
+   - All persisted data
+
+### Architecture Decisions Made
+
+**State Management**: Zustand (chosen)
+
+- Minimal boilerplate, familiar API, great DevTools
+- Selective subscriptions prevent unnecessary re-renders
+- Multi-store action pattern with optimistic updates
+
+**Synchronization Pattern**: Optimistic updates
+
+- Update local store immediately for instant feedback
+- Queue Firestore writes asynchronously
+- Assume Firestore writes always succeed (no rollback for MVP)
+
+**Conflict Resolution**: Last-write-wins with server timestamps
+
+- Deletion always wins (immediate propagation)
+- Final task in implementation plan
+
+**Component State Strategy**: Hybrid approach
+
+- Mostly zero local state with minimal exceptions
+- Selective subscriptions to prevent unnecessary re-renders
+- Clear separation of concerns
+
+**Selective Subscription Patterns**:
+
+```javascript
+// ✅ GOOD - Only subscribes to specific state
+const mode = useLocalStore((state) => state.canvas.mode);
+const object = useFirestoreStore((state) => state.objects[objectId]);
+
+// ❌ BAD - Subscribes to entire state
+const { canvas, ui } = useLocalStore();
+const objects = useFirestoreStore((state) => state.objects);
+```
+
+### Subtasks
+
+**Phase 1: Setup and Core Structure**
+
+1. - [x] Install Zustand dependency
+   - Run: `npm install zustand`
+
+2. - [x] Create Local State Store
+   - File: `src/stores/localStore.js`
+   - Define initial state shape (canvas, ui)
+   - Create actions/setters for all local state
+   - Implement canvas mode, zoom, pan, selection, dragging state
+
+3. - [x] Create Firestore State Store
+   - File: `src/stores/firestoreStore.js`
+   - Define initial state shape (objects, isLoading, lastSyncTime)
+   - Create actions/setters for Firestore-synced state
+   - Implement object CRUD operations
+
+4. - [x] Create Presence State Store
+   - File: `src/stores/presenceStore.js`
+   - Define initial state shape (onlineUsers, remoteCursors, connectionStatus)
+   - Create actions/setters for presence data
+   - Implement cursor and user presence management
+
+5. - [x] Create central action dispatcher
+   - File: `src/stores/actions.js`
+   - Implement multi-store actions (moveObject, finishDrag, etc.)
+   - Define optimistic update patterns
+   - Handle cross-store communication
+
+**Phase 2: Migrate Canvas State**
+
+6. - [x] Migrate canvas view state
+   - Move zoom, pan from CanvasContext to Local Store
+   - Update Canvas.jsx to use useLocalStore() (ZERO local state)
+   - Remove old state management code
+
+7. - [x] Migrate canvas mode state
+   - Move tool selection (select/rectangle/circle/text) to Local Store
+   - Update Toolbar.jsx to use useLocalStore() (ZERO local state)
+   - Remove old CanvasContext mode state
+
+8. - [x] Migrate selection state
+   - Move selectedObjectIds to Local Store
+   - Update all components that use selection to use useLocalStore() (ZERO local state)
+   - Remove old selection state from CanvasContext
+
+9. - [x] Migrate dragging state
+   - Move localObjectPositions to Local Store
+   - Track actively dragging objects in Local Store
+   - Update drag handlers to use central actions (ZERO local state in shape components)
+
+10. - [x] Migrate transform state
+    - Move localObjectTransforms to Local Store
+    - Track actively transforming objects in Local Store
+    - Update transform handlers to use central actions (ZERO local state in shape components)
+
+**Phase 3: Migrate Firestore-Synced State**
+
+11. - [x] Migrate canvas objects
+    - Move objects array to Firestore Store
+    - Update useObjectSync to write to Firestore Store
+    - Update Canvas.jsx to read from useFirestoreStore() (ZERO local state)
+    - Remove old objects state
+
+12. - [x] Migrate cursor data to Presence Store
+    - Keep Firestore as backend
+    - Update useCursorSync hook to write cursor data to Presence Store instead of local useState
+    - Update Canvas.jsx to read cursors from Presence Store using selective subscription
+    - Maintain existing filtering logic (only show cursors for online users)
+    - Keep all existing functionality working (cursor visibility, real-time updates, filtering)
+
+13. - [x] Migrate presence data
+    - Move online users to Presence Store
+    - Update usePresenceSync to write to Presence Store
+    - Update PresencePanel.jsx to read from usePresenceStore() (ZERO local state)
+
+**Phase 4: Implement Unified Sync Logic**
+
+14. - [x] Create unified Firestore sync layer
+    - Pattern: Hooks → Stores → Components (unified via stores, not service class)
+    - ✅ useObjectSync writes to Firestore Store
+    - ✅ useCursorSync writes to Presence Store
+    - ✅ usePresenceSync writes to Presence Store
+    - ✅ All components read from stores (no scattered useState)
+    - ✅ Single source of truth: Zustand stores
+
+15. - [x] Implement optimistic updates pattern
+    - ✅ Pattern: Update local → Write remote → Sync reconciles
+    - ✅ moveObject: Updates Local Store immediately, then Firestore
+    - ✅ transformObject: Updates Local Store immediately, then Firestore
+    - ✅ deleteObjects: Removes from store immediately, then Firestore
+    - ✅ Prevents flicker: Local state cleared when remote matches
+    - ✅ Documented in src/stores/OPTIMISTIC_UPDATES.md
+
+16. - [x] Update component store access patterns
+    - ✅ Hybrid approach: Zero local state except where UX requires it
+    - ✅ **Zero Local State**: Canvas, Toolbar, Rectangle, Circle, Cursor, PresencePanel, ZoomControls, Header
+    - ✅ **Minimal Local State**: Text (editing only), Login/SignUp (form validation only)
+    - ✅ **Selective Subscriptions**: `useLocalStore((state) => state.canvas.mode)` - subscribes to specific slice only
+    - ✅ **Examples**:
+      - Toolbar: Subscribes only to `canvas.mode`
+      - Canvas: Subscribes only to `objects.sorted` and `objects.isLoading`
+      - PresencePanel: Subscribes only to `presence.onlineUsers`
+    - ✅ No component subscribes to entire store (prevents unnecessary re-renders)
+
+**Phase 5: Cleanup and Refactor**
+
+17. - [x] Remove old context providers
+    - ✅ Deleted CanvasContext (replaced by Local Store)
+    - ✅ Deleted useCanvas hook (no longer needed)
+    - ✅ Removed CanvasProvider wrapper from CanvasPage.jsx
+    - ✅ Updated Canvas tests (removed CanvasProvider dependency)
+    - ✅ Deleted CanvasContext test file
+    - ✅ All remaining hooks are actively used (useAuth, useCursorSync, etc.)
+    - ✅ No prop drilling issues (event handlers passed directly parent → child)
+
+18. - [x] Refactor hooks to use stores
+    - ✅ **useObjectSync** → Writes to Firestore Store (no local state, no return value)
+      - Before: ~120 lines with useState/useRef
+      - After: ~58 lines, writes to `useFirestoreStore.getState().setObjects()`
+    - ✅ **useCursorSync** → Writes to Presence Store (no local state, no return value)
+      - Writes to `usePresenceStore.getState().setRemoteCursors()`
+    - ✅ **usePresenceSync** → Writes to Presence Store (no local state, no return value)
+      - Writes to `usePresenceStore.getState().setOnlineUsers()`
+    - ✅ All hooks simplified: Set up listener → Write to store → Cleanup
+    - ✅ Components read from stores instead of hook return values
+    - Note: Completed in Phase 3 (Tasks 11-13)
+
+19. - [x] Remove duplicate state management code
+    - ✅ **Removed duplicate shape creation**: Deleted `createShapeOnCanvas` from Canvas.jsx
+      - Canvas now uses `actions.createShape` (includes optimistic updates)
+    - ✅ **Created updateText action**: Added to actions.js with optimistic updates
+      - Replaces direct `updateObject` calls from firestoreUtils
+    - ✅ **Consolidated delete operations**: Canvas now uses `actions.deleteObjects`
+      - Includes optimistic updates + proper store management
+    - ✅ **Deleted firestoreUtils.js**: All operations moved to actions.js/stores
+      - Before: Direct Firestore calls scattered in components
+      - After: Centralized actions with optimistic updates
+    - ✅ **Verified useState calls**: All remaining useState are appropriate
+      - Canvas: stageSize, isDragging, spacePressed (local UI state) ✅
+      - Text: isEditing, editValue (text editing UX) ✅
+      - PresencePanel: isCollapsed (UI only) ✅
+    - ✅ **Verified useEffect chains**: All necessary and non-duplicated
+      - Keyboard shortcuts, window resize, optimistic update reconciliation ✅
+    - ✅ **No manual sync logic remaining**: All handled by hooks → stores pattern
+
+20. - [x] Add store DevTools
+    - ✅ Redux DevTools already enabled on all stores via `devtools` middleware
+    - ✅ **Local Store** named `"local-store"` - Canvas view, selection, optimistic drag/transform
+    - ✅ **Firestore Store** named `"firestore-store"` - Synced objects, loading state
+    - ✅ **Presence Store** named `"presence-store"` - Online users, cursors
+    - ✅ **No additional packages needed** - devtools is built into Zustand
+    - ✅ **Features Available**:
+      - State inspection (see current store state)
+      - Action history (see all dispatched actions)
+      - Time-travel debugging (jump to previous states)
+      - Diff view (see what changed)
+      - State export/import (save/load snapshots)
+    - **How to Use**: Open browser DevTools → Redux tab → Select store from dropdown
+    - Note: Already implemented in initial store setup
+
+**Phase 6: Verification**
+
+21. - [ ] Verify all features work
+    - Canvas pan/zoom
+    - Object creation
+    - Object selection
+    - Object dragging
+    - Object transforms
+    - Multi-user cursors
+    - Presence system
+
+22. - [ ] Test synchronization scenarios
+    - Create object on one device, appears on another
+    - Drag object on one device, updates on another
+    - Delete object on one device, disappears on another
+    - Verify optimistic updates work correctly
+
+23. - [ ] Test offline/online scenarios
+    - Create objects while offline
+    - Reconnect and verify sync
+    - Queue updates work correctly
+
+24. - [ ] Performance check
+
+- No additional re-renders compared to current local state approach
+- Selective subscriptions working correctly (toolbar click doesn't re-render rectangles)
+- Smooth canvas interactions
+- No lag in multi-user scenarios
+- Verify same performance as current implementation
+
+**Phase 7: Final Implementation**
+
+25. - [ ] **Final Task**: Implement conflict resolution
+    - Last-write-wins using server timestamps
+    - Deletion always wins (immediate propagation)
+    - Handle simultaneous edits correctly
+    - Test two users editing same object simultaneously
+
+**Files to Create:**
+
+- `src/stores/localStore.js` - Local state store (canvas, ui)
+- `src/stores/firestoreStore.js` - Firestore state store (objects)
+- `src/stores/presenceStore.js` - Presence state store (users, cursors)
+- `src/stores/actions.js` - Central action dispatcher
+- `src/services/firestoreSync.js` - Unified Firestore sync layer
+- `src/stores/README.md` - Document store architecture
+
+**Files to Modify:**
+
+**Zero Local State Components** (Write directly to stores with selective subscriptions):
+
+- `src/components/canvas/Canvas.jsx` - Use useFirestoreStore() + useLocalStore() with selective subscriptions
+- `src/components/canvas/Toolbar.jsx` - Use useLocalStore() for tool selection only
+- `src/components/canvas/shapes/Rectangle.jsx` - Use central actions for drag/transform, subscribe only to own object
+- `src/components/canvas/shapes/Circle.jsx` - Use central actions for drag/transform, subscribe only to own object
+- `src/components/canvas/Cursor.jsx` - Use usePresenceStore() for cursor data only
+- `src/components/canvas/PresencePanel.jsx` - Use usePresenceStore() for user list only
+- `src/components/canvas/ZoomControls.jsx` - Use useLocalStore() for zoom actions only
+- `src/components/ui/Header.jsx` - Use Auth context (no changes needed)
+
+**Minimal Local State Components** (Specific UX requirements):
+
+- `src/components/canvas/shapes/Text.jsx` - Local state for text input while typing, store on save
+- `src/components/auth/Login.jsx` - Form validation states (minimal changes)
+- `src/components/auth/SignUp.jsx` - Form validation states (minimal changes)
+
+**Hook Updates**:
+
+- `src/hooks/useObjectSync.js` - Work with Firestore Store
+- `src/hooks/useCursorSync.js` - Work with Presence Store
+- `src/hooks/usePresenceSync.js` - Work with Presence Store
+- `src/contexts/CanvasContext.jsx` - Deprecate/remove
+
+**Files to Delete:**
+
+- `src/contexts/CanvasContext.jsx` (after full migration)
+- Various scattered state management code
+
+**Dependencies to Add:**
+
+- `zustand` - State management library
+
+**Test Before Merge:**
+
+- [ ] All canvas features work as before
+- [ ] No performance regression (same re-render behavior as current local state)
+- [ ] Selective subscriptions working correctly (toolbar click doesn't re-render rectangles)
+- [ ] Multi-user sync works correctly
+- [ ] Optimistic updates provide instant feedback
+- [ ] Offline mode works
+- [ ] No console errors or warnings
+- [ ] Code is more maintainable and readable
+- [ ] Store DevTools work for debugging
+- [ ] **Final**: Conflict resolution works correctly
