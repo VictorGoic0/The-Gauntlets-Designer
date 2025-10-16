@@ -1110,7 +1110,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Ensure Transformer properly attaches to text nodes
    - Verify rotation property syncs correctly
 
-4. - [x] Fix text resize-then-rotate size snap issue
+4. - [x] Fix text resize-then-rotate size snap issueThat worked and got rid of a lot of warnings.
    - Update `src/components/canvas/shapes/Text.jsx`
    - Fix text snapping back to old size after resize then rotate
    - Ensure width/height properly updated after resize
@@ -1122,6 +1122,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Keep local transform state until Firestore confirms update (same pattern as drag)
    - Pass transforming objects to `useObjectSync` to block remote updates during transform
    - Add `useEffect` to auto-clear local transforms when remote matches
+
+6. - [x] Fix Konva NaN warnings for x, y, rotation attributes
+   - Update `src/components/canvas/Canvas.jsx`
+   - Add default values for all numeric properties before passing to Konva components
+   - Ensure x, y, rotation, width, height, radius, fontSize always have valid numbers
+   - Prevents "NaN is not a valid value" warnings spamming console
 
 **Files Modified:**
 
@@ -1140,4 +1146,5 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [ ] Newly created text can be rotated immediately
 - [x] Text maintains correct size after resize then rotate
 - [x] Multiple transforms in a row work without snap-back
+- [x] No NaN warnings in console when idle or interacting with shapes
 - [ ] All existing functionality still works

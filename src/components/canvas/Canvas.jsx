@@ -66,7 +66,7 @@ export default function Canvas() {
   const [draggingObjectId, setDraggingObjectId] = useState(null);
   
   // Track which object is currently being transformed for visual feedback
-  const [transformingObjectId, setTransformingObjectId] = useState(null);
+  const [_transformingObjectId, setTransformingObjectId] = useState(null);
   
   // Combine dragging and transforming objects to prevent remote updates during user actions
   const activeObjectIds = {
@@ -226,7 +226,7 @@ export default function Canvas() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedObjectIds, deleteSelectedObjects]);
+  }, [selectedObjectIds, deleteSelectedObjects, clearSelection]);
 
   // Create shape on canvas and sync to Firestore
   const createShapeOnCanvas = async (x, y, shapeType) => {
@@ -465,17 +465,22 @@ export default function Canvas() {
               // Merge local transforms with Firestore data for optimistic updates
               const mergedProps = localTransform ? { ...obj, ...localTransform } : obj;
               
+              // Ensure all numeric values have defaults to prevent NaN warnings
+              const safeX = position.x ?? 0;
+              const safeY = position.y ?? 0;
+              const safeRotation = mergedProps.rotation ?? 0;
+              
               if (obj.type === "rectangle") {
                 return (
                   <Rectangle
                     key={obj.id}
                     shapeProps={{
-                      x: position.x,
-                      y: position.y,
-                      width: mergedProps.width,
-                      height: mergedProps.height,
-                      fill: mergedProps.fill,
-                      rotation: mergedProps.rotation,
+                      x: safeX,
+                      y: safeY,
+                      width: mergedProps.width ?? 100,
+                      height: mergedProps.height ?? 100,
+                      fill: mergedProps.fill ?? "#3b82f6",
+                      rotation: safeRotation,
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
@@ -496,11 +501,11 @@ export default function Canvas() {
                   <Circle
                     key={obj.id}
                     shapeProps={{
-                      x: position.x,
-                      y: position.y,
-                      radius: mergedProps.radius,
-                      fill: mergedProps.fill,
-                      rotation: mergedProps.rotation,
+                      x: safeX,
+                      y: safeY,
+                      radius: mergedProps.radius ?? 50,
+                      fill: mergedProps.fill ?? "#3b82f6",
+                      rotation: safeRotation,
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
@@ -521,14 +526,14 @@ export default function Canvas() {
                   <Text
                     key={obj.id}
                     shapeProps={{
-                      x: position.x,
-                      y: position.y,
-                      text: mergedProps.text,
-                      fontSize: mergedProps.fontSize,
-                      fontFamily: mergedProps.fontFamily,
-                      width: mergedProps.width,
-                      fill: mergedProps.fill,
-                      rotation: mergedProps.rotation,
+                      x: safeX,
+                      y: safeY,
+                      text: mergedProps.text ?? "Double-click to edit",
+                      fontSize: mergedProps.fontSize ?? 16,
+                      fontFamily: mergedProps.fontFamily ?? "Arial",
+                      width: mergedProps.width ?? 200,
+                      fill: mergedProps.fill ?? "#000000",
+                      rotation: safeRotation,
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
