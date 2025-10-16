@@ -27,16 +27,29 @@ export default function Text({
 }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
+  const onTextChangeRef = useRef(onTextChange);
+  const isEditingRef = useRef(false);
   const { canvasMode } = useCanvas();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(shapeProps.text || "Double-click to edit");
   
-  // Update local editValue when props change from Firestore
+  // Keep refs updated without triggering re-renders
   useEffect(() => {
-    if (shapeProps.text && !isEditing) {
-      setEditValue(shapeProps.text);
+    onTextChangeRef.current = onTextChange;
+  }, [onTextChange]);
+  
+  useEffect(() => {
+    isEditingRef.current = isEditing;
+  }, [isEditing]);
+  
+  // Update local editValue when props change from Firestore
+  // Only sync when shapeProps.text changes (not when isEditing state changes)
+  // to avoid overwriting user's edit before Firestore confirms the update
+  useEffect(() => {
+    if (!isEditingRef.current) {
+      setEditValue(shapeProps.text || "Double-click to edit");
     }
-  }, [shapeProps.text, isEditing]);
+  }, [shapeProps.text]);
 
   useEffect(() => {
     if (isSelected && transformerRef.current && shapeRef.current) {
@@ -184,11 +197,11 @@ export default function Text({
       
       const handleBlur = () => {
         const newText = textarea.value;
-        if (onTextChange && newText !== shapeProps.text) {
+        if (onTextChangeRef.current && newText !== shapeProps.text) {
           // Update local state immediately for instant feedback
           setEditValue(newText);
           // Then update Firestore
-          onTextChange(newText);
+          onTextChangeRef.current(newText);
         }
         setIsEditing(false);
         removeTextarea();
@@ -216,7 +229,7 @@ export default function Text({
         removeTextarea();
       };
     }
-  }, [isEditing, editValue, shapeProps.text, shapeProps.fontSize, shapeProps.fontFamily, onTextChange]);
+  }, [isEditing, editValue, shapeProps.text, shapeProps.fontSize, shapeProps.fontFamily]);
 
   return (
     <>
