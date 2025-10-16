@@ -422,11 +422,13 @@ service cloud.firestore {
 
 ---
 
-### Phase 8: State Management Refactor (Next) - Priority: HIGH
+### Phase 8: State Management Refactor - Priority: HIGH ✅ COMPLETED
 
 **Goal**: Refactor state management into centralized store pattern
 
-**Proposed Architecture**: Three separate Zustand stores with clear boundaries
+**Status**: ✅ COMPLETE - All phases implemented and tested
+
+**Architecture**: Three separate Zustand stores with clear boundaries
 
 #### Store Structure
 
@@ -435,29 +437,48 @@ service cloud.firestore {
 - Canvas objects (rectangles, circles, text)
 - All data that needs to sync across users
 - Server timestamps for conflict resolution
+- Pending updates for drag conflicts
 - Structure:
 
 ```javascript
 {
   objects: {
-    [objectId]: {
-      type: 'rectangle' | 'circle' | 'text',
-      x: number,
-      y: number,
-      width: number,
-      height: number,
-      rotation: number,
-      fill: string,
-      text: string, // for text objects
-      fontSize: number, // for text objects
-      zIndex: number,
-      createdBy: string,
-      lastModifiedBy: string,
-      lastModified: timestamp
-    }
+    data: {
+      [objectId]: {
+        id: string,
+        type: 'rectangle' | 'circle' | 'text',
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        radius: number, // for circles
+        rotation: number,
+        fill: string,
+        text: string, // for text objects
+        fontSize: number, // for text objects
+        fontFamily: string, // for text objects
+        zIndex: number,
+        createdBy: string,
+        createdAt: timestamp, // Set once at creation, never changes
+        lastEditedBy: string,
+        lastEditedAt: timestamp // Updates on every edit (not creation/deletion)
+      }
+    },
+    sorted: Array, // Objects sorted by zIndex
+    isLoading: boolean,
+    lastSyncTime: timestamp,
+    error: string | null
   },
-  isLoading: boolean,
-  lastSyncTime: timestamp
+  pendingUpdates: {
+    [objectId]: object // Stores remote updates during active drag/transform
+  },
+  currentObjectsMap: {
+    [objectId]: object // Current state for conflict resolution
+  },
+  connection: {
+    isConnected: boolean,
+    isOffline: boolean
+  }
 }
 ```
 
@@ -498,24 +519,49 @@ service cloud.firestore {
 - Canvas view state (zoom, pan, mode)
 - Selection state (selected objects)
 - Active operations (dragging, transforming)
-- UI state (toolbar, panels)
+- Local overlays for optimistic updates
+- Optimistic objects not yet synced to Firestore
 - Structure:
 
 ```javascript
 {
   canvas: {
     mode: 'select' | 'rectangle' | 'circle' | 'text',
-    zoom: number,
-    pan: { x: number, y: number },
-    selectedObjectIds: string[],
-    activeDrag: { objectId: string, startPos: {x: number, y: number} } | null,
-    activeTransform: { objectId: string, type: 'resize' | 'rotate' } | null
+    stageScale: number,
+    stagePosition: { x: number, y: number },
+    MIN_SCALE: 0.1,
+    MAX_SCALE: 5
   },
-  ui: {
-    toolbarVisible: boolean,
-    presencePanelCollapsed: boolean,
-    loadingStates: {
-      [operation: string]: boolean
+  selection: {
+    selectedObjectIds: string[]
+  },
+  dragging: {
+    draggingObjectId: string | null, // Currently dragging object
+    localObjectPositions: {
+      [objectId]: { x: number, y: number } // Local overlay during and after drag
+    }
+  },
+  transforms: {
+    transformingObjectId: string | null, // Currently transforming object
+    localObjectTransforms: {
+      [objectId]: { // Local overlay during and after transform
+        x?: number,
+        y?: number,
+        width?: number,
+        height?: number,
+        radius?: number,
+        rotation?: number,
+        fontSize?: number
+      }
+    }
+  },
+  optimisticObjects: {
+    data: {
+      [localId]: {
+        id: string, // Local generated ID
+        isOptimistic: true, // Flag to prevent Firestore writes
+        ...objectData
+      }
     }
   }
 }
@@ -693,15 +739,70 @@ const TextEditor = () => {
 
 #### Implementation Plan
 
-- [ ] Choose state management approach (Zustand recommended)
-- [ ] Create Local State Store (canvas mode, zoom, pan, selection, dragging)
-- [ ] Create Firestore State Store (objects, cursors, presence)
-- [ ] Create Presence State Store (online users, cursors, connection)
-- [ ] Migrate all canvas state to centralized stores
-- [ ] Implement unified sync logic
-- [ ] Remove old context providers and scattered state management
-- [ ] Add store DevTools and debugging capabilities
-- [ ] **Final Task**: Implement conflict resolution (last-write-wins with server timestamps)
+- [x] Choose state management approach (Zustand selected)
+- [x] Create Local State Store (canvas mode, zoom, pan, selection, dragging, transforms, optimistic objects)
+- [x] Create Firestore State Store (objects with conflict resolution)
+- [x] Create Presence State Store (online users, cursors, connection)
+- [x] Migrate all canvas state to centralized stores
+- [x] Implement unified sync logic via hooks
+- [x] Remove old context providers (CanvasContext) and scattered state management
+- [x] Add store DevTools and debugging capabilities (Redux DevTools enabled)
+- [x] **Implement conflict resolution with timestamps:**
+  - [x] Added `createdAt` timestamp (set once, never changes)
+  - [x] Added `lastEditedAt` timestamp (updates on every edit)
+  - [x] Implemented last-write-wins strategy based on `lastEditedAt`
+  - [x] Optimistic deletion (deletes always win)
+  - [x] Pending updates only for actively dragging/transforming objects
+- [x] **Fixed state management bugs:**
+  - [x] Fixed infinite pending update loop
+  - [x] Fixed flicker on drag/transform release
+  - [x] Ensured remote updates persist correctly
+  - [x] Implemented "wait for remote match" pattern for smooth UX
+
+#### Conflict Resolution Implementation
+
+**Timestamp Strategy:**
+
+- `createdAt`: Set once with `serverTimestamp()` at creation, immutable
+- `lastEditedAt`: Updates with `serverTimestamp()` on every edit (drag, transform, text change)
+- Epoch/Unix milliseconds format for easy comparison
+
+**Last-Write-Wins:**
+
+- When remote update arrives for actively dragging/transforming object → stored as pending
+- When drag/transform ends → compare `lastEditedAt` timestamps
+- Update with later timestamp wins, earlier timestamp discarded
+- Falls back to `createdAt` if `lastEditedAt` doesn't exist
+
+**Active vs Pending:**
+
+- `activeObjectIds`: Only includes objects CURRENTLY being dragged/transformed
+- Remote updates for active objects → stored in `pendingUpdates`
+- Remote updates for inactive objects → apply immediately to Firestore store
+- Local overlays persist until remote matches (prevents flicker)
+
+**Key Fix:**
+
+- Previously: All objects with local overlays were marked "active" → infinite pending loop
+- Now: Only currently dragging/transforming object marked "active" → clean state transitions
+
+#### Optimistic Objects System
+
+**ID Reconciliation:**
+
+- New objects created with local generated ID (`obj_${timestamp}_${random}`)
+- Marked `isOptimistic: true` in Local Store
+- Immediately rendered for instant user feedback
+- Written to Firestore with `addDoc()` which returns Firestore ID
+- Local ID reconciled with Firestore ID upon successful write
+- All references updated (selection, dragging, transforms)
+- `isOptimistic` flag removed, object moves to Firestore Store
+
+**Benefits:**
+
+- Instant object creation (no network delay)
+- Prevents premature Firestore updates (no writes until object exists in Firestore)
+- Clean separation: local optimistic state vs synced Firestore state
 
 ---
 
@@ -751,9 +852,9 @@ const TextEditor = () => {
 - ✅ **Canvas dimensions**: 5,000 x 5,000 pixels
 - ✅ **Cursor colors**: 10 predefined colors assigned randomly per user
 - ✅ **Cursor throttle**: 45ms updates with <50ms perceived latency via interpolation
-- ✅ **Conflict resolution**: Last-write-wins with optimistic deletion (deletes take priority)
+- ✅ **Conflict resolution**: Last-write-wins based on `lastEditedAt` timestamps with optimistic deletion (deletes take priority)
 - ✅ **Development environment**: Direct against live Firebase (no emulator for MVP)
-- ✅ **State management**: Currently React hooks + Context API (planned refactor to centralized store)
+- ✅ **State management**: Zustand centralized stores (Local, Firestore, Presence) with optimistic updates and conflict resolution
 
 ---
 

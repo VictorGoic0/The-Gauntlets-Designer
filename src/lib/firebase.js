@@ -9,7 +9,14 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
-import { getDatabase, ref, set } from "firebase/database";
+import {
+  getDatabase,
+  ref,
+  set,
+  onValue,
+  onDisconnect,
+  serverTimestamp,
+} from "firebase/database";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
