@@ -627,7 +627,69 @@ const PresencePanel = () => {
 - Easy to optimize - components only re-render when their specific stores change
 - Simple to test - mock only the stores the component actually uses
 
-**Future Abstraction**: Can add unified interface later if needed, but start simple
+#### Component State Strategy
+
+**Hybrid Approach**: Mostly zero local state with minimal exceptions
+
+**Zero Local State Components** (Write directly to stores):
+
+- `Canvas.jsx` - All canvas interactions go to stores
+- `Toolbar.jsx` - Tool selection goes to Local Store
+- `Rectangle.jsx` - Drag/transform actions go to stores
+- `Circle.jsx` - Drag/transform actions go to stores
+- `Cursor.jsx` - Cursor rendering from Presence Store
+- `PresencePanel.jsx` - User list from Presence Store
+- `ZoomControls.jsx` - Zoom actions go to Local Store
+- `Header.jsx` - User info from Auth context
+
+**Minimal Local State Components** (Specific UX requirements):
+
+- `Text.jsx` - Local state for text input while typing, store on save
+- `Login.jsx` - Form validation states
+- `SignUp.jsx` - Form validation states
+- Any future modal/tooltip components - Temporary UI states
+
+**State Flow Pattern**:
+
+```javascript
+// Zero local state component
+const Canvas = () => {
+  const { objects } = useFirestoreStore();
+  const { canvas } = useLocalStore();
+
+  const handleDrag = (id, pos) => {
+    actions.moveObject(id, pos); // Direct to stores
+  };
+
+  return (
+    <Stage>
+      {objects.map((obj) => (
+        <Shape key={obj.id} {...obj} />
+      ))}
+    </Stage>
+  );
+};
+
+// Minimal local state component
+const TextEditor = () => {
+  const [localText, setLocalText] = useState(""); // Only for typing
+  const { text, updateText } = useFirestoreStore();
+
+  const handleSave = () => {
+    updateText(localText); // Write to store on save
+    setLocalText(""); // Clear local state
+  };
+
+  return <textarea value={localText} onChange={setLocalText} />;
+};
+```
+
+**Benefits**:
+
+- Cleaner architecture - most state in stores
+- Better debugging - centralized state management
+- Simpler components - just read and call actions
+- Flexibility - add local state only when UX requires it
 
 #### Implementation Plan
 

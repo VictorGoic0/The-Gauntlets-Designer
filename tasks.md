@@ -1236,40 +1236,42 @@ Implement a central store pattern with two distinct domains:
    - Presence data (who's online)
    - All persisted data
 
-### Implementation Options
+### Architecture Decisions Made
 
-**Option A: Context + useReducer** (no dependencies)
+**State Management**: Zustand (chosen)
 
-- Two contexts: `LocalStateContext` and `FirestoreStateContext`
-- Reducers handle all state changes
-- Pro: No new dependencies
-- Con: More boilerplate
+- Minimal boilerplate, familiar API, great DevTools
+- Selective subscriptions prevent unnecessary re-renders
+- Multi-store action pattern with optimistic updates
 
-**Option B: Zustand** (~1kb, recommended)
+**Synchronization Pattern**: Optimistic updates
 
-- `useLocalStore` and `useFirestoreStore`
-- Pro: Minimal boilerplate, familiar API, great DevTools
-- Con: Another dependency
+- Update local store immediately for instant feedback
+- Queue Firestore writes asynchronously
+- Assume Firestore writes always succeed (no rollback for MVP)
 
-**Option C: Jotai** (atomic approach)
+**Conflict Resolution**: Last-write-wins with server timestamps
 
-- Pro: Very granular, prevents unnecessary re-renders
-- Con: Different mental model
+- Deletion always wins (immediate propagation)
+- Final task in implementation plan
 
-### Decision Criteria (To Be Determined)
+**Component State Strategy**: Hybrid approach
 
-1. **Synchronization Pattern**: How to handle local → Firestore → remote flow?
+- Mostly zero local state with minimal exceptions
+- Selective subscriptions to prevent unnecessary re-renders
+- Clear separation of concerns
 
-   - Optimistic: Update local store immediately, push to Firestore, reconcile conflicts?
-   - Wait for Firestore confirmation before updating?
+**Selective Subscription Patterns**:
 
-2. **Conflict Resolution**: Unified conflict resolution strategy?
+```javascript
+// ✅ GOOD - Only subscribes to specific state
+const mode = useLocalStore((state) => state.canvas.mode);
+const object = useFirestoreStore((state) => state.objects[objectId]);
 
-   - Last-write-wins with server timestamps?
-   - Deletion always wins?
-   - Per-operation conflict handling?
-
-3. **Migration Strategy**: All at once (chosen by user)
+// ❌ BAD - Subscribes to entire state
+const { canvas, ui } = useLocalStore();
+const objects = useFirestoreStore((state) => state.objects);
+```
 
 ### Subtasks
 
@@ -1306,46 +1308,46 @@ Implement a central store pattern with two distinct domains:
 
 6. - [ ] Migrate canvas view state
    - Move zoom, pan from CanvasContext to Local Store
-   - Update Canvas.jsx to use useLocalStore()
+   - Update Canvas.jsx to use useLocalStore() (ZERO local state)
    - Remove old state management code
 
 7. - [ ] Migrate canvas mode state
    - Move tool selection (select/rectangle/circle/text) to Local Store
-   - Update Toolbar.jsx to use useLocalStore()
+   - Update Toolbar.jsx to use useLocalStore() (ZERO local state)
    - Remove old CanvasContext mode state
 
 8. - [ ] Migrate selection state
    - Move selectedObjectIds to Local Store
-   - Update all components that use selection to use useLocalStore()
+   - Update all components that use selection to use useLocalStore() (ZERO local state)
    - Remove old selection state from CanvasContext
 
 9. - [ ] Migrate dragging state
    - Move localObjectPositions to Local Store
    - Track actively dragging objects in Local Store
-   - Update drag handlers to use central actions
+   - Update drag handlers to use central actions (ZERO local state in shape components)
 
 10. - [ ] Migrate transform state
     - Move localObjectTransforms to Local Store
     - Track actively transforming objects in Local Store
-    - Update transform handlers to use central actions
+    - Update transform handlers to use central actions (ZERO local state in shape components)
 
 **Phase 3: Migrate Firestore-Synced State**
 
 11. - [ ] Migrate canvas objects
     - Move objects array to Firestore Store
     - Update useObjectSync to write to Firestore Store
-    - Update Canvas.jsx to read from useFirestoreStore()
+    - Update Canvas.jsx to read from useFirestoreStore() (ZERO local state)
     - Remove old objects state
 
 12. - [ ] Migrate cursor data
     - Move remote cursors to Presence Store
     - Update useCursorSync to write to Presence Store
-    - Update Cursor components to read from usePresenceStore()
+    - Update Cursor.jsx to read from usePresenceStore() (ZERO local state)
 
 13. - [ ] Migrate presence data
     - Move online users to Presence Store
     - Update usePresenceSync to write to Presence Store
-    - Update PresencePanel to read from usePresenceStore()
+    - Update PresencePanel.jsx to read from usePresenceStore() (ZERO local state)
 
 **Phase 4: Implement Unified Sync Logic**
 
@@ -1362,10 +1364,13 @@ Implement a central store pattern with two distinct domains:
     - Assume Firestore writes always succeed (no rollback for MVP)
 
 16. - [ ] Update component store access patterns
-    - Implement direct store subscription pattern
-    - Components subscribe only to stores they need
-    - Clear separation of concerns - no hooks combining multiple stores
-    - Update all components to use new store hooks
+
+- Implement hybrid approach: mostly zero local state with minimal exceptions
+- **Zero Local State Components**: Canvas, Toolbar, Rectangle, Circle, Cursor, PresencePanel, ZoomControls, Header
+- **Minimal Local State Components**: Text (for typing), Login/SignUp (form validation)
+- Implement selective subscriptions to prevent unnecessary re-renders
+- Components subscribe only to specific state slices they need
+- Clear separation of concerns - no hooks combining multiple stores
 
 **Phase 5: Cleanup and Refactor**
 
@@ -1413,9 +1418,12 @@ Implement a central store pattern with two distinct domains:
     - Queue updates work correctly
 
 24. - [ ] Performance check
-    - No additional re-renders
-    - Smooth canvas interactions
-    - No lag in multi-user scenarios
+
+- No additional re-renders compared to current local state approach
+- Selective subscriptions working correctly (toolbar click doesn't re-render rectangles)
+- Smooth canvas interactions
+- No lag in multi-user scenarios
+- Verify same performance as current implementation
 
 **Phase 7: Final Implementation**
 
@@ -1436,13 +1444,25 @@ Implement a central store pattern with two distinct domains:
 
 **Files to Modify:**
 
-- `src/components/canvas/Canvas.jsx` - Use new stores
-- `src/components/canvas/Toolbar.jsx` - Use useLocalStore()
-- `src/components/canvas/shapes/Rectangle.jsx` - Use central actions
-- `src/components/canvas/shapes/Circle.jsx` - Use central actions
-- `src/components/canvas/shapes/Text.jsx` - Use central actions
-- `src/components/canvas/Cursor.jsx` - Use usePresenceStore()
-- `src/components/canvas/PresencePanel.jsx` - Use usePresenceStore()
+**Zero Local State Components** (Write directly to stores with selective subscriptions):
+
+- `src/components/canvas/Canvas.jsx` - Use useFirestoreStore() + useLocalStore() with selective subscriptions
+- `src/components/canvas/Toolbar.jsx` - Use useLocalStore() for tool selection only
+- `src/components/canvas/shapes/Rectangle.jsx` - Use central actions for drag/transform, subscribe only to own object
+- `src/components/canvas/shapes/Circle.jsx` - Use central actions for drag/transform, subscribe only to own object
+- `src/components/canvas/Cursor.jsx` - Use usePresenceStore() for cursor data only
+- `src/components/canvas/PresencePanel.jsx` - Use usePresenceStore() for user list only
+- `src/components/canvas/ZoomControls.jsx` - Use useLocalStore() for zoom actions only
+- `src/components/ui/Header.jsx` - Use Auth context (no changes needed)
+
+**Minimal Local State Components** (Specific UX requirements):
+
+- `src/components/canvas/shapes/Text.jsx` - Local state for text input while typing, store on save
+- `src/components/auth/Login.jsx` - Form validation states (minimal changes)
+- `src/components/auth/SignUp.jsx` - Form validation states (minimal changes)
+
+**Hook Updates**:
+
 - `src/hooks/useObjectSync.js` - Work with Firestore Store
 - `src/hooks/useCursorSync.js` - Work with Presence Store
 - `src/hooks/usePresenceSync.js` - Work with Presence Store
@@ -1460,7 +1480,8 @@ Implement a central store pattern with two distinct domains:
 **Test Before Merge:**
 
 - [ ] All canvas features work as before
-- [ ] No performance regression
+- [ ] No performance regression (same re-render behavior as current local state)
+- [ ] Selective subscriptions working correctly (toolbar click doesn't re-render rectangles)
 - [ ] Multi-user sync works correctly
 - [ ] Optimistic updates provide instant feedback
 - [ ] Offline mode works
