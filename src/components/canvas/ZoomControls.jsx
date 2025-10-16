@@ -1,7 +1,11 @@
-import { useCanvas } from "../../hooks/useCanvas";
+import useLocalStore from "../../stores/localStore";
 
 export default function ZoomControls() {
-  const { stageScale, setStageScale, setStagePosition, MIN_SCALE, MAX_SCALE } = useCanvas();
+  const stageScale = useLocalStore((state) => state.canvas.stageScale);
+  const MIN_SCALE = useLocalStore((state) => state.canvas.MIN_SCALE);
+  const MAX_SCALE = useLocalStore((state) => state.canvas.MAX_SCALE);
+  const setStageScale = useLocalStore((state) => state.setStageScale);
+  const setStagePosition = useLocalStore((state) => state.setStagePosition);
 
   // Calculate zoom percentage
   const zoomPercentage = Math.round(stageScale * 100);

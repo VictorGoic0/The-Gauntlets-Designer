@@ -9,6 +9,7 @@ import useCursorSync from "../../hooks/useCursorSync";
 import usePresence from "../../hooks/usePresence";
 import usePresenceSync from "../../hooks/usePresenceSync";
 import useObjectSync from "../../hooks/useObjectSync";
+import useLocalStore from "../../stores/localStore";
 import Cursor from "./Cursor";
 import Rectangle from "./shapes/Rectangle";
 import Circle from "./shapes/Circle";
@@ -18,20 +19,22 @@ import { createRectangle, createCircle, createText } from "../../utils/objectUti
 import { updateObject, deleteObjects } from "../../utils/firestoreUtils";
 
 export default function Canvas() {
-  // Get canvas state from context
-  const {
-    stagePosition,
-    setStagePosition,
-    stageScale,
-    setStageScale,
-    MIN_SCALE,
-    MAX_SCALE,
-    canvasMode,
-    clearSelection,
-    selectObject,
-    isSelected,
-    selectedObjectIds,
-  } = useCanvas();
+  // Get canvas view state from Local Store (zoom, pan)
+  const stagePosition = useLocalStore((state) => state.canvas.stagePosition);
+  const stageScale = useLocalStore((state) => state.canvas.stageScale);
+  const MIN_SCALE = useLocalStore((state) => state.canvas.MIN_SCALE);
+  const MAX_SCALE = useLocalStore((state) => state.canvas.MAX_SCALE);
+  const setStagePosition = useLocalStore((state) => state.setStagePosition);
+  const setStageScale = useLocalStore((state) => state.setStageScale);
+
+  // Get canvas mode state from Local Store (tool selection)
+  const canvasMode = useLocalStore((state) => state.canvas.mode);
+
+  // Get selection state from Local Store
+  const selectedObjectIds = useLocalStore((state) => state.selection.selectedObjectIds);
+  const clearSelection = useLocalStore((state) => state.clearSelection);
+  const selectObject = useLocalStore((state) => state.selectObject);
+  const isSelected = useLocalStore((state) => state.isSelected);
   
   const { currentUser } = useAuth();
 

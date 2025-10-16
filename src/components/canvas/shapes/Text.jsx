@@ -1,6 +1,6 @@
 import { Text as KonvaText, Transformer } from "react-konva";
 import { useRef, useEffect, useState } from "react";
-import { useCanvas } from "../../../hooks/useCanvas";
+import useLocalStore from "../../../stores/localStore";
 
 /**
  * Text shape component
@@ -29,7 +29,7 @@ export default function Text({
   const transformerRef = useRef();
   const onTextChangeRef = useRef(onTextChange);
   const isEditingRef = useRef(false);
-  const { canvasMode } = useCanvas();
+  const canvasMode = useLocalStore((state) => state.canvas.mode);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(shapeProps.text || "Double-click to edit");
   

@@ -1,4 +1,4 @@
-import { useCanvas } from "../../hooks/useCanvas";
+import useLocalStore from "../../stores/localStore";
 
 /**
  * Toolbar component for canvas tools
@@ -8,7 +8,8 @@ import { useCanvas } from "../../hooks/useCanvas";
  * - Positioned on the left side of the canvas
  */
 export default function Toolbar() {
-  const { canvasMode, setCanvasMode } = useCanvas();
+  const canvasMode = useLocalStore((state) => state.canvas.mode);
+  const setCanvasMode = useLocalStore((state) => state.setCanvasMode);
 
   const tools = [
     {

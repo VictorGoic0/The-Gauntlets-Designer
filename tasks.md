@@ -1298,7 +1298,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Create actions/setters for presence data
    - Implement cursor and user presence management
 
-5. - [ ] Create central action dispatcher
+5. - [x] Create central action dispatcher
    - File: `src/stores/actions.js`
    - Implement multi-store actions (moveObject, finishDrag, etc.)
    - Define optimistic update patterns
@@ -1306,17 +1306,17 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Phase 2: Migrate Canvas State**
 
-6. - [ ] Migrate canvas view state
+6. - [x] Migrate canvas view state
    - Move zoom, pan from CanvasContext to Local Store
    - Update Canvas.jsx to use useLocalStore() (ZERO local state)
    - Remove old state management code
 
-7. - [ ] Migrate canvas mode state
+7. - [x] Migrate canvas mode state
    - Move tool selection (select/rectangle/circle/text) to Local Store
    - Update Toolbar.jsx to use useLocalStore() (ZERO local state)
    - Remove old CanvasContext mode state
 
-8. - [ ] Migrate selection state
+8. - [x] Migrate selection state
    - Move selectedObjectIds to Local Store
    - Update all components that use selection to use useLocalStore() (ZERO local state)
    - Remove old selection state from CanvasContext
