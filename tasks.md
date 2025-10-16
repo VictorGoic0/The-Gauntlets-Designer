@@ -1382,10 +1382,14 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Phase 5: Cleanup and Refactor**
 
-17. - [ ] Remove old context providers
-    - Delete or deprecate CanvasContext
-    - Remove unused state management hooks
-    - Clean up prop drilling
+17. - [x] Remove old context providers
+    - ✅ Deleted CanvasContext (replaced by Local Store)
+    - ✅ Deleted useCanvas hook (no longer needed)
+    - ✅ Removed CanvasProvider wrapper from CanvasPage.jsx
+    - ✅ Updated Canvas tests (removed CanvasProvider dependency)
+    - ✅ Deleted CanvasContext test file
+    - ✅ All remaining hooks are actively used (useAuth, useCursorSync, etc.)
+    - ✅ No prop drilling issues (event handlers passed directly parent → child)
 
 18. - [ ] Refactor hooks to use stores
     - Update useObjectSync to work with Firestore Store
