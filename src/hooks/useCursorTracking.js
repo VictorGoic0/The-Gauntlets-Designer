@@ -22,10 +22,7 @@ export function useCursorTracking(enabled = true) {
     if (!enabled || !currentUser) return;
 
     const userColor = getUserColor(currentUser.uid);
-    const cursorRef = ref(
-      realtimeDb,
-      `projects/shared-canvas/cursors/${currentUser.uid}`
-    );
+    const cursorRef = ref(realtimeDb, `cursors/${currentUser.uid}`);
 
     // Set up automatic cleanup on disconnect
     onDisconnect(cursorRef).remove();

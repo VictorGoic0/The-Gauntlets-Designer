@@ -21,10 +21,7 @@ export function usePresence(enabled = true) {
     if (!enabled || !currentUser) return;
 
     const userColor = getUserColor(currentUser.uid);
-    const presenceRef = ref(
-      realtimeDb,
-      `presence/shared-canvas/${currentUser.uid}`
-    );
+    const presenceRef = ref(realtimeDb, `presence/${currentUser.uid}`);
 
     // Initialize presence data on mount
     const initializePresence = async () => {
