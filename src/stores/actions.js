@@ -184,8 +184,8 @@ export const finishDrag = async (
       );
   }
 
-  // Keep local position until remote update arrives to prevent flicker
-  // The sync layer will clear it when remote position matches
+  // Keep local position until remote update arrives and matches
+  // Canvas useEffect will clear it when remote position matches local
 };
 
 /**
@@ -232,8 +232,8 @@ export const finishTransform = async (objectId, transformData, currentUser) => {
       .updateObjectInFirestore(objectId, transformData, currentUser.uid);
   }
 
-  // Keep local transform until remote update arrives to prevent snap-back
-  // The sync layer will clear it when remote transform matches
+  // Keep local transform until remote update arrives and matches
+  // Canvas useEffect will clear it when remote transform matches local
 };
 
 /**
