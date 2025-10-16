@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
@@ -69,13 +69,16 @@ export default function Canvas() {
   const [_transformingObjectId, setTransformingObjectId] = useState(null);
   
   // Combine dragging and transforming objects to prevent remote updates during user actions
-  const activeObjectIds = {
-    ...localObjectPositions,
-    ...Object.keys(localObjectTransforms).reduce((acc, id) => {
-      acc[id] = true;
-      return acc;
-    }, {}),
-  };
+  // Use useMemo to create stable reference that only changes when actual IDs change
+  const activeObjectIds = useMemo(() => {
+    return {
+      ...localObjectPositions,
+      ...Object.keys(localObjectTransforms).reduce((acc, id) => {
+        acc[id] = true;
+        return acc;
+      }, {}),
+    };
+  }, [localObjectPositions, localObjectTransforms]);
   
   // Object syncing (pass active objects to prevent remote updates during drag/transform)
   const { objects, loading } = useObjectSync(activeObjectIds);
@@ -93,6 +96,23 @@ export default function Canvas() {
   const deleteSelectedObjects = useCallback(async () => {
     // Delete all selected objects using utility function
     await deleteObjects(selectedObjectIds);
+    
+    // Clear local state for deleted objects
+    setLocalObjectPositions((prev) => {
+      const updated = { ...prev };
+      selectedObjectIds.forEach((id) => {
+        delete updated[id];
+      });
+      return updated;
+    });
+    
+    setLocalObjectTransforms((prev) => {
+      const updated = { ...prev };
+      selectedObjectIds.forEach((id) => {
+        delete updated[id];
+      });
+      return updated;
+    });
     
     // Clear selection
     clearSelection();
@@ -115,12 +135,23 @@ export default function Canvas() {
   }, []);
 
   // Clear local positions when remote updates match
+  // Clean up local positions for deleted objects and when remote matches
   useEffect(() => {
+    const existingObjectIds = new Set(objects.map((obj) => obj.id));
+    
     setLocalObjectPositions((prev) => {
       const updated = { ...prev };
       let changed = false;
       
       Object.keys(prev).forEach((objectId) => {
+        // If object was deleted remotely, remove local position
+        if (!existingObjectIds.has(objectId)) {
+          delete updated[objectId];
+          changed = true;
+          return;
+        }
+        
+        // If object exists and not being dragged, check if remote matches
         const remoteObject = objects.find(obj => obj.id === objectId);
         if (remoteObject) {
           const localPos = prev[objectId];
@@ -139,13 +170,23 @@ export default function Canvas() {
     });
   }, [objects]);
 
-  // Clear local transforms when remote updates match
+  // Clean up local transforms for deleted objects and when remote matches
   useEffect(() => {
+    const existingObjectIds = new Set(objects.map((obj) => obj.id));
+    
     setLocalObjectTransforms((prev) => {
       const updated = { ...prev };
       let changed = false;
       
       Object.keys(prev).forEach((objectId) => {
+        // If object was deleted remotely, remove local transform
+        if (!existingObjectIds.has(objectId)) {
+          delete updated[objectId];
+          changed = true;
+          return;
+        }
+        
+        // If object exists, check if remote transform matches local (within tolerance)
         const remoteObject = objects.find(obj => obj.id === objectId);
         if (remoteObject) {
           const localTransform = prev[objectId];

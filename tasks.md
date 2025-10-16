@@ -1089,14 +1089,22 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 ### Subtasks
 
-1. - [ ] Fix simultaneous drag conflict resolution
+1. - [x] Fix deleted objects persisting on other devices
+
+   - Update `src/components/canvas/Canvas.jsx`
+   - Stabilized `activeObjectIds` using `useMemo` to prevent constant re-subscriptions
+   - Added cleanup in `deleteSelectedObjects` to remove from local state immediately
+   - Added cleanup in sync effects to remove deleted objects from `localObjectPositions` and `localObjectTransforms`
+   - Ensures Firestore is source of truth and local state is cleaned up when objects are deleted
+
+2. - [ ] Fix simultaneous drag conflict resolution
 
    - Update `src/hooks/useObjectSync.js`
    - Implement proper last-write-wins using server timestamps
    - Ensure dragging same object by multiple users resolves correctly
    - Most recent drag should win based on `lastModified` timestamp
 
-2. - [x] Add username/password authentication
+3. - [x] Add username/password authentication
 
    - Update `src/lib/firebase.js`
    - Add `signUpWithEmail(email, password, displayName)` function
@@ -1106,34 +1114,34 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - Both pages include Google Sign-In option
    - Add proper routing with AuthRedirect component
 
-3. - [x] Fix text editing not working (textarea kept being destroyed)
+4. - [x] Fix text editing not working (textarea kept being destroyed)
 
    - Update `src/components/canvas/shapes/Text.jsx`
    - Used refs for `onTextChange` and `isEditing` to prevent useEffect from re-running on every Canvas render
    - Fixed race condition where exiting edit mode would overwrite new text with old text from Firestore
    - Text editing now works consistently and edits sync properly
 
-4. - [ ] Fix text rotation issue for new text objects
+5. - [ ] Fix text rotation issue for new text objects
 
    - Update `src/components/canvas/shapes/Text.jsx`
    - Debug why newly created text cannot be rotated
    - Ensure Transformer properly attaches to text nodes
    - Verify rotation property syncs correctly
 
-5. - [x] Fix text resize-then-rotate size snap issue
+6. - [x] Fix text resize-then-rotate size snap issue
    - Update `src/components/canvas/shapes/Text.jsx`
    - Fix text snapping back to old size after resize then rotate
    - Ensure width/height properly updated after resize
    - Apply scale to dimensions correctly before rotation
 
-6. - [x] Fix transform snap-back on second resize/rotate
+7. - [x] Fix transform snap-back on second resize/rotate
    - Update `src/components/canvas/Canvas.jsx`
    - Fix transforms snapping back to old values on subsequent transforms
    - Keep local transform state until Firestore confirms update (same pattern as drag)
    - Pass transforming objects to `useObjectSync` to block remote updates during transform
    - Add `useEffect` to auto-clear local transforms when remote matches
 
-7. - [x] Fix Konva NaN warnings for x, y, rotation attributes
+8. - [x] Fix Konva NaN warnings for x, y, rotation attributes
    - Update `src/components/canvas/Canvas.jsx`
    - Add default values for all numeric properties before passing to Konva components
    - Ensure x, y, rotation, width, height, radius, fontSize always have valid numbers
@@ -1159,6 +1167,9 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 **Test Before Merge:**
 
+- [x] Objects deleted on one device disappear on all other devices immediately
+- [x] Deleted objects are removed from Firestore (verified in console)
+- [x] Local state properly cleaned up when objects deleted remotely
 - [ ] Two users can drag same object simultaneously - last one wins
 - [x] Can sign up with email/password
 - [x] Can sign in with email/password
