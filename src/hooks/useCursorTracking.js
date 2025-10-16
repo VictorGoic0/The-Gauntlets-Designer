@@ -6,13 +6,20 @@ import { getUserColor } from "../utils/userColors";
 
 /**
  * Hook to track local cursor position and sync to Realtime Database.
+ * Converts screen coordinates to canvas coordinates before storing.
  * Throttles updates to 45ms (~22 updates/second) for performance
  * while maintaining <50ms perceived latency.
  * Automatically cleans up cursor on unmount and browser close.
  *
  * @param {boolean} enabled - Whether cursor tracking is enabled
+ * @param {Object} stagePosition - Stage position {x, y} for coordinate conversion
+ * @param {number} stageScale - Stage scale for coordinate conversion
  */
-export function useCursorTracking(enabled = true) {
+export function useCursorTracking(
+  enabled = true,
+  stagePosition = { x: 0, y: 0 },
+  stageScale = 1
+) {
   const { currentUser } = useAuth();
   const lastUpdateRef = useRef(0);
   const cursorPositionRef = useRef({ x: 0, y: 0 });
@@ -30,10 +37,14 @@ export function useCursorTracking(enabled = true) {
     const handleMouseMove = async (e) => {
       const now = Date.now();
 
-      // Store cursor position
+      // Convert screen coordinates to canvas coordinates
+      const canvasX = (e.clientX - stagePosition.x) / stageScale;
+      const canvasY = (e.clientY - stagePosition.y) / stageScale;
+
+      // Store cursor position (in canvas coordinates)
       cursorPositionRef.current = {
-        x: e.clientX,
-        y: e.clientY,
+        x: canvasX,
+        y: canvasY,
       };
 
       // Throttle: only update if enough time has passed
@@ -44,7 +55,7 @@ export function useCursorTracking(enabled = true) {
       lastUpdateRef.current = now;
 
       try {
-        // Write cursor position to Realtime Database
+        // Write cursor position (in canvas coordinates) to Realtime Database
         await set(cursorRef, {
           x: cursorPositionRef.current.x,
           y: cursorPositionRef.current.y,
@@ -69,7 +80,7 @@ export function useCursorTracking(enabled = true) {
         console.error("Error removing cursor:", error);
       });
     };
-  }, [enabled, currentUser]);
+  }, [enabled, currentUser, stagePosition, stageScale]);
 }
 
 export default useCursorTracking;

@@ -1216,13 +1216,42 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
      - ✅ Presence Store structure
      - ✅ Throttling (45ms updates)
 
+4. - [x] Fix cursor position tracking to use canvas coordinates ✅ COMPLETE
+
+   - **Problem**: Cursors tracked in screen coordinates (pixels from browser window edge)
+     - Different screen sizes/resolutions show cursors at wrong positions
+     - Zoom and pan state not accounted for
+     - Objects work correctly because they use canvas coordinates
+   - **Goal**: Track cursors in canvas coordinates (logical position on 5000x5000 canvas)
+   - **Solution**: Update `useCursorTracking` hook to convert coordinates
+     - Hook accepts `stagePosition` and `stageScale` as parameters
+     - Convert screen coords to canvas coords before writing to DB
+     - Canvas converts canvas coords back to screen coords for rendering
+   - **Data Flow:**
+     - Track: Screen coords → Canvas coords → Realtime DB
+     - Render: Realtime DB → Canvas coords → Screen coords
+   - **Implementation completed:**
+     - ✅ Updated `useCursorTracking(enabled, stagePosition, stageScale)` signature
+     - ✅ Convert: `canvasX = (clientX - stagePosition.x) / stageScale`
+     - ✅ Canvas passes transform state to hook
+     - ✅ Canvas converts cursor positions for rendering in useMemo
+     - ✅ Added stagePosition/stageScale to useEffect dependencies
+   - **Files modified:**
+     - ✅ `src/hooks/useCursorTracking.js` (accepts transform params, converts coords)
+     - ✅ `src/components/canvas/Canvas.jsx` (passes transform, converts for rendering)
+     - ✅ `src/components/canvas/Cursor.jsx` (updated JSDoc)
+
 **Files Modified:**
 
 - `src/stores/firestoreStore.js` (conflict resolution - completed in PR #14)
 - `src/components/canvas/shapes/Text.jsx` (pending)
-- `src/hooks/useCursorTracking.js` (cursor sync to Realtime DB - completed)
+- `src/hooks/useCursorTracking.js` (cursor sync + canvas coordinates - completed)
 - `src/hooks/useCursorSync.js` (cursor sync to Realtime DB - completed)
-- `src/lib/firebase.js` (added Realtime DB imports - completed)
+- `src/hooks/usePresence.js` (flattened DB paths - completed)
+- `src/hooks/usePresenceSync.js` (flattened DB paths - completed)
+- `src/lib/firebase.js` (added Realtime DB imports + flattened paths - completed)
+- `src/components/canvas/Canvas.jsx` (cursor coordinate conversion - completed)
+- `src/components/canvas/Cursor.jsx` (updated JSDoc - completed)
 
 **Test Before Merge:**
 
