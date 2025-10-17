@@ -262,7 +262,7 @@ export default function Text({
           ref={transformerRef}
           boundBoxFunc={(oldBox, newBox) => {
             // Limit resize to prevent negative dimensions
-            if (newBox.width < 20 || newBox.height < 20) {
+            if (newBox.width < 5 || newBox.height < 5) {
               return oldBox;
             }
             return newBox;

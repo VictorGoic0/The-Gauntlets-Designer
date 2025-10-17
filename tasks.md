@@ -1185,12 +1185,27 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - ✅ Timestamp comparison resolves conflicts correctly
    - ✅ Most recent edit wins based on `lastEditedAt` timestamp
 
-2. - [ ] Fix text rotation issue for new text objects
+2. - [x] Fix text rotation issue for new text objects ✅ COMPLETE
 
-   - Update `src/components/canvas/shapes/Text.jsx`
-   - Debug why newly created text cannot be rotated
-   - Ensure Transformer properly attaches to text nodes
-   - Verify rotation property syncs correctly
+   - **Problem**: Newly created text objects could not be rotated until after resizing
+     - Width was correctly set (200px default) in Firestore
+     - Rotation only worked after making text taller via resize
+   - **Root Cause**: Transformer `boundBoxFunc` minimum was too restrictive
+     - Text had 20px minimum for width/height
+     - During rotation, axis-aligned bounding box dimensions change
+     - At certain rotation angles, bounding box height dipped below 20px
+     - `boundBoxFunc` rejected the transformation → rotation blocked!
+     - After resize, text was taller (>20px at all angles) → rotation worked
+   - **Why this only affected Text:**
+     - Rectangle/Circle use 5px minimum (allows rotation)
+     - Text used 20px minimum (blocks rotation for small text)
+     - Default text (200×~20-30px) triggers this issue
+   - **Solution**: Lowered minimum threshold to match other shapes
+     - Changed from `newBox.width < 20 || newBox.height < 20`
+     - To: `newBox.width < 5 || newBox.height < 5`
+     - Now matches Rectangle and Circle behavior
+   - **Files modified:**
+     - ✅ `src/components/canvas/shapes/Text.jsx` (lowered boundBoxFunc threshold from 20px to 5px)
 
 3. - [x] Move cursor sync to Realtime Database ✅ COMPLETE
 
@@ -1244,7 +1259,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 **Files Modified:**
 
 - `src/stores/firestoreStore.js` (conflict resolution - completed in PR #14)
-- `src/components/canvas/shapes/Text.jsx` (pending)
+- `src/components/canvas/shapes/Text.jsx` (text rotation fix - completed)
 - `src/hooks/useCursorTracking.js` (cursor sync + canvas coordinates - completed)
 - `src/hooks/useCursorSync.js` (cursor sync to Realtime DB - completed)
 - `src/hooks/usePresence.js` (flattened DB paths - completed)
