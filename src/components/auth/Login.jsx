@@ -4,6 +4,7 @@ import { signInWithEmail, signInWithGoogle } from "../../lib/firebase";
 import { showSuccess, showError } from "../../utils/toast";
 import Card from "../design-system/Card";
 import Button from "../design-system/Button";
+import Input from "../design-system/Input";
 
 // Firebase Auth error code to user-friendly message mapping
 export const AUTH_ERROR_MESSAGES = {
@@ -95,39 +96,27 @@ export default function Login() {
         <div className="space-y-6">
           {/* Email/Password Login Form */}
           <form onSubmit={handleEmailSignIn} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium" style={{ color: '#111827' }}>
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="you@example.com"
-              />
-            </div>
+            <Input
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium" style={{ color: '#111827' }}>
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your password"
-              />
-            </div>
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+            />
 
             <div className="flex justify-center" style={{ marginTop: '32px' }}>
               <Button
