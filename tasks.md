@@ -1775,7 +1775,8 @@ const objects = useFirestoreStore((state) => state.objects);
    - Replace all button elements with Button component
    - Use appropriate variants (primary for submit, outline for secondary actions)
    - Ensure loading states work correctly
-   - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`
+   - Add Button component to sign-out button in Header
+   - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`, `src/components/ui/Header.jsx`
 
 10. - [x] Integrate Input component into Login/SignUp pages
     - Replace all input elements with Input component

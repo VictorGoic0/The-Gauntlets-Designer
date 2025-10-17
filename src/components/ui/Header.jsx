@@ -1,6 +1,7 @@
 import { useAuth } from "../../hooks/useAuth";
 import { signOutUser } from "../../lib/firebase";
 import ConnectionStatus from "./ConnectionStatus";
+import Button from "../design-system/Button";
 
 export default function Header() {
   const { currentUser } = useAuth();
@@ -22,12 +23,13 @@ export default function Header() {
           <span className="text-gray-300">
             Welcome, {currentUser?.displayName || "User"}
           </span>
-          <button
+          <Button
             onClick={handleSignOut}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+            variant="primary"
+            size="sm"
           >
             Sign Out
-          </button>
+          </Button>
         </div>
       </div>
     </header>
