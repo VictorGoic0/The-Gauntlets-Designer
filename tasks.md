@@ -1283,12 +1283,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 - `src/stores/firestoreStore.js` (conflict resolution - completed in PR #14)
 - `src/components/canvas/shapes/Text.jsx` (text rotation fix - completed)
-- `src/hooks/useCursorTracking.js` (cursor sync + canvas coordinates - completed)
+- `src/hooks/useCursorTracking.js` (cursor sync + canvas coordinates + container offset - completed)
 - `src/hooks/useCursorSync.js` (cursor sync to Realtime DB - completed)
 - `src/hooks/usePresence.js` (flattened DB paths - completed)
 - `src/hooks/usePresenceSync.js` (flattened DB paths - completed)
 - `src/lib/firebase.js` (added Realtime DB imports + flattened paths - completed)
-- `src/components/canvas/Canvas.jsx` (cursor coordinate conversion - completed)
+- `src/components/canvas/Canvas.jsx` (cursor coordinate conversion + container offset tracking - completed)
 - `src/components/canvas/Cursor.jsx` (updated JSDoc - completed)
 
 **Test Before Merge:** ✅ ALL TESTS PASSED
@@ -1297,6 +1297,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [x] Newly created text can be rotated immediately
 - [x] Cursor updates are smooth and real-time via Realtime Database
 - [x] Cursors align correctly across different screen sizes/resolutions
+- [x] Cursor position accounts for Header offset (y-position no longer offset)
 - [x] Cursors only visible for online users (presence filtering still works)
 - [x] Cursor cleanup works on disconnect
 - [x] All existing functionality still works
