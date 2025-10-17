@@ -1695,7 +1695,7 @@ const objects = useFirestoreStore((state) => state.objects);
 
 ### Subtasks
 
-1. - [ ] Create design tokens
+1. - [x] Create design tokens
    - File: `src/styles/tokens.js`
    - Color palette (primary, secondary, neutral, semantic colors)
    - Typography scale (font sizes, weights, line heights)
@@ -1704,7 +1704,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Shadow definitions
    - Modern, Material-UI inspired aesthetic
 
-2. - [ ] Create Card component
+2. - [x] Create Card component
    - File: `src/components/design-system/Card.jsx`
    - Container for grouped content (will be used for Login/SignUp pages)
    - Variants: elevated, outlined, flat
@@ -1712,7 +1712,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Hover effects (optional)
    - Uses design tokens for styling
 
-3. - [ ] Create Input component
+3. - [x] Create Input component
    - File: `src/components/design-system/Input.jsx`
    - Text input with label (will be used for Login/SignUp forms)
    - Error state styling
@@ -1723,7 +1723,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Full accessibility
    - Uses design tokens for styling
 
-4. - [ ] Create Button component
+4. - [x] Create Button component
    - File: `src/components/design-system/Button.jsx`
    - Variants: primary, secondary, outline, ghost
    - Sizes: sm, md, lg
@@ -1732,7 +1732,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Full accessibility (ARIA labels, keyboard navigation)
    - Uses design tokens for styling
 
-5. - [ ] Setup Toast notifications with React Hot Toast
+5. - [x] Setup Toast notifications with React Hot Toast
    - Install dependency: `npm install react-hot-toast`
    - Create toast utility/wrapper: `src/utils/toast.js`
    - Configure toast styling with design tokens
