@@ -3,8 +3,8 @@
  * Shows cursor pointer and user name label.
  * 
  * @param {Object} props
- * @param {number} props.x - X position in screen coordinates
- * @param {number} props.y - Y position in screen coordinates
+ * @param {number} props.x - X position in screen-rendered coordinates (canvas coords converted to screen)
+ * @param {number} props.y - Y position in screen-rendered coordinates (canvas coords converted to screen)
  * @param {string} props.userName - User's display name
  * @param {string} props.userColor - User's assigned color
  */

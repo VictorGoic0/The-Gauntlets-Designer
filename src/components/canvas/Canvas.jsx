@@ -58,8 +58,8 @@ export default function Canvas() {
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   // Cursor tracking and syncing
-  useCursorTracking(true);
-  useCursorSync(); // Sets up Firestore listener, writes to Presence Store
+  useCursorTracking(true, stagePosition, stageScale);
+  useCursorSync(); // Sets up Realtime DB listener, writes to Presence Store
   
   // Presence tracking
   usePresence(true);
@@ -102,9 +102,19 @@ export default function Canvas() {
   }, [firestoreObjects, optimisticObjectsData]);
   
   // Filter cursors to only show users who are in the presence list (online)
-  const visibleCursors = remoteCursors.filter((cursor) => {
-    return onlineUsers.some((user) => user.userId === cursor.userId);
-  });
+  // Then convert from canvas coordinates to screen coordinates for rendering
+  const visibleCursors = useMemo(() => {
+    return remoteCursors
+      .filter((cursor) => {
+        return onlineUsers.some((user) => user.userId === cursor.userId);
+      })
+      .map((cursor) => ({
+        ...cursor,
+        // Convert canvas coordinates to screen coordinates
+        x: cursor.x * stageScale + stagePosition.x,
+        y: cursor.y * stageScale + stagePosition.y,
+      }));
+  }, [remoteCursors, onlineUsers, stageScale, stagePosition]);
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;

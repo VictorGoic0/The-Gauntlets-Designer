@@ -1185,12 +1185,27 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
    - ✅ Timestamp comparison resolves conflicts correctly
    - ✅ Most recent edit wins based on `lastEditedAt` timestamp
 
-2. - [ ] Fix text rotation issue for new text objects
+2. - [x] Fix text rotation issue for new text objects ✅ COMPLETE
 
-   - Update `src/components/canvas/shapes/Text.jsx`
-   - Debug why newly created text cannot be rotated
-   - Ensure Transformer properly attaches to text nodes
-   - Verify rotation property syncs correctly
+   - **Problem**: Newly created text objects could not be rotated until after resizing
+     - Width was correctly set (200px default) in Firestore
+     - Rotation only worked after making text taller via resize
+   - **Root Cause**: Transformer `boundBoxFunc` minimum was too restrictive
+     - Text had 20px minimum for width/height
+     - During rotation, axis-aligned bounding box dimensions change
+     - At certain rotation angles, bounding box height dipped below 20px
+     - `boundBoxFunc` rejected the transformation → rotation blocked!
+     - After resize, text was taller (>20px at all angles) → rotation worked
+   - **Why this only affected Text:**
+     - Rectangle/Circle use 5px minimum (allows rotation)
+     - Text used 20px minimum (blocks rotation for small text)
+     - Default text (200×~20-30px) triggers this issue
+   - **Solution**: Lowered minimum threshold to match other shapes
+     - Changed from `newBox.width < 20 || newBox.height < 20`
+     - To: `newBox.width < 5 || newBox.height < 5`
+     - Now matches Rectangle and Circle behavior
+   - **Files modified:**
+     - ✅ `src/components/canvas/shapes/Text.jsx` (lowered boundBoxFunc threshold from 20px to 5px)
 
 3. - [x] Move cursor sync to Realtime Database ✅ COMPLETE
 
@@ -1216,22 +1231,52 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
      - ✅ Presence Store structure
      - ✅ Throttling (45ms updates)
 
+4. - [x] Fix cursor position tracking to use canvas coordinates ✅ COMPLETE
+
+   - **Problem**: Cursors tracked in screen coordinates (pixels from browser window edge)
+     - Different screen sizes/resolutions show cursors at wrong positions
+     - Zoom and pan state not accounted for
+     - Objects work correctly because they use canvas coordinates
+   - **Goal**: Track cursors in canvas coordinates (logical position on 5000x5000 canvas)
+   - **Solution**: Update `useCursorTracking` hook to convert coordinates
+     - Hook accepts `stagePosition` and `stageScale` as parameters
+     - Convert screen coords to canvas coords before writing to DB
+     - Canvas converts canvas coords back to screen coords for rendering
+   - **Data Flow:**
+     - Track: Screen coords → Canvas coords → Realtime DB
+     - Render: Realtime DB → Canvas coords → Screen coords
+   - **Implementation completed:**
+     - ✅ Updated `useCursorTracking(enabled, stagePosition, stageScale)` signature
+     - ✅ Convert: `canvasX = (clientX - stagePosition.x) / stageScale`
+     - ✅ Canvas passes transform state to hook
+     - ✅ Canvas converts cursor positions for rendering in useMemo
+     - ✅ Added stagePosition/stageScale to useEffect dependencies
+   - **Files modified:**
+     - ✅ `src/hooks/useCursorTracking.js` (accepts transform params, converts coords)
+     - ✅ `src/components/canvas/Canvas.jsx` (passes transform, converts for rendering)
+     - ✅ `src/components/canvas/Cursor.jsx` (updated JSDoc)
+
 **Files Modified:**
 
 - `src/stores/firestoreStore.js` (conflict resolution - completed in PR #14)
-- `src/components/canvas/shapes/Text.jsx` (pending)
-- `src/hooks/useCursorTracking.js` (cursor sync to Realtime DB - completed)
+- `src/components/canvas/shapes/Text.jsx` (text rotation fix - completed)
+- `src/hooks/useCursorTracking.js` (cursor sync + canvas coordinates - completed)
 - `src/hooks/useCursorSync.js` (cursor sync to Realtime DB - completed)
-- `src/lib/firebase.js` (added Realtime DB imports - completed)
+- `src/hooks/usePresence.js` (flattened DB paths - completed)
+- `src/hooks/usePresenceSync.js` (flattened DB paths - completed)
+- `src/lib/firebase.js` (added Realtime DB imports + flattened paths - completed)
+- `src/components/canvas/Canvas.jsx` (cursor coordinate conversion - completed)
+- `src/components/canvas/Cursor.jsx` (updated JSDoc - completed)
 
-**Test Before Merge:**
+**Test Before Merge:** ✅ ALL TESTS PASSED
 
 - [x] Two users can drag same object simultaneously - last one wins (fixed in PR #14)
-- [ ] Newly created text can be rotated immediately
-- [ ] Cursor updates are smooth and real-time via Realtime Database
-- [ ] Cursors only visible for online users (presence filtering still works)
-- [ ] Cursor cleanup works on disconnect
-- [ ] All existing functionality still works
+- [x] Newly created text can be rotated immediately
+- [x] Cursor updates are smooth and real-time via Realtime Database
+- [x] Cursors align correctly across different screen sizes/resolutions
+- [x] Cursors only visible for online users (presence filtering still works)
+- [x] Cursor cleanup works on disconnect
+- [x] All existing functionality still works
 
 ---
 
