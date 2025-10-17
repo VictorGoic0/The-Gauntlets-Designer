@@ -8,7 +8,6 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -17,13 +16,11 @@ export default function SignUp() {
     
     if (!displayName.trim()) {
       const errorMessage = "Please enter a display name";
-      setError(errorMessage);
       showError(errorMessage);
       return;
     }
     
     try {
-      setError(null);
       setLoading(true);
       await signUpWithEmail(email, password, displayName);
       showSuccess("Account created successfully! Welcome!");
@@ -47,7 +44,6 @@ export default function SignUp() {
           errorMessage = error.message || "An error occurred. Please try again.";
       }
       
-      setError(errorMessage);
       showError(errorMessage);
     } finally {
       setLoading(false);
@@ -56,7 +52,6 @@ export default function SignUp() {
 
   const handleGoogleSignIn = async () => {
     try {
-      setError(null);
       setLoading(true);
       await signInWithGoogle();
       showSuccess("Account created successfully! Welcome!");
@@ -69,7 +64,6 @@ export default function SignUp() {
       // Map error code to user-friendly message
       const errorMessage = AUTH_ERROR_MESSAGES[errorCode] || error.message || "An error occurred. Please try again.";
       
-      setError(errorMessage);
       showError(errorMessage);
     } finally {
       setLoading(false);
@@ -192,33 +186,6 @@ export default function SignUp() {
             Sign in with Google
             </button>
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Sign Up Error
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">{error}</div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Link to Login */}
           <div className="text-center">
