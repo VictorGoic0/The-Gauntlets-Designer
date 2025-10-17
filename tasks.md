@@ -1805,18 +1805,18 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Test Before Merge:**
 
-- [ ] Design system components are consistent and reusable
-- [ ] All components have proper hover/focus states
-- [ ] Components are accessible (keyboard navigation, ARIA labels)
-- [ ] Components use design tokens consistently
-- [ ] Toast notifications work correctly (auto-dismiss, positioning)
-- [ ] Toast shows on login/signup errors and success
-- [ ] Toast shows on internet disconnect/reconnect
-- [ ] Card component renders correctly on Login/SignUp pages
-- [ ] Button component works on Login/SignUp pages (including loading states)
-- [ ] Input component works on Login/SignUp pages (including password toggle)
-- [ ] Documentation is clear with usage examples
-- [ ] No console errors or warnings
+- [x] Design system components are consistent and reusable
+- [x] All components have proper hover/focus states
+- [x] Components are accessible (keyboard navigation, ARIA labels)
+- [x] Components use design tokens consistently
+- [x] Toast notifications work correctly (auto-dismiss, positioning)
+- [x] Toast shows on login/signup errors and success
+- [x] Toast shows on internet disconnect/reconnect
+- [x] Card component renders correctly on Login/SignUp pages
+- [x] Button component works on Login/SignUp pages (including loading states)
+- [x] Input component works on Login/SignUp pages (including password toggle)
+- [x] Documentation is clear with usage examples
+- [x] No console errors or warnings
 
 ---
 
