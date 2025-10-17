@@ -57,8 +57,26 @@ export default function Canvas() {
   const containerRef = useRef(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
+  // Calculate container offset from viewport (for cursor positioning)
+  const [containerOffset, setContainerOffset] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const updateContainerOffset = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerOffset({ x: rect.left, y: rect.top });
+      }
+    };
+
+    // Update on mount and window resize
+    updateContainerOffset();
+    window.addEventListener("resize", updateContainerOffset);
+    
+    return () => window.removeEventListener("resize", updateContainerOffset);
+  }, []);
+
   // Cursor tracking and syncing
-  useCursorTracking(true, stagePosition, stageScale);
+  useCursorTracking(true, stagePosition, stageScale, containerOffset);
   useCursorSync(); // Sets up Realtime DB listener, writes to Presence Store
   
   // Presence tracking

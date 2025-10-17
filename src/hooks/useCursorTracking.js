@@ -14,11 +14,13 @@ import { getUserColor } from "../utils/userColors";
  * @param {boolean} enabled - Whether cursor tracking is enabled
  * @param {Object} stagePosition - Stage position {x, y} for coordinate conversion
  * @param {number} stageScale - Stage scale for coordinate conversion
+ * @param {Object} containerOffset - Container offset {x, y} from viewport
  */
 export function useCursorTracking(
   enabled = true,
   stagePosition = { x: 0, y: 0 },
-  stageScale = 1
+  stageScale = 1,
+  containerOffset = { x: 0, y: 0 }
 ) {
   const { currentUser } = useAuth();
   const lastUpdateRef = useRef(0);
@@ -38,8 +40,11 @@ export function useCursorTracking(
       const now = Date.now();
 
       // Convert screen coordinates to canvas coordinates
-      const canvasX = (e.clientX - stagePosition.x) / stageScale;
-      const canvasY = (e.clientY - stagePosition.y) / stageScale;
+      // Account for: container offset from viewport, stage pan, and scale
+      const canvasX =
+        (e.clientX - containerOffset.x - stagePosition.x) / stageScale;
+      const canvasY =
+        (e.clientY - containerOffset.y - stagePosition.y) / stageScale;
 
       // Store cursor position (in canvas coordinates)
       cursorPositionRef.current = {
@@ -80,7 +85,7 @@ export function useCursorTracking(
         console.error("Error removing cursor:", error);
       });
     };
-  }, [enabled, currentUser, stagePosition, stageScale]);
+  }, [enabled, currentUser, stagePosition, stageScale, containerOffset]);
 }
 
 export default useCursorTracking;

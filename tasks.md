@@ -1256,6 +1256,29 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
      - ✅ `src/components/canvas/Canvas.jsx` (passes transform, converts for rendering)
      - ✅ `src/components/canvas/Cursor.jsx` (updated JSDoc)
 
+5. - [x] Fix cursor y-position offset from Header ✅ COMPLETE
+
+   - **Problem**: Cursor x-position was correct but y-position was slightly off (too low)
+     - Cursor appeared below where user's mouse actually was
+     - Offset corresponded to Header height (~56-64px)
+   - **Root Cause**: Canvas coordinate conversion didn't account for page layout
+     - `e.clientX/Y` is relative to viewport (entire browser window)
+     - Canvas container is below the Header component
+     - Need to subtract container's offset from viewport top
+   - **Solution**: Calculate and pass container offset to cursor tracking
+     - Canvas.jsx measures container's `getBoundingClientRect()` on mount and resize
+     - Stores as static `containerOffset` state: `{ x: rect.left, y: rect.top }`
+     - Passes to `useCursorTracking` hook as simple parameter
+     - Hook subtracts container offset before converting to canvas coordinates
+   - **Key Design Decision**: Separation of concerns
+     - Canvas component handles DOM measurements (only on mount/resize)
+     - Hook receives static offset values, no DOM measurements inside hook
+     - Hook only recalculates on dependency changes, not every mousemove
+   - **Formula**: `canvasCoord = (clientCoord - containerOffset - stagePosition) / stageScale`
+   - **Files modified:**
+     - ✅ `src/components/canvas/Canvas.jsx` (added containerOffset calculation and state)
+     - ✅ `src/hooks/useCursorTracking.js` (accepts containerOffset param, subtracts from coords)
+
 **Files Modified:**
 
 - `src/stores/firestoreStore.js` (conflict resolution - completed in PR #14)
