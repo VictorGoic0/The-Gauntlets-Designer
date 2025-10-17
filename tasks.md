@@ -1750,7 +1750,7 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Phase II: Integrate Design System**
 
-7. - [ ] Integrate Toast notifications
+7. - [x] Integrate Toast notifications
    - Integrate into Login page:
      - Import toast utility
      - Show error toast on login failure
@@ -1766,7 +1766,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`
    - Connection monitoring: Add to `src/App.jsx` or existing connection status component
 
-8. - [ ] Integrate Card component into Login/SignUp pages
+8. - [x] Integrate Card component into Login/SignUp pages
    - Replace custom container styling with Card component
    - Use 'elevated' variant for modern look
    - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import PropTypes from 'prop-types';
 import { colors, typography, spacing, borderRadius, transitions } from '../../styles/tokens';
 
 /**
@@ -240,51 +239,3 @@ export default function Input({
     </div>
   );
 }
-
-Input.propTypes = {
-  /** Label text displayed above the input */
-  label: PropTypes.string,
-  
-  /** Input type */
-  type: PropTypes.oneOf(['text', 'email', 'password', 'number', 'tel', 'url', 'search']),
-  
-  /** Input value (controlled component) */
-  value: PropTypes.string.isRequired,
-  
-  /** Change handler function */
-  onChange: PropTypes.func.isRequired,
-  
-  /** Error message to display (also applies error styling) */
-  error: PropTypes.string,
-  
-  /** Apply success styling */
-  success: PropTypes.bool,
-  
-  /** Helper text displayed below input (when no error) */
-  helperText: PropTypes.string,
-  
-  /** Placeholder text */
-  placeholder: PropTypes.string,
-  
-  /** Disable the input */
-  disabled: PropTypes.bool,
-  
-  /** Mark input as required */
-  required: PropTypes.bool,
-  
-  /** Input ID (auto-generated if not provided) */
-  id: PropTypes.string,
-  
-  /** Input name attribute */
-  name: PropTypes.string,
-  
-  /** Autocomplete attribute */
-  autoComplete: PropTypes.string,
-  
-  /** Additional CSS classes */
-  className: PropTypes.string,
-  
-  /** Custom inline styles */
-  style: PropTypes.object,
-};
-

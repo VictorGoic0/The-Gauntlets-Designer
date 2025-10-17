@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { colors, spacing, borderRadius, shadows, transitions } from '../../styles/tokens';
 
 /**
@@ -114,24 +113,3 @@ export default function Card({
     </>
   );
 }
-
-Card.propTypes = {
-  /** Content to be displayed inside the card */
-  children: PropTypes.node.isRequired,
-  
-  /** Visual variant of the card */
-  variant: PropTypes.oneOf(['elevated', 'outlined', 'flat']),
-  
-  /** Padding size inside the card */
-  padding: PropTypes.oneOf(['none', 'sm', 'md', 'lg']),
-  
-  /** Enable hover effect (elevation increase and slight lift) */
-  hover: PropTypes.bool,
-  
-  /** Additional CSS classes */
-  className: PropTypes.string,
-  
-  /** Custom inline styles (will override default styles) */
-  style: PropTypes.object,
-};
-

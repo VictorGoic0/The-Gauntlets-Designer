@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { colors, typography, spacing, borderRadius, shadows, transitions } from '../../styles/tokens';
 
 /**
@@ -269,39 +268,3 @@ export default function Button({
     </button>
   );
 }
-
-Button.propTypes = {
-  /** Button content */
-  children: PropTypes.node.isRequired,
-  
-  /** Visual variant of the button */
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'ghost']),
-  
-  /** Button size */
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  
-  /** Show loading spinner and disable button */
-  loading: PropTypes.bool,
-  
-  /** Disable the button */
-  disabled: PropTypes.bool,
-  
-  /** Make button full width */
-  fullWidth: PropTypes.bool,
-  
-  /** Button type attribute */
-  type: PropTypes.oneOf(['button', 'submit', 'reset']),
-  
-  /** Click handler */
-  onClick: PropTypes.func,
-  
-  /** Additional CSS classes */
-  className: PropTypes.string,
-  
-  /** Custom inline styles */
-  style: PropTypes.object,
-  
-  /** ARIA label for accessibility */
-  ariaLabel: PropTypes.string,
-};
-

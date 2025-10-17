@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { signUpWithEmail, signInWithGoogle } from "../../lib/firebase";
 import { showSuccess, showError } from "../../utils/toast";
 import { AUTH_ERROR_MESSAGES } from "./Login";
+import Card from "../design-system/Card";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -72,12 +73,12 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 px-4 py-12">
-      <div style={{ width: '420px' }} className="space-y-6 p-8 bg-white rounded-xl shadow-2xl">
+      <Card variant="elevated" padding="lg" style={{ width: '420px', minHeight: '400px' }}>
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold" style={{ color: '#111827' }}>
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm" style={{ color: '#4B5563' }}>
             Join the collaborative canvas
           </p>
         </div>
@@ -86,7 +87,7 @@ export default function SignUp() {
           {/* Email/Password Sign Up Form */}
           <form onSubmit={handleEmailSignUp} className="space-y-4">
             <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="displayName" className="block text-sm font-medium" style={{ color: '#111827' }}>
                 Display Name
               </label>
               <input
@@ -102,7 +103,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium" style={{ color: '#111827' }}>
                 Email
               </label>
               <input
@@ -119,7 +120,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium" style={{ color: '#111827' }}>
                 Password
               </label>
               <input
@@ -135,7 +136,7 @@ export default function SignUp() {
               />
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center" style={{ marginTop: '32px' }}>
               <button
                 type="submit"
                 disabled={loading}
@@ -153,7 +154,7 @@ export default function SignUp() {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              <span className="px-2 bg-white" style={{ color: '#6B7280' }}>Or continue with</span>
             </div>
           </div>
 
@@ -189,18 +190,19 @@ export default function SignUp() {
 
           {/* Link to Login */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm" style={{ color: '#4B5563' }}>
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium hover:text-blue-500"
+                style={{ color: '#2563EB' }}
               >
                 Sign in
               </Link>
             </p>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
