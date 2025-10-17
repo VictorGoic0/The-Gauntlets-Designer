@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Login from "./components/auth/Login";
 import SignUp from "./components/auth/SignUp";
 import CanvasPage from "./pages/CanvasPage";
 import { useAuth } from "./hooks/useAuth";
+import { toastConfig } from "./utils/toast";
 
 // Component to redirect authenticated users from auth pages to canvas
 function AuthRedirect({ children }) {
@@ -33,6 +35,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Toaster {...toastConfig} />
         <Routes>
           {/* Auth routes - redirect to canvas if already logged in */}
           <Route

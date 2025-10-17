@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signUpWithEmail, signInWithGoogle } from "../../lib/firebase";
+import { showSuccess, showError } from "../../utils/toast";
+import { AUTH_ERROR_MESSAGES } from "./Login";
+import Card from "../design-system/Card";
+import Button from "../design-system/Button";
+import Input from "../design-system/Input";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -14,27 +18,36 @@ export default function SignUp() {
     e.preventDefault();
     
     if (!displayName.trim()) {
-      setError("Please enter a display name");
+      const errorMessage = "Please enter a display name";
+      showError(errorMessage);
       return;
     }
     
     try {
-      setError(null);
       setLoading(true);
       await signUpWithEmail(email, password, displayName);
+      showSuccess("Account created successfully! Welcome!");
       // User will be redirected automatically by AuthContext
       navigate("/");
     } catch (error) {
-      // Provide user-friendly error messages
-      if (error.code === "auth/email-already-in-use") {
-        setError("This email is already registered. Please sign in instead.");
-      } else if (error.code === "auth/weak-password") {
-        setError("Password should be at least 6 characters.");
-      } else if (error.code === "auth/invalid-email") {
-        setError("Please enter a valid email address.");
-      } else {
-        setError(error.message);
+      // Get error code from either error.code or error.message
+      const errorCode = error.code || error.message;
+      
+      // Map error code to user-friendly message
+      let errorMessage;
+      switch (errorCode) {
+        case "auth/email-already-in-use":
+        case "auth/weak-password":
+        case "auth/invalid-email":
+        case "EMAIL_EXISTS":
+        case "WEAK_PASSWORD":
+          errorMessage = AUTH_ERROR_MESSAGES[errorCode];
+          break;
+        default:
+          errorMessage = error.message || "An error occurred. Please try again.";
       }
+      
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -42,13 +55,19 @@ export default function SignUp() {
 
   const handleGoogleSignIn = async () => {
     try {
-      setError(null);
       setLoading(true);
       await signInWithGoogle();
+      showSuccess("Account created successfully! Welcome!");
       // User will be redirected automatically by AuthContext
       navigate("/");
     } catch (error) {
-      setError(error.message);
+      // Get error code from either error.code or error.message
+      const errorCode = error.code || error.message;
+      
+      // Map error code to user-friendly message
+      const errorMessage = AUTH_ERROR_MESSAGES[errorCode] || error.message || "An error occurred. Please try again.";
+      
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -56,12 +75,12 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 px-4 py-12">
-      <div style={{ width: '420px' }} className="space-y-6 p-8 bg-white rounded-xl shadow-2xl">
+      <Card variant="elevated" padding="lg" style={{ width: '420px', minHeight: '400px' }}>
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold" style={{ color: '#111827' }}>
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm" style={{ color: '#4B5563' }}>
             Join the collaborative canvas
           </p>
         </div>
@@ -69,65 +88,49 @@ export default function SignUp() {
         <div className="space-y-6">
           {/* Email/Password Sign Up Form */}
           <form onSubmit={handleEmailSignUp} className="space-y-4">
-            <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
-                Display Name
-              </label>
-              <input
-                id="displayName"
-                name="displayName"
-                type="text"
-                required
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="John Doe"
-              />
-            </div>
+            <Input
+              label="Display Name"
+              type="text"
+              name="displayName"
+              required
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="John Doe"
+            />
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="you@example.com"
-              />
-            </div>
+            <Input
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="At least 6 characters"
-              />
-            </div>
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 6 characters"
+            />
 
-            <div className="flex justify-center">
-              <button
+            <div className="flex justify-center" style={{ marginTop: '32px' }}>
+              <Button
                 type="submit"
+                variant="primary"
+                size="md"
+                loading={loading}
                 disabled={loading}
-                style={{ width: '200px', height: '40px' }}
-                className="px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ width: '200px' }}
               >
                 {loading ? "Creating account..." : "Sign up"}
-              </button>
+              </Button>
             </div>
           </form>
 
@@ -137,17 +140,18 @@ export default function SignUp() {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              <span className="px-2 bg-white" style={{ color: '#6B7280' }}>Or continue with</span>
             </div>
           </div>
 
           {/* Google Sign In Button */}
           <div className="flex justify-center">
-            <button
+            <Button
               onClick={handleGoogleSignIn}
+              variant="outline"
+              size="md"
               disabled={loading}
-              style={{ width: '240px', height: '40px' }}
-              className="flex items-center justify-center gap-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              style={{ width: '240px', backgroundColor: '#ffffff', borderColor: '#D1D5DB', color: '#374151' }}
             >
             <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24">
               <path
@@ -167,51 +171,25 @@ export default function SignUp() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Sign in with Google
-            </button>
+            <span>Sign in with Google</span>
+            </Button>
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Sign Up Error
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">{error}</div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Link to Login */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm" style={{ color: '#4B5563' }}>
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium hover:text-blue-500"
+                style={{ color: '#2563EB' }}
               >
                 Sign in
               </Link>
             </p>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

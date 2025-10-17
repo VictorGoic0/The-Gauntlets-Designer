@@ -1283,12 +1283,12 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 
 - `src/stores/firestoreStore.js` (conflict resolution - completed in PR #14)
 - `src/components/canvas/shapes/Text.jsx` (text rotation fix - completed)
-- `src/hooks/useCursorTracking.js` (cursor sync + canvas coordinates - completed)
+- `src/hooks/useCursorTracking.js` (cursor sync + canvas coordinates + container offset - completed)
 - `src/hooks/useCursorSync.js` (cursor sync to Realtime DB - completed)
 - `src/hooks/usePresence.js` (flattened DB paths - completed)
 - `src/hooks/usePresenceSync.js` (flattened DB paths - completed)
 - `src/lib/firebase.js` (added Realtime DB imports + flattened paths - completed)
-- `src/components/canvas/Canvas.jsx` (cursor coordinate conversion - completed)
+- `src/components/canvas/Canvas.jsx` (cursor coordinate conversion + container offset tracking - completed)
 - `src/components/canvas/Cursor.jsx` (updated JSDoc - completed)
 
 **Test Before Merge:** ✅ ALL TESTS PASSED
@@ -1297,6 +1297,7 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - [x] Newly created text can be rotated immediately
 - [x] Cursor updates are smooth and real-time via Realtime Database
 - [x] Cursors align correctly across different screen sizes/resolutions
+- [x] Cursor position accounts for Header offset (y-position no longer offset)
 - [x] Cursors only visible for online users (presence filtering still works)
 - [x] Cursor cleanup works on disconnect
 - [x] All existing functionality still works
@@ -1683,3 +1684,204 @@ const objects = useFirestoreStore((state) => state.objects);
 - [x] Code is more maintainable and readable
 - [x] Store DevTools work for debugging
 - [x] **Final**: Conflict resolution works correctly (last-write-wins with timestamps)
+
+---
+
+## PR #15: Design System Component Library
+
+**Goal**: Build a reusable design system component library for consistent UI patterns
+
+**Note**: Custom design tokens will be used for styling. Tailwind may be kept for responsive utilities only.
+
+### Subtasks
+
+1. - [x] Create design tokens
+   - File: `src/styles/tokens.js`
+   - Color palette (primary, secondary, neutral, semantic colors)
+   - Typography scale (font sizes, weights, line heights)
+   - Spacing scale (consistent spacing values)
+   - Border radius values
+   - Shadow definitions
+   - Modern, Material-UI inspired aesthetic
+
+2. - [x] Create Card component
+   - File: `src/components/design-system/Card.jsx`
+   - Container for grouped content (will be used for Login/SignUp pages)
+   - Variants: elevated, outlined, flat
+   - Padding options
+   - Hover effects (optional)
+   - Uses design tokens for styling
+
+3. - [x] Create Input component
+   - File: `src/components/design-system/Input.jsx`
+   - Text input with label (will be used for Login/SignUp forms)
+   - Error state styling
+   - Success state styling
+   - Helper text support
+   - Icon support (prefix/suffix)
+   - Password visibility toggle
+   - Full accessibility
+   - Uses design tokens for styling
+
+4. - [x] Create Button component
+   - File: `src/components/design-system/Button.jsx`
+   - Variants: primary, secondary, outline, ghost
+   - Sizes: sm, md, lg
+   - States: default, hover, active, disabled, loading
+   - Icon support
+   - Full accessibility (ARIA labels, keyboard navigation)
+   - Uses design tokens for styling
+
+5. - [x] Setup Toast notifications with React Hot Toast
+   - Install dependency: `npm install react-hot-toast`
+   - Create toast utility/wrapper: `src/utils/toast.js`
+   - Configure toast styling with design tokens
+   - Export helper functions: `toast.success()`, `toast.error()`, `toast.warning()`, `toast.info()`
+   - Add `<Toaster />` to App.jsx for rendering toasts
+   - Custom styling to match Material-UI inspired design
+
+6. - [x] Create design system documentation
+   - File: `src/components/design-system/README.md`
+   - Document color palette
+   - Document typography scale
+   - Document spacing system
+   - Document component usage patterns
+   - Include usage examples for all components
+
+**Phase II: Integrate Design System**
+
+7. - [x] Integrate Toast notifications
+   - Integrate into Login page:
+     - Import toast utility
+     - Show error toast on login failure
+     - Show success toast on successful login
+   - Integrate into SignUp page:
+     - Import toast utility
+     - Show error toast on signup failure
+     - Show success toast on successful signup
+   - Add connection status toasts:
+     - Show warning toast when internet disconnects
+     - Show success toast when internet reconnects
+     - Monitor connection status (use existing ConnectionStatus logic or navigator.onLine)
+   - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`
+   - Connection monitoring: Add to `src/App.jsx` or existing connection status component
+
+8. - [x] Integrate Card component into Login/SignUp pages
+   - Replace custom container styling with Card component
+   - Use 'elevated' variant for modern look
+   - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`
+
+9. - [x] Integrate Button component into Login/SignUp pages
+   - Replace all button elements with Button component
+   - Use appropriate variants (primary for submit, outline for secondary actions)
+   - Ensure loading states work correctly
+   - Add Button component to sign-out button in Header
+   - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`, `src/components/ui/Header.jsx`
+
+10. - [x] Integrate Input component into Login/SignUp pages
+    - Replace all input elements with Input component
+    - Use error states for validation feedback
+    - Use password toggle for password fields
+    - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`
+
+**Files to Create:**
+
+- `src/styles/tokens.js`
+- `src/components/design-system/Card.jsx`
+- `src/components/design-system/Input.jsx`
+- `src/components/design-system/Button.jsx`
+- `src/utils/toast.js` (wrapper for React Hot Toast with custom styling)
+- `src/components/design-system/README.md`
+
+**Files to Modify (Phase II):**
+
+- `src/App.jsx` (add Toaster component, connection monitoring)
+- `src/components/auth/Login.jsx`
+- `src/components/auth/SignUp.jsx`
+
+**Dependencies to Add:**
+
+- `react-hot-toast` - Toast notification library
+
+**Test Before Merge:**
+
+- [ ] Design system components are consistent and reusable
+- [ ] All components have proper hover/focus states
+- [ ] Components are accessible (keyboard navigation, ARIA labels)
+- [ ] Components use design tokens consistently
+- [ ] Toast notifications work correctly (auto-dismiss, positioning)
+- [ ] Toast shows on login/signup errors and success
+- [ ] Toast shows on internet disconnect/reconnect
+- [ ] Card component renders correctly on Login/SignUp pages
+- [ ] Button component works on Login/SignUp pages (including loading states)
+- [ ] Input component works on Login/SignUp pages (including password toggle)
+- [ ] Documentation is clear with usage examples
+- [ ] No console errors or warnings
+
+---
+
+## PR #16: AI Agent Integration
+
+**Goal**: Integrate AI agent functionality into the canvas
+
+### Subtasks
+
+1. - [ ] Define AI agent requirements
+   - What should the AI agent do?
+   - What AI service/API to use? (OpenAI, Anthropic, etc.)
+   - What user interactions trigger AI features?
+   - How should AI responses be displayed?
+
+2. - [ ] Plan AI agent architecture
+   - File: `src/services/aiAgent.js`
+   - Define API integration approach
+   - Plan state management for AI interactions
+   - Design user interaction flow
+   - Plan error handling and rate limiting
+
+3. - [ ] Create AI agent service
+   - File: `src/services/aiAgent.js`
+   - Implement API calls
+   - Handle authentication
+   - Handle rate limiting
+   - Handle errors gracefully
+
+4. - [ ] Create AI agent UI components
+   - Design chat interface or command palette
+   - Create input component for AI prompts
+   - Create display component for AI responses
+   - Add loading states
+   - Add error states
+
+5. - [ ] Integrate AI agent into canvas
+   - Add AI agent trigger (button, keyboard shortcut, etc.)
+   - Connect AI agent to canvas state
+   - Allow AI to create/modify objects
+   - Display AI suggestions/responses
+
+6. - [ ] Add AI agent features
+   - Define specific AI capabilities
+   - Implement each feature
+   - Test and refine
+
+**Files to Create:**
+
+- `src/services/aiAgent.js`
+- AI agent UI components (TBD based on requirements)
+
+**Files to Modify:**
+
+- `src/components/canvas/Canvas.jsx` (integration)
+- Other files TBD based on requirements
+
+**Dependencies to Add:**
+
+- AI service SDK (TBD - OpenAI SDK, Anthropic SDK, etc.)
+
+**Test Before Merge:**
+
+- [ ] AI agent integration works smoothly
+- [ ] No performance impact on canvas
+- [ ] Error handling works correctly
+- [ ] Rate limiting prevents abuse
+- [ ] All AI features work as expected
