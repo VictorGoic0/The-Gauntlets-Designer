@@ -1,6 +1,22 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmail, signInWithGoogle } from "../../lib/firebase";
+import { showSuccess, showError } from "../../utils/toast";
+
+// Firebase Auth error code to user-friendly message mapping
+export const AUTH_ERROR_MESSAGES = {
+  "auth/invalid-credential": "Invalid email or password. Please try again.",
+  "auth/user-not-found": "No account found with this email. Please sign up.",
+  "auth/wrong-password": "Incorrect password. Please try again.",
+  "auth/invalid-email": "Please enter a valid email address.",
+  "auth/user-disabled": "This account has been disabled. Please contact support.",
+  "auth/too-many-requests": "Too many failed login attempts. Please try again later.",
+  "auth/email-already-in-use": "An account with this email already exists.",
+  "auth/weak-password": "Password should be at least 6 characters.",
+  "INVALID_LOGIN_CREDENTIALS": "Invalid email or password. Please try again.",
+  "EMAIL_EXISTS": "An account with this email already exists.",
+  "WEAK_PASSWORD": "Password should be at least 6 characters.",
+};
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,19 +31,31 @@ export default function Login() {
       setError(null);
       setLoading(true);
       await signInWithEmail(email, password);
+      showSuccess("Welcome back!");
       // User will be redirected automatically by AuthContext
       navigate("/");
     } catch (error) {
-      // Provide user-friendly error messages
-      if (error.code === "auth/user-not-found") {
-        setError("No account found with this email. Please sign up.");
-      } else if (error.code === "auth/wrong-password") {
-        setError("Incorrect password. Please try again.");
-      } else if (error.code === "auth/invalid-email") {
-        setError("Please enter a valid email address.");
-      } else {
-        setError(error.message);
+      // Get error code from either error.code or error.message
+      const errorCode = error.code || error.message;
+      
+      // Map error code to user-friendly message
+      let errorMessage;
+      switch (errorCode) {
+        case "auth/invalid-credential":
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-email":
+        case "auth/user-disabled":
+        case "auth/too-many-requests":
+        case "INVALID_LOGIN_CREDENTIALS":
+          errorMessage = AUTH_ERROR_MESSAGES[errorCode];
+          break;
+        default:
+          errorMessage = error.message || "An error occurred. Please try again.";
       }
+      
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -38,10 +66,18 @@ export default function Login() {
       setError(null);
       setLoading(true);
       await signInWithGoogle();
+      showSuccess("Welcome back!");
       // User will be redirected automatically by AuthContext
       navigate("/");
     } catch (error) {
-      setError(error.message);
+      // Get error code from either error.code or error.message
+      const errorCode = error.code || error.message;
+      
+      // Map error code to user-friendly message
+      const errorMessage = AUTH_ERROR_MESSAGES[errorCode] || error.message || "An error occurred. Please try again.";
+      
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }

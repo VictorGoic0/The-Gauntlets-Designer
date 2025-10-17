@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signUpWithEmail, signInWithGoogle } from "../../lib/firebase";
+import { showSuccess, showError } from "../../utils/toast";
+import { AUTH_ERROR_MESSAGES } from "./Login";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -14,7 +16,9 @@ export default function SignUp() {
     e.preventDefault();
     
     if (!displayName.trim()) {
-      setError("Please enter a display name");
+      const errorMessage = "Please enter a display name";
+      setError(errorMessage);
+      showError(errorMessage);
       return;
     }
     
@@ -22,19 +26,29 @@ export default function SignUp() {
       setError(null);
       setLoading(true);
       await signUpWithEmail(email, password, displayName);
+      showSuccess("Account created successfully! Welcome!");
       // User will be redirected automatically by AuthContext
       navigate("/");
     } catch (error) {
-      // Provide user-friendly error messages
-      if (error.code === "auth/email-already-in-use") {
-        setError("This email is already registered. Please sign in instead.");
-      } else if (error.code === "auth/weak-password") {
-        setError("Password should be at least 6 characters.");
-      } else if (error.code === "auth/invalid-email") {
-        setError("Please enter a valid email address.");
-      } else {
-        setError(error.message);
+      // Get error code from either error.code or error.message
+      const errorCode = error.code || error.message;
+      
+      // Map error code to user-friendly message
+      let errorMessage;
+      switch (errorCode) {
+        case "auth/email-already-in-use":
+        case "auth/weak-password":
+        case "auth/invalid-email":
+        case "EMAIL_EXISTS":
+        case "WEAK_PASSWORD":
+          errorMessage = AUTH_ERROR_MESSAGES[errorCode];
+          break;
+        default:
+          errorMessage = error.message || "An error occurred. Please try again.";
       }
+      
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -45,10 +59,18 @@ export default function SignUp() {
       setError(null);
       setLoading(true);
       await signInWithGoogle();
+      showSuccess("Account created successfully! Welcome!");
       // User will be redirected automatically by AuthContext
       navigate("/");
     } catch (error) {
-      setError(error.message);
+      // Get error code from either error.code or error.message
+      const errorCode = error.code || error.message;
+      
+      // Map error code to user-friendly message
+      const errorMessage = AUTH_ERROR_MESSAGES[errorCode] || error.message || "An error occurred. Please try again.";
+      
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }

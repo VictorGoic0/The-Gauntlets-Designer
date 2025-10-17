@@ -26,7 +26,7 @@ import {
 export const toastConfig = {
   // Default options for all toasts
   duration: 4000,
-  position: "top-right",
+  position: "bottom-left",
 
   // Styling
   style: {
