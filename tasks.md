@@ -1740,7 +1740,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Add `<Toaster />` to App.jsx for rendering toasts
    - Custom styling to match Material-UI inspired design
 
-6. - [ ] Create design system documentation
+6. - [x] Create design system documentation
    - File: `src/components/design-system/README.md`
    - Document color palette
    - Document typography scale
@@ -1771,7 +1771,7 @@ const objects = useFirestoreStore((state) => state.objects);
    - Use 'elevated' variant for modern look
    - Files modified: `src/components/auth/Login.jsx`, `src/components/auth/SignUp.jsx`
 
-9. - [ ] Integrate Button component into Login/SignUp pages
+9. - [x] Integrate Button component into Login/SignUp pages
    - Replace all button elements with Button component
    - Use appropriate variants (primary for submit, outline for secondary actions)
    - Ensure loading states work correctly

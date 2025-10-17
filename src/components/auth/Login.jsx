@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmail, signInWithGoogle } from "../../lib/firebase";
 import { showSuccess, showError } from "../../utils/toast";
 import Card from "../design-system/Card";
+import Button from "../design-system/Button";
 
 // Firebase Auth error code to user-friendly message mapping
 export const AUTH_ERROR_MESSAGES = {
@@ -129,14 +130,16 @@ export default function Login() {
             </div>
 
             <div className="flex justify-center" style={{ marginTop: '32px' }}>
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="md"
+                loading={loading}
                 disabled={loading}
-                style={{ width: '200px', height: '40px' }}
-                className="px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ width: '200px' }}
               >
                 {loading ? "Signing in..." : "Sign in"}
-              </button>
+              </Button>
             </div>
           </form>
 
@@ -152,11 +155,12 @@ export default function Login() {
 
           {/* Google Sign In Button */}
           <div className="flex justify-center">
-            <button
+            <Button
               onClick={handleGoogleSignIn}
+              variant="outline"
+              size="md"
               disabled={loading}
-              style={{ width: '240px', height: '40px' }}
-              className="flex items-center justify-center gap-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              style={{ width: '240px', backgroundColor: '#ffffff', borderColor: '#D1D5DB', color: '#374151' }}
             >
             <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24">
               <path
@@ -176,8 +180,8 @@ export default function Login() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Sign in with Google
-            </button>
+            <span>Sign in with Google</span>
+            </Button>
           </div>
 
           {/* Link to Sign Up */}
