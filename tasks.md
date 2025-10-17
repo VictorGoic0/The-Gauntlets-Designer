@@ -1268,14 +1268,15 @@ Each PR represents a complete, testable feature. PRs build on each other sequent
 - `src/components/canvas/Canvas.jsx` (cursor coordinate conversion - completed)
 - `src/components/canvas/Cursor.jsx` (updated JSDoc - completed)
 
-**Test Before Merge:**
+**Test Before Merge:** ✅ ALL TESTS PASSED
 
 - [x] Two users can drag same object simultaneously - last one wins (fixed in PR #14)
-- [ ] Newly created text can be rotated immediately
-- [ ] Cursor updates are smooth and real-time via Realtime Database
-- [ ] Cursors only visible for online users (presence filtering still works)
-- [ ] Cursor cleanup works on disconnect
-- [ ] All existing functionality still works
+- [x] Newly created text can be rotated immediately
+- [x] Cursor updates are smooth and real-time via Realtime Database
+- [x] Cursors align correctly across different screen sizes/resolutions
+- [x] Cursors only visible for online users (presence filtering still works)
+- [x] Cursor cleanup works on disconnect
+- [x] All existing functionality still works
 
 ---
 
