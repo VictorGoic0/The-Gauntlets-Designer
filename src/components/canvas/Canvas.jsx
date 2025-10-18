@@ -255,6 +255,15 @@ export default function Canvas() {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Ignore shortcuts if user is typing in an input/textarea
+      const isTyping =
+        e.target.tagName === "INPUT" ||
+        e.target.tagName === "TEXTAREA" ||
+        e.target.isContentEditable;
+
+      // Don't interfere when user is typing
+      if (isTyping) return;
+
       if (e.code === "Space" && !e.repeat) {
         e.preventDefault();
         setSpacePressed(true);
@@ -274,6 +283,15 @@ export default function Canvas() {
     };
 
     const handleKeyUp = (e) => {
+      // Ignore shortcuts if user is typing in an input/textarea
+      const isTyping =
+        e.target.tagName === "INPUT" ||
+        e.target.tagName === "TEXTAREA" ||
+        e.target.isContentEditable;
+
+      // Don't interfere when user is typing
+      if (isTyping) return;
+
       if (e.code === "Space") {
         e.preventDefault();
         setSpacePressed(false);
