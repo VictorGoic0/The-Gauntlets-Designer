@@ -2,6 +2,8 @@ import { useAuth } from "../../hooks/useAuth";
 import { signOutUser } from "../../lib/firebase";
 import ConnectionStatus from "./ConnectionStatus";
 import Button from "../design-system/Button";
+import { testFirebaseFunction } from "../../services/testFunctions";
+import toast from "react-hot-toast";
 
 export default function Header() {
   const { currentUser } = useAuth();
@@ -14,11 +16,30 @@ export default function Header() {
     }
   };
 
+  const handleTestFunction = async () => {
+    try {
+      const result = await testFirebaseFunction();
+      const keyInfo = result.config?.keyPreview 
+        ? ` Key: ${result.config.keyPreview}` 
+        : "";
+      toast.success(`✅ Function works!${keyInfo}`);
+    } catch (error) {
+      toast.error(`❌ Function failed: ${error.message}`);
+    }
+  };
+
   return (
     <header className="bg-gray-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Goico's Artist</h1>
         <div className="flex items-center" style={{ gap: '2rem' }}>
+          <Button
+            onClick={handleTestFunction}
+            variant="outline"
+            size="sm"
+          >
+            Test Function
+          </Button>
           <ConnectionStatus />
           <span className="text-gray-300">
             Welcome, {currentUser?.displayName || "User"}
