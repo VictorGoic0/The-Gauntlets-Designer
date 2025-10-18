@@ -10,8 +10,6 @@ exports.aiAgent = onCall(
     secrets: ["OPENAI_API_KEY"], // Grant access to the secret
   },
   async (request) => {
-    console.log("=== AI AGENT CALLED ===");
-
     // Verify user is authenticated
     if (!request.auth) {
       throw new HttpsError(
@@ -25,8 +23,6 @@ exports.aiAgent = onCall(
     if (!command) {
       throw new HttpsError("invalid-argument", "Command is required.");
     }
-
-    console.log(`User ${request.auth.uid} command: "${command}"`);
 
     try {
       // Initialize OpenAI (API key will be set as secret later)
@@ -56,10 +52,6 @@ exports.aiAgent = onCall(
 
       const responseMessage = completion.choices[0].message;
 
-      console.log(
-        `OpenAI returned ${responseMessage.tool_calls?.length || 0} tool calls`
-      );
-
       // If OpenAI wants to call tools
       if (responseMessage.tool_calls) {
         const results = [];
@@ -68,13 +60,6 @@ exports.aiAgent = onCall(
         for (const toolCall of responseMessage.tool_calls) {
           const toolName = toolCall.function.name;
           const toolArgs = JSON.parse(toolCall.function.arguments);
-
-          console.log(
-            `Executing tool ${results.length + 1}/${
-              responseMessage.tool_calls.length
-            }: ${toolName}`,
-            toolArgs
-          );
 
           const result = await executeTool(
             toolName,
@@ -105,32 +90,3 @@ exports.aiAgent = onCall(
     }
   }
 );
-
-// /**
-//  * Test function - v2 API (auth test only for now)
-//  * COMMENTED OUT - Replaced by aiAgent function
-//  */
-// exports.testFunction = onCall((request) => {
-//   console.log("=== TEST FUNCTION CALLED (v2) ===");
-//   console.log("Has auth?", !!request.auth);
-//
-//   if (!request.auth) {
-//     console.error("ERROR: No auth context!");
-//     throw new HttpsError(
-//       "unauthenticated",
-//       "User must be authenticated to call this function."
-//     );
-//   }
-//
-//   console.log("Authenticated user:", request.auth.uid);
-//
-//   return {
-//     success: true,
-//     message: "Firebase Functions v2 is working correctly!",
-//     user: {
-//       uid: request.auth.uid,
-//       email: request.auth.token.email || "N/A",
-//     },
-//     timestamp: new Date().toISOString(),
-//   };
-// });
