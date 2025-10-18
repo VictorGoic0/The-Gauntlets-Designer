@@ -2,8 +2,6 @@ import { useAuth } from "../../hooks/useAuth";
 import { signOutUser } from "../../lib/firebase";
 import ConnectionStatus from "./ConnectionStatus";
 import Button from "../design-system/Button";
-import { testCreateRectangle } from "../../services/testFunctions";
-import toast from "react-hot-toast";
 
 export default function Header({ onOpenAI }) {
   const { currentUser } = useAuth();
@@ -13,19 +11,6 @@ export default function Header({ onOpenAI }) {
       await signOutUser();
     } catch (error) {
       console.error("Error signing out:", error);
-    }
-  };
-
-  const handleTestFunction = async () => {
-    try {
-      const result = await testCreateRectangle();
-      if (result.results && result.results.length > 0) {
-        toast.success(`✅ Rectangle created!`);
-      } else {
-        toast.success(`✅ AI Agent responded: ${result.message}`);
-      }
-    } catch (error) {
-      toast.error(`❌ AI Agent failed: ${error.message}`);
     }
   };
 
@@ -57,15 +42,6 @@ export default function Header({ onOpenAI }) {
               </svg>
               AI Assistant
             </span>
-          </Button>
-
-          {/* Test Button (for development) */}
-          <Button
-            onClick={handleTestFunction}
-            variant="outline"
-            size="sm"
-          >
-            Test
           </Button>
 
           <ConnectionStatus />

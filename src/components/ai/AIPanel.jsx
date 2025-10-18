@@ -81,6 +81,7 @@ export default function AIPanel({ isOpen, onClose }) {
     alignItems: "center",
     justifyContent: "center",
     zIndex: 50,
+    animation: "fadeIn 0.2s ease-out",
   };
 
   // Backdrop styles
@@ -98,12 +99,39 @@ export default function AIPanel({ isOpen, onClose }) {
     maxHeight: "80vh",
     display: "flex",
     flexDirection: "column",
+    animation: "scaleIn 0.2s ease-out",
   };
 
   return (
-    <div style={panelContainerStyles}>
-      {/* Backdrop */}
-      <div style={backdropStyles} onClick={onClose} />
+    <>
+      {/* Keyframe animations */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
+          }
+          
+          @keyframes scaleIn {
+            from {
+              opacity: 0;
+              transform: scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+        `}
+      </style>
+
+      <div style={panelContainerStyles}>
+        {/* Backdrop */}
+        <div style={backdropStyles} onClick={onClose} />
 
       {/* AI Panel Card */}
       <div style={cardWrapperStyles}>
@@ -405,6 +433,7 @@ export default function AIPanel({ isOpen, onClose }) {
         </Card>
       </div>
     </div>
+    </>
   );
 }
 

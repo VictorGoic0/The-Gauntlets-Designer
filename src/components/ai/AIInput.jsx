@@ -44,14 +44,16 @@ export default function AIInput({ onSubmit, isLoading }) {
     backgroundColor: isLoading
       ? colors.action.disabledBackground
       : colors.background.paper,
-    border: `1px solid ${colors.neutral[300]}`,
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: isFocused ? colors.primary[500] : colors.neutral[300],
     borderRadius: borderRadius.base,
     outline: "none",
     transition: `border-color ${transitions.duration.short} ${transitions.easing.easeInOut}, box-shadow ${transitions.duration.short} ${transitions.easing.easeInOut}`,
     cursor: isLoading ? "not-allowed" : "text",
     resize: "none",
+    boxSizing: "border-box",
     ...(isFocused && {
-      borderColor: colors.primary[500],
       boxShadow: `0 0 0 3px ${colors.primary[500]}1A`,
     }),
   };
@@ -67,10 +69,7 @@ export default function AIInput({ onSubmit, isLoading }) {
         placeholder="Describe what you want to create... (e.g., 'Create a red rectangle')"
         disabled={isLoading}
         rows={3}
-        style={{
-          ...textareaStyles,
-          boxSizing: "border-box",
-        }}
+        style={textareaStyles}
         aria-label="AI command input"
       />
 
