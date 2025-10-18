@@ -29,20 +29,25 @@ Build the foundational infrastructure for real-time collaborative design, provin
 ### Backend & Real-Time
 
 - **Platform**: Firebase
-  - **Firestore**: Real-time database for canvas state and object sync
+  - **Firestore**: Persistent storage for object properties
+  - **Realtime Database**: High-frequency updates (cursors, object positions)
   - **Firebase Auth**: Google Sign-In and Email/Password authentication
+  - **Firebase Cloud Functions**: Backend for AI agent (v2 API)
   - **Firebase Hosting**: Optional alternative to Netlify
-- **Real-time Sync**: Firestore listeners (onSnapshot)
+- **Real-time Sync**: Firestore listeners (onSnapshot) + Realtime DB listeners (onValue)
 - **Development**: Direct against live Firebase (no emulator for MVP)
 
 ### Architecture Pattern
 
-- **Client-side state management**: React hooks (useState + Context API when needed)
+- **Client-side state management**: Zustand centralized stores (Local, Firestore, Presence)
 - **Sync strategy**: Optimistic updates with server reconciliation
-- **Conflict resolution**: Last-write-wins with optimistic deletion (deletes take priority)
+- **Conflict resolution**: Last-write-wins with `lastEditedAt` timestamps (deletes take priority)
 - **Project Model**: Single shared canvas (hardcoded project ID) for entire application
 - **Canvas Dimensions**: 5,000 x 5,000 pixels
 - **Cursor Update Throttle**: 45ms (~22 updates/second per user for <50ms perceived latency)
+- **Data Storage Strategy**: Hybrid approach
+  - **Realtime Database**: High-frequency updates (cursors, object positions)
+  - **Firestore**: Persistent properties (object type, size, color, etc.)
 
 ---
 
@@ -224,9 +229,18 @@ Build the foundational infrastructure for real-time collaborative design, provin
 
 ## Firebase Data Model
 
-### Collections Structure
+### Hybrid Storage Strategy
 
 **Note**: MVP uses a single hardcoded project ID (`'shared-canvas'`) accessible to all authenticated users.
+
+**Architecture**: Hybrid data storage for optimal performance
+
+- **Firestore**: Persistent object properties (infrequent updates)
+- **Realtime Database**: High-frequency position updates (cursors, dragging)
+
+---
+
+### Firestore Collections
 
 ```
 /projects/shared-canvas
@@ -236,27 +250,22 @@ Build the foundational infrastructure for real-time collaborative design, provin
 
 /projects/shared-canvas/objects/{objectId}
   - type: 'rectangle' | 'circle' | 'line' | 'text'
-  - x: number
-  - y: number
+  - x: number (initial position / fallback)
+  - y: number (initial position / fallback)
   - width: number
   - height: number
+  - radius: number (for circles)
   - rotation: number
   - fill: string (color)
   - stroke: string (color)
   - text: string (for text objects)
   - fontSize: number (for text objects)
+  - fontFamily: string (for text objects)
   - zIndex: number
   - createdBy: userId
-  - lastModifiedBy: userId
-  - lastModified: timestamp (server timestamp - FieldValue.serverTimestamp())
-
-/projects/shared-canvas/cursors/{userId}
-  - x: number
-  - y: number
-  - userName: string
-  - userColor: string
-  - lastSeen: timestamp (server timestamp)
-  - Auto-deleted via onDisconnect()
+  - createdAt: timestamp (set once, immutable)
+  - lastEditedBy: userId
+  - lastEditedAt: timestamp (updates on every edit)
 
 /projects/shared-canvas/presence/{userId}
   - userName: string
@@ -266,6 +275,59 @@ Build the foundational infrastructure for real-time collaborative design, provin
   - lastSeen: timestamp (server timestamp)
   - Auto-cleaned via onDisconnect()
 ```
+
+---
+
+### Realtime Database Paths
+
+```
+/projects/shared-canvas/cursors/{userId}
+  - x: number (canvas coordinates)
+  - y: number (canvas coordinates)
+  - userName: string
+  - userColor: string
+  - lastSeen: timestamp (server timestamp)
+  - Auto-deleted via onDisconnect()
+
+/objectPositions/{objectId} (PR #18 - Planned)
+  - x: number (real-time position)
+  - y: number (real-time position)
+  - timestamp: number (optional)
+  - NOTE: Overlays Firestore position; fallback to Firestore if missing
+
+/selections/{userId} (PR #19 - Planned)
+  - objectId: string | null (null if nothing selected)
+  - userName: string
+  - userColor: string (from user's cursor color)
+  - timestamp: number (server timestamp)
+  - Auto-deleted via onDisconnect()
+  - NOTE: Tracks what object each user currently has selected
+```
+
+---
+
+### Data Access Pattern
+
+**Object Rendering:**
+
+1. Read object properties from Firestore (type, size, color, etc.)
+2. Read position from Realtime DB (x, y)
+3. Merge: `{ ...firestoreObject, x: realtimeX ?? firestoreX, y: realtimeY ?? firestoreY }`
+4. Realtime DB position takes priority; Firestore is fallback
+
+**Object Updates:**
+
+- **Position changes (drag)**: Write to Realtime DB only (high frequency)
+- **Property changes (resize, rotate, color)**: Write to Firestore only
+- **Creation**: Write properties to Firestore + initial position to both
+- **Deletion**: Delete from both Firestore and Realtime DB
+
+**Benefits:**
+
+- Real-time dragging visibility (like cursors)
+- Reduced Firestore writes (position updates don't touch Firestore)
+- Persistent fallback (Firestore still has last known position)
+- Zero breaking changes (x, y kept in Firestore for creation)
 
 ### Firestore Rules (MVP)
 
@@ -860,9 +922,25 @@ const TextEditor = () => {
 
 **Goal**: Add AI-powered natural language canvas manipulation
 
-**Status**: In Progress
+**Status**: ✅ Core Complete (PR #16) / 🔄 Advanced Features In Progress (PR #17)
 
 **Target Rubric Score**: Good-to-Excellent (18-25 points out of 25)
+
+**PR #16 Status** (✅ Complete):
+
+- ✅ Firebase Functions backend with OpenAI GPT-4
+- ✅ 7 core tools (3 creation + 4 manipulation)
+- ✅ Frontend AI chat interface
+- ✅ Secure API key management
+- ✅ Authentication and error handling
+
+**PR #17 Status** (🔄 Planned):
+
+- [ ] 4 additional tools (2 layout + 2 complex)
+- [ ] Full function calling flow testing
+- [ ] Conversation memory
+- [ ] Performance optimization
+- [ ] Rubric validation
 
 ---
 
@@ -1155,7 +1233,166 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
 
 ---
 
-### Phase 11: Polish & Performance (Days 5-7) - Priority: MEDIUM
+### Phase 11: Real-Time Object Positions (PR #18) - Priority: HIGH
+
+**Goal**: Enable real-time visibility of dragging objects across users
+
+**Status**: 🔄 PLANNED (After PR #16 merge)
+
+**Motivation**: Currently, users only see final object positions after drag ends. With PR #18, users will see objects moving in real-time as others drag them (similar to cursor visibility).
+
+**Architecture**: Hybrid storage - positions in Realtime DB, properties in Firestore
+
+#### Implementation Plan
+
+**Phase 1: Add Realtime DB Position Layer**
+
+- [ ] Create Realtime DB position schema at `/objectPositions/{objectId}`
+- [ ] Update object creation to write to both Firestore and Realtime DB
+- [ ] Add Realtime DB position subscription hook
+- [ ] Update drag handler to write to Realtime DB only (not Firestore)
+- [ ] Add cleanup on object deletion (both sources)
+- [ ] Implement position merge logic in Canvas (Realtime DB priority, Firestore fallback)
+
+**Phase 2: Real-Time Drag Visibility**
+
+- [ ] Test real-time position sync across multiple browsers
+- [ ] Add visual indicator for remote drags (optional)
+- [ ] Add smooth interpolation for remote updates (optional)
+
+**Phase 3: Migration & Edge Cases**
+
+- [ ] Migrate existing objects (copy x, y to Realtime DB)
+- [ ] Handle edge cases (network issues, disconnects, orphans)
+- [ ] Performance testing (10+ simultaneous drags)
+
+**Phase 4: Optimization**
+
+- [ ] Add position update throttling (30-60fps)
+- [ ] Update store architecture documentation
+- [ ] Verify no performance regression
+
+**Key Design Decisions:**
+
+- ✅ No breaking changes (Firestore keeps x, y for creation)
+- ✅ Realtime DB position overrides Firestore position
+- ✅ Automatic fallback (if no Realtime DB position, use Firestore)
+- ✅ Position updates only touch Realtime DB (reduce Firestore writes)
+
+**Files to Create:**
+
+- `src/hooks/useObjectPositions.js`
+- `src/utils/positionMerge.js`
+- `src/utils/migratePositions.js`
+
+**Files to Modify:**
+
+- `src/stores/actions.js`
+- `src/stores/presenceStore.js`
+- `src/components/canvas/Canvas.jsx`
+- `src/stores/OPTIMISTIC_ARCHITECTURE.md`
+
+**Estimated Time**: 6-8 hours
+
+---
+
+### Phase 11.5: Selection Tracking (PR #19) - Priority: MEDIUM
+
+**Goal**: Show what objects other users are currently selecting with colored borders
+
+**Status**: 🔄 PLANNED
+
+**Motivation**: Enable real-time awareness of what collaborators are focusing on, improving coordination and reducing conflicts
+
+**Architecture**: Realtime Database for user selections + visual border overlays
+
+#### Selection Data Model
+
+**Realtime Database Path:**
+
+```
+/selections/{userId}
+  - objectId: string | null (null if nothing selected)
+  - userName: string
+  - userColor: string (from user's cursor color)
+  - timestamp: number (server timestamp)
+  - Auto-deleted via onDisconnect()
+```
+
+#### Visual Design
+
+- Each remote user's selection shows as a colored border (2-3px thick)
+- Border color matches that user's cursor color
+- Border appears outside the object (not inside or interfering with transform handles)
+- Only show borders for _other_ users' selections (not your own)
+- Your own selection uses existing selection highlight (different visual style)
+
+#### Implementation Plan
+
+**Phase 1: Realtime DB Selection Tracking**
+
+- [ ] Create Realtime DB selection schema at `/selections/{userId}`
+- [ ] Create `useSelectionTracking` hook to write current user's selection
+- [ ] Create `useSelectionSync` hook to subscribe to remote users' selections
+- [ ] Update Presence Store to store remote selections
+- [ ] Throttle selection updates (100ms) to reduce Realtime DB writes
+- [ ] Set up `onDisconnect().remove()` for cleanup
+
+**Phase 2: Visual Indicators**
+
+- [ ] Add selection border rendering logic in Canvas
+- [ ] Update shape components (Rectangle, Circle, Text) to render colored borders
+- [ ] Handle multiple users selecting same object (show first user's color + count)
+- [ ] Add subtle fade in/out animation for borders
+- [ ] Ensure borders don't interfere with transform handles (z-index)
+
+**Phase 3: Integration & UX**
+
+- [ ] Integrate selection tracking into Canvas component
+- [ ] Update selection actions to trigger Realtime DB writes
+- [ ] Handle multi-select (track primary selection only for MVP)
+- [ ] Handle deselection (clear from Realtime DB)
+
+**Phase 4: Testing & Edge Cases**
+
+- [ ] Handle disconnects (onDisconnect cleanup)
+- [ ] Handle deleted objects (clear stale selections)
+- [ ] Test multi-user scenarios (2-3+ users selecting same/different objects)
+- [ ] Performance testing (10+ users selecting objects)
+
+**Key Design Decisions:**
+
+- ✅ Track only primary selected object for MVP (not full multi-select)
+- ✅ Throttle selection updates (100ms) to reduce Realtime DB writes
+- ✅ Auto-cleanup with onDisconnect() when user leaves
+- ✅ Visual indicator: single border with user's cursor color
+- ✅ Multiple users selecting same object: show first user's color + count indicator
+
+**Files to Create:**
+
+- `src/hooks/useSelectionTracking.js` - Track current user's selection
+- `src/hooks/useSelectionSync.js` - Subscribe to remote selections
+- `src/components/canvas/SelectionBorder.jsx` - Reusable border component (optional)
+
+**Files to Modify:**
+
+- `src/stores/presenceStore.js` - Add remoteSelections state
+- `src/stores/actions.js` - Integrate selection tracking
+- `src/components/canvas/Canvas.jsx` - Integrate hooks and render logic
+- `src/components/canvas/shapes/*.jsx` - Render selection borders
+
+**Estimated Time**: 4-6 hours
+
+**Benefits:**
+
+- Improved collaboration awareness
+- Reduced conflicts (users see what others are working on)
+- Better coordination for simultaneous editing
+- Figma-like collaborative UX
+
+---
+
+### Phase 12: Polish & Performance - Priority: MEDIUM
 
 **Goal**: Optimize and stabilize
 
@@ -1213,35 +1450,64 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
 
 **Completed Features**:
 
-- ✅ Multiplayer cursors with <50ms perceived latency
+- ✅ Multiplayer cursors with <50ms perceived latency (Realtime DB)
 - ✅ Real-time object sync (rectangles, circles, text)
 - ✅ Pan and zoom functionality
 - ✅ Object transformations (move, resize, rotate)
 - ✅ Presence system
-- ✅ State persistence
+- ✅ State persistence (hybrid Firestore + Realtime DB)
 - ✅ Google Sign-In and Email/Password authentication
+- ✅ Zustand centralized state management with conflict resolution
+- ✅ Design System Component Library
+- ✅ AI Agent Core Integration (7 tools)
 - ✅ Deployed and publicly accessible
 
-**Current Focus**: AI agent integration - final MVP feature
+**Current Work**:
 
-- PR #15: Design System Component Library ✅ COMPLETED
-- PR #16: AI Agent Integration (In Progress) - Week MVP Final Feature
+- **PR #16: AI Agent Integration** ✅ CORE COMPLETE
 
-**Implementation Approach**:
+  - ✅ Firebase Functions backend with OpenAI GPT-4
+  - ✅ 7 core tools (3 creation + 4 manipulation)
+  - ✅ Frontend AI chat interface
+  - ✅ Secure API key management
+  - ✅ Ready for merge
 
-- **Firebase Cloud Functions backend** (secure - API keys NOT exposed to frontend)
-- GPT-4 with OpenAI Function Calling (no LangChain for MVP)
-- 11 canvas manipulation tools (exceeds rubric "Excellent" threshold)
-- Natural language interface for canvas operations
-- Real-time sync via existing Firestore infrastructure
-- **Target**: 21-25 points out of 25 (Good to Excellent)
+- **PR #17: AI Advanced Features** 🔄 PLANNED
 
-**Next Priorities** (Post-MVP):
+  - [ ] 4 additional tools (2 layout + 2 complex)
+  - [ ] Full function calling flow testing
+  - [ ] Conversation memory
+  - [ ] Rubric validation (target: 21-25 points)
 
+- **PR #18: Real-Time Object Positions** 🔄 PLANNED
+
+  - [ ] Migrate object positions to Realtime DB
+  - [ ] Real-time dragging visibility (like cursors)
+  - [ ] Hybrid storage (positions in Realtime DB, properties in Firestore)
+  - [ ] Zero breaking changes (fallback pattern)
+
+- **PR #19: Selection Tracking** 🔄 PLANNED
+  - [ ] Track user selections in Realtime DB
+  - [ ] Show colored borders on objects selected by others
+  - [ ] Improve collaboration awareness
+  - [ ] Figma-like collaborative UX
+
+**Architecture Highlights**:
+
+- **Hybrid Data Storage**: Firestore (persistent properties) + Realtime DB (high-frequency updates)
+- **State Management**: Zustand stores (Local, Firestore, Presence) with optimistic updates
+- **Conflict Resolution**: Last-write-wins with `lastEditedAt` timestamps
+- **AI Backend**: Firebase Cloud Functions (v2 API) with secure OpenAI integration
+- **Security**: API keys stored server-side only (never exposed to frontend)
+
+**Next Priorities**:
+
+- Complete PR #17 (AI advanced features + rubric validation)
+- Implement PR #18 (real-time object dragging)
+- Implement PR #19 (selection tracking with colored borders)
 - Add multi-select and advanced selection features
 - Layer management system
-- Performance optimization and polish
-- Consider LangChain for advanced agent patterns
+- Final performance optimization and polish
 
 ---
 

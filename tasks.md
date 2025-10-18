@@ -2347,3 +2347,416 @@ firebase functions:secrets:set OPENAI_API_KEY
 ---
 
 **Estimated Time**: 8-12 hours
+
+---
+
+## PR #18: Real-Time Object Positions
+
+**Goal**: Migrate object position data to Realtime Database for real-time dragging visibility while keeping other properties in Firestore
+
+**Architecture**: Hybrid data storage - Position in Realtime DB, everything else in Firestore
+
+**Motivation**: Enable real-time visibility of dragging objects across users (like cursors), not just final positions
+
+---
+
+### Architecture Overview
+
+**Data Split Strategy:**
+
+```
+Firestore (Persistent Object Properties):
+/projects/shared-canvas/objects/{objectId}
+  - type, width, height, fill, rotation, zIndex, radius, text, fontSize
+  - x, y (KEPT for initial creation / fallback)
+  - createdBy, createdAt, lastEditedBy, lastEditedAt
+
+Realtime Database (Live Positions - Overlays Firestore):
+/objectPositions/{objectId}
+  - x, y
+  - timestamp (optional)
+```
+
+**Key Design Decisions:**
+
+1. **No Breaking Changes**: Firestore objects keep x, y for creation
+2. **Read Priority**: Realtime DB position overrides Firestore position
+3. **Fallback**: If no Realtime DB position exists, use Firestore position
+4. **Position Updates**: Only update Realtime DB (not Firestore)
+5. **Single Source of Truth**: Realtime DB is authority for position after creation
+
+**Benefits:**
+
+- Zero breaking changes to existing code
+- Automatic fallback for old/new objects
+- Real-time drag visibility (like cursors)
+- Simple overlay pattern
+- Gradual migration friendly
+
+---
+
+### Phase 1: Add Realtime DB Position Layer
+
+1. - [ ] Create Realtime DB position schema
+   - Path: `/objectPositions/{objectId}`
+   - Structure: `{ x, y, timestamp }`
+   - Rules: Same as cursors (auth users can read/write)
+
+2. - [ ] Update object creation to write to both sources
+   - Keep Firestore write as-is (includes x, y)
+   - Add Realtime DB write after Firestore
+   - Handle creation errors gracefully
+   - File: `src/stores/actions.js` (createShape)
+
+3. - [ ] Add Realtime DB position subscription
+   - Subscribe to `/objectPositions`
+   - Store in Presence Store (similar to cursors)
+   - Merge with Firestore data (Realtime DB priority)
+   - File: Create `src/hooks/useObjectPositions.js`
+
+4. - [ ] Update drag handler to write to Realtime DB only
+   - During drag: Update Realtime DB (high frequency)
+   - On drag end: Keep Realtime DB updated (DON'T write to Firestore)
+   - Skip Firestore updates entirely for position
+   - File: `src/stores/actions.js` (moveObject, finishDrag)
+
+5. - [ ] Add cleanup on object deletion
+   - Delete from Firestore (existing)
+   - Also delete from Realtime DB
+   - Handle cleanup errors
+   - File: `src/stores/actions.js` (deleteObjects)
+
+6. - [ ] Implement position merge logic in Canvas
+   - Read objects from Firestore Store
+   - Read positions from Presence Store
+   - Merge: `{ ...firestoreObject, x: realtimeX ?? firestoreX, y: realtimeY ?? firestoreY }`
+   - File: `src/components/canvas/Canvas.jsx`
+
+---
+
+### Phase 2: Real-Time Drag Visibility
+
+7. - [ ] Test real-time position sync
+   - Open multiple browser windows
+   - Drag object in one window
+   - Verify other windows see movement in real-time
+   - Compare to cursor smoothness
+
+8. - [ ] Add visual indicator for remote drags (optional)
+   - Show "User X is moving this" label
+   - Dim or highlight object being dragged by others
+   - Optional: Show user avatar/color
+   - File: Create `src/components/canvas/DragIndicator.jsx`
+
+9. - [ ] Add smooth interpolation for remote updates (optional)
+   - Prevent jittery movement
+   - Interpolate between position updates
+   - Target: 60fps visual smoothness
+   - File: `src/utils/positionInterpolation.js`
+
+---
+
+### Phase 3: Migration & Edge Cases
+
+10. - [ ] Migrate existing objects
+    - Read all objects from Firestore
+    - Copy x, y to Realtime DB
+    - One-time migration script or automatic on load
+    - File: Create `src/utils/migratePositions.js`
+
+11. - [ ] Handle edge cases
+    - Object exists in Firestore but not Realtime DB → Use Firestore position ✅
+    - Object exists in Realtime DB but not Firestore → Clean up orphan
+    - Network issues → Fall back to Firestore
+    - User disconnects during drag → Clean up with onDisconnect()
+    - Multiple users drag same object → Last write wins (existing behavior)
+
+12. - [ ] Performance testing
+    - Test with 10+ objects being dragged simultaneously
+    - Verify cursor sync still performs well
+    - Monitor Realtime DB usage
+    - Test on slower networks
+    - Ensure no FPS drops
+
+---
+
+### Phase 4: Optimization
+
+13. - [ ] Add position update throttling
+    - Throttle drag updates to 30-60fps
+    - Reduce Realtime DB writes
+    - Maintain smooth visual experience
+    - File: `src/hooks/useObjectPositions.js`
+
+14. - [ ] Add onDisconnect cleanup
+    - Auto-remove position data on disconnect (optional - positions are persistent)
+    - Or keep positions persisted (objects should stay where they are)
+    - Decision: Keep positions persisted (unlike cursors)
+
+15. - [ ] Update store architecture documentation
+    - Document position merge logic
+    - Clean separation of Firestore vs Realtime data
+    - Update OPTIMISTIC_ARCHITECTURE.md
+    - File: `src/stores/OPTIMISTIC_ARCHITECTURE.md`
+
+---
+
+### Files to Create
+
+- `src/hooks/useObjectPositions.js` - Realtime DB position subscription
+- `src/utils/positionMerge.js` - Merge logic for Firestore + Realtime DB
+- `src/utils/migratePositions.js` - One-time migration utility
+- `src/components/canvas/DragIndicator.jsx` - Visual indicator for remote drags (optional)
+- `src/utils/positionInterpolation.js` - Smooth interpolation (optional)
+
+---
+
+### Files to Modify
+
+- `src/stores/actions.js` - Update createShape, moveObject, finishDrag, deleteObjects
+- `src/stores/presenceStore.js` - Add objectPositions state
+- `src/components/canvas/Canvas.jsx` - Position merge logic
+- `src/lib/firebase.js` - Realtime DB helper functions (if needed)
+- `src/stores/OPTIMISTIC_ARCHITECTURE.md` - Document new architecture
+
+---
+
+### Test Before Merge
+
+**Functional Tests:**
+
+- [ ] Objects created with x, y in both Firestore and Realtime DB
+- [ ] Dragging updates Realtime DB only (not Firestore)
+- [ ] Other users see real-time dragging (like cursor movement)
+- [ ] Position persists after drag (reads from Realtime DB)
+- [ ] Fallback works (object without Realtime DB position uses Firestore)
+- [ ] Object deletion removes from both Firestore and Realtime DB
+- [ ] Multiple users can drag different objects simultaneously
+
+**Performance Tests:**
+
+- [ ] No FPS drops with 10+ objects being dragged
+- [ ] Cursor sync still performs well
+- [ ] Position updates smooth and real-time
+- [ ] Network issues handled gracefully
+
+**Edge Case Tests:**
+
+- [ ] Page refresh works (positions persist in Realtime DB)
+- [ ] New users see correct positions
+- [ ] Existing objects without Realtime DB positions work (fallback)
+- [ ] Orphan Realtime DB positions cleaned up
+- [ ] Simultaneous drag conflicts resolved (last write wins)
+
+---
+
+**Estimated Time**: 6-8 hours
+
+**Dependencies**: None (can start immediately after PR #16 merge)
+
+---
+
+## PR #19: Selection Tracking
+
+**Goal**: Show what objects other users are currently selecting with colored borders
+
+**Architecture**: Realtime Database for user selections + visual indicators on canvas
+
+**Motivation**: Enable users to see what their collaborators are focusing on, improving awareness and coordination
+
+---
+
+### Architecture Overview
+
+**Realtime Database Path:**
+
+```
+/selections/{userId}
+  - objectId: string | null (null if nothing selected)
+  - userName: string
+  - userColor: string (from user's cursor color)
+  - timestamp: number (server timestamp)
+  - Auto-deleted via onDisconnect()
+```
+
+**Data Flow:**
+
+1. **User selects object** → Write to `/selections/{userId}` with `{ objectId, userName, userColor, timestamp }`
+2. **User deselects** → Write `{ objectId: null, ... }` or remove entry
+3. **Frontend subscribes** to `/selections` for all users (except self)
+4. **When rendering object** → Check if any other users have it selected
+5. **If selected by others** → Add colored border(s) around object using user's color
+
+**Visual Design:**
+
+- Each remote user's selection shows as a colored border (2-3px thick)
+- Use that user's cursor color for the border
+- Border appears outside the object (not inside)
+- Only show borders for _other_ users' selections (not your own)
+- Your own selection uses the existing selection highlight (different style)
+
+**Multi-Select Behavior:**
+
+- For MVP, track only the primary selected object (first in selection array)
+- Future: Could track all selected objects per user
+
+---
+
+### Phase 1: Realtime DB Selection Tracking
+
+1. - [ ] Create Realtime DB selection schema
+   - Path: `/selections/{userId}`
+   - Structure: `{ objectId: string | null, userName: string, userColor: string, timestamp: number }`
+   - Rules: Same as cursors (auth users can read/write)
+
+2. - [ ] Create selection tracking hook
+   - File: Create `src/hooks/useSelectionTracking.js`
+   - Write current user's selection to Realtime DB on selection change
+   - Throttle updates (100ms) to reduce writes
+   - Set up `onDisconnect().remove()` for cleanup
+   - Handle deselection (write null or remove entry)
+
+3. - [ ] Create selection sync hook
+   - File: Create `src/hooks/useSelectionSync.js`
+   - Subscribe to `/selections` for all users
+   - Store remote selections in Presence Store
+   - Filter out current user's selection
+   - Map userId → objectId for quick lookups
+
+4. - [ ] Update Presence Store
+   - File: `src/stores/presenceStore.js`
+   - Add `remoteSelections: { [userId]: { objectId, userName, userColor, timestamp } }`
+   - Add actions: `setRemoteSelections(selections)`
+
+---
+
+### Phase 2: Visual Indicators
+
+5. - [ ] Add selection border rendering logic
+   - File: `src/components/canvas/Canvas.jsx`
+   - For each object, check if any remote users have it selected
+   - Pass `remoteSelectors` array to shape components
+   - Format: `[{ userName, userColor }, ...]`
+
+6. - [ ] Update shape components to render selection borders
+   - Files: `src/components/canvas/shapes/Rectangle.jsx`, `Circle.jsx`, `Text.jsx`
+   - Accept `remoteSelectors` prop
+   - If `remoteSelectors` has entries, render colored borders
+   - Border: 2-3px solid stroke in user's color
+   - Position border outside the shape (offset by a few pixels)
+   - Use Konva `Rect` or `Circle` as border overlay
+
+7. - [ ] Handle multiple users selecting same object
+   - Option A: Show multiple nested borders (each user's color)
+   - Option B: Show single border with multiple colors (gradient or segments)
+   - **Decision for MVP**: Single border with first user's color + count indicator
+   - Example: Border in blue + small badge "2" if two users selected
+
+8. - [ ] Add visual polish
+   - Subtle animation when selection border appears/disappears (fade in/out)
+   - Optional: Show user name label near the border
+   - Ensure border doesn't interfere with transform handles
+   - Border should be behind transform handles in z-index
+
+---
+
+### Phase 3: Integration & UX
+
+9. - [ ] Integrate selection tracking into canvas
+   - File: `src/components/canvas/Canvas.jsx`
+   - Call `useSelectionTracking` with current user's selection
+   - Call `useSelectionSync` to get remote selections
+   - Pass remote selection data to shape components
+
+10. - [ ] Update selection actions
+    - File: `src/stores/actions.js`
+    - Ensure selection changes trigger Realtime DB write
+    - Handle multi-select (track primary selection only for MVP)
+    - Handle deselection (clear from Realtime DB)
+
+11. - [ ] Add selection tracking to local store
+    - File: `src/stores/localStore.js`
+    - Track if selection tracking is enabled
+    - Add helper to get primary selected object
+
+---
+
+### Phase 4: Testing & Edge Cases
+
+12. - [ ] Handle edge cases
+    - User disconnects → onDisconnect removes selection
+    - Object deleted while selected by others → Clear stale selections
+    - User selects object that doesn't exist → Ignore gracefully
+    - Rapid selection changes → Throttle updates (100ms)
+
+13. - [ ] Test multi-user scenarios
+    - Two users select same object → Both see each other's border
+    - User A selects object, User B sees border in User A's color
+    - User deselects → Border disappears for others immediately
+    - Three+ users select same object → Visual indicator correct
+
+14. - [ ] Performance testing
+    - Test with 10+ users selecting different objects
+    - Verify no FPS drops
+    - Ensure selection tracking doesn't slow down canvas
+    - Monitor Realtime DB writes (throttled properly)
+
+---
+
+### Files to Create
+
+- `src/hooks/useSelectionTracking.js` - Track current user's selection to Realtime DB
+- `src/hooks/useSelectionSync.js` - Subscribe to remote users' selections
+- `src/components/canvas/SelectionBorder.jsx` - Reusable selection border component (optional)
+
+---
+
+### Files to Modify
+
+- `src/stores/presenceStore.js` - Add remoteSelections state
+- `src/stores/actions.js` - Integrate selection tracking
+- `src/stores/localStore.js` - Helper for primary selected object
+- `src/components/canvas/Canvas.jsx` - Integrate hooks and pass data to shapes
+- `src/components/canvas/shapes/Rectangle.jsx` - Render selection borders
+- `src/components/canvas/shapes/Circle.jsx` - Render selection borders
+- `src/components/canvas/shapes/Text.jsx` - Render selection borders
+- `src/lib/firebase.js` - Realtime DB helper functions (if needed)
+
+---
+
+### Test Before Merge
+
+**Functional Tests:**
+
+- [ ] User A selects object → User B sees colored border in User A's color
+- [ ] User A deselects → Border disappears for User B immediately
+- [ ] Two users select same object → Both see each other's borders
+- [ ] User disconnects → Selection border disappears for others
+- [ ] Object deleted while selected → Selection cleared gracefully
+- [ ] Rapid selection changes → Updates throttled, no spam
+
+**Visual Tests:**
+
+- [ ] Selection border is visible and distinct from own selection
+- [ ] Border color matches user's cursor color
+- [ ] Border doesn't interfere with transform handles
+- [ ] Border appears outside the object (not inside)
+- [ ] Border fades in/out smoothly (optional animation)
+
+**Performance Tests:**
+
+- [ ] No FPS drops with 10+ users selecting objects
+- [ ] Selection tracking doesn't slow canvas interactions
+- [ ] Realtime DB writes throttled properly (max ~10/sec per user)
+
+**Edge Case Tests:**
+
+- [ ] Selecting non-existent object handled gracefully
+- [ ] Network issues don't break selection tracking
+- [ ] Multiple users selecting/deselecting rapidly works correctly
+
+---
+
+**Estimated Time**: 4-6 hours
+
+**Dependencies**: PR #18 (optional - can be done independently)
