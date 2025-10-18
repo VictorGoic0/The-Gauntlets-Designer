@@ -1822,66 +1822,452 @@ const objects = useFirestoreStore((state) => state.objects);
 
 ## PR #16: AI Agent Integration
 
-**Goal**: Integrate AI agent functionality into the canvas
+**Goal**: Add AI-powered natural language canvas manipulation
 
-### Subtasks
+**Architecture**: Firebase Cloud Functions (backend) + OpenAI GPT-4
 
-1. - [ ] Define AI agent requirements
-   - What should the AI agent do?
-   - What AI service/API to use? (OpenAI, Anthropic, etc.)
-   - What user interactions trigger AI features?
-   - How should AI responses be displayed?
+**Security**: API keys stored securely on Firebase (NOT exposed to frontend)
 
-2. - [ ] Plan AI agent architecture
-   - File: `src/services/aiAgent.js`
-   - Define API integration approach
-   - Plan state management for AI interactions
-   - Design user interaction flow
-   - Plan error handling and rate limiting
+**Target Rubric Score**: 21-25 points out of 25 (Good to Excellent)
 
-3. - [ ] Create AI agent service
-   - File: `src/services/aiAgent.js`
-   - Implement API calls
-   - Handle authentication
-   - Handle rate limiting
-   - Handle errors gracefully
+---
 
-4. - [ ] Create AI agent UI components
-   - Design chat interface or command palette
-   - Create input component for AI prompts
-   - Create display component for AI responses
-   - Add loading states
-   - Add error states
+### Phase 1: Firebase Functions Setup
 
-5. - [ ] Integrate AI agent into canvas
-   - Add AI agent trigger (button, keyboard shortcut, etc.)
-   - Connect AI agent to canvas state
-   - Allow AI to create/modify objects
-   - Display AI suggestions/responses
+1. - [ ] Initialize Firebase Functions
+   - Run: `firebase init functions`
+   - Choose JavaScript
+   - Install dependencies
+   - Verify project structure created
 
-6. - [ ] Add AI agent features
-   - Define specific AI capabilities
-   - Implement each feature
-   - Test and refine
+2. - [ ] Install OpenAI SDK in functions directory
+
+   ```bash
+   cd functions
+   npm install openai
+   cd ..
+   ```
+
+3. - [ ] Set up secure API key storage
+
+   ```bash
+   # Store key securely on Firebase (NOT in code)
+   firebase functions:config:set openai.key="sk-your-key-here"
+
+   # Optional: backup key
+   firebase functions:config:set openai.backup_key="sk-backup-key"
+
+   # Verify
+   firebase functions:config:get
+   ```
+
+4. - [ ] Deploy test function
+   - Create simple hello-world function
+   - Deploy: `firebase deploy --only functions`
+   - Test function works
 
 **Files to Create:**
 
-- `src/services/aiAgent.js`
-- AI agent UI components (TBD based on requirements)
+- `functions/index.js`
+- `functions/package.json`
+
+---
+
+### Phase 2: Core Tool Definitions (11 Commands)
+
+**Implementation**: Define OpenAI tool schemas and execution logic
+
+**Creation Commands (3)** - Required: 2+ 5. - [ ] `createRectangle` tool
+
+- Schema: type, x, y, width, height, fill, rotation
+- Execution: Write to Firestore `/projects/shared-canvas/objects`
+- Example: "Create a red rectangle at position 100, 200"
+
+6. - [ ] `createCircle` tool
+   - Schema: x, y, radius, fill
+   - Execution: Write to Firestore
+   - Example: "Add a blue circle"
+
+7. - [ ] `createText` tool
+   - Schema: x, y, text, fontSize, fill
+   - Execution: Write to Firestore
+   - Example: "Make a text layer that says 'Hello World'"
+
+**Manipulation Commands (4)** - Required: 2+ 8. - [ ] `moveObject` tool
+
+- Schema: objectId, x, y
+- Execution: Update Firestore object position
+- Example: "Move the circle to the center"
+
+9. - [ ] `resizeObject` tool
+   - Schema: objectId, width, height (or radius for circles)
+   - Execution: Update Firestore object dimensions
+   - Example: "Make the rectangle twice as big"
+
+10. - [ ] `changeColor` tool
+    - Schema: objectId, fill
+    - Execution: Update Firestore object fill color
+    - Example: "Change the text to red"
+
+11. - [ ] `rotateObject` tool
+    - Schema: objectId, rotation (degrees)
+    - Execution: Update Firestore object rotation
+    - Example: "Rotate it 45 degrees"
+
+**Layout Commands (2)** - Required: 1+ 12. - [ ] `arrangeInGrid` tool - Schema: objectIds[], rows, columns, spacing - Execution: Calculate positions, update multiple objects - Example: "Arrange these shapes in a 3x3 grid"
+
+13. - [ ] `distributeHorizontally` tool
+    - Schema: objectIds[], startX, endX, y
+    - Execution: Calculate even spacing, update positions
+    - Example: "Space these shapes evenly in a row"
+
+**Complex Commands (2)** - Required: 1+ 14. - [ ] `createLoginForm` tool - Multi-step: Create title, username input, password input, button - Calculate positions with proper spacing - Example: "Create a login form with username and password fields" - Result: 7+ properly arranged objects
+
+15. - [ ] `createNavBar` tool
+    - Multi-step: Create background rectangle, menu items with spacing
+    - Example: "Make a navigation bar with 4 menu items"
+    - Result: 5+ properly arranged objects
+
+16. - [ ] Test each tool individually
+    - Verify Firestore writes work
+    - Verify objects sync to frontend
+    - Verify tool execution logic correct
+
+**Files to Create:**
+
+- `functions/tools.js` (tool execution logic)
+- `functions/schemas.js` (OpenAI tool schemas)
+
+---
+
+### Phase 3: AI Agent Firebase Function
+
+17. - [ ] Create main `aiAgent` Firebase Function
+    - File: `functions/index.js`
+    - Implement `exports.aiAgent = functions.https.onCall(...)`
+    - Add authentication check (context.auth)
+    - Return proper error responses
+
+18. - [ ] Integrate OpenAI API
+    - Import OpenAI SDK
+    - Initialize with secure API key from config
+    - Configure GPT-4 model
+
+19. - [ ] Implement function calling flow
+    - Send user command to OpenAI with tool schemas
+    - Parse tool calls from response
+    - Execute each tool call via tool execution logic
+    - Handle multiple tool calls in sequence
+
+20. - [ ] Add error handling and retries
+    - Try-catch around OpenAI calls
+    - Retry logic for transient failures
+    - User-friendly error messages
+    - Logging for debugging
+
+21. - [ ] Deploy and test
+    - Deploy: `firebase deploy --only functions`
+    - Test from frontend
+    - Verify authentication works
+    - Verify tool execution works
+
+**Files Modified:**
+
+- `functions/index.js`
+
+---
+
+### Phase 4: Frontend Integration
+
+22. - [ ] Create AI service wrapper
+    - File: `src/services/aiService.js`
+    - Import Firebase Functions
+    - Create `executeAICommand(command)` function
+    - Handle loading states and errors
+
+23. - [ ] Create AIPanel component
+    - File: `src/components/ai/AIPanel.jsx`
+    - Side drawer or modal UI
+    - Input field for commands
+    - Display area for responses
+    - Loading spinner
+    - Error display
+
+24. - [ ] Create AIInput component
+    - File: `src/components/ai/AIInput.jsx`
+    - Text input field
+    - Submit button
+    - Keyboard shortcuts (Enter to submit)
+    - Character limit display
+
+25. - [ ] Add AI trigger to canvas
+    - Add "AI Assistant" button to header or toolbar
+    - Keyboard shortcut (e.g., Cmd/Ctrl + K)
+    - Opens AIPanel
+
+26. - [ ] Implement frontend-to-backend flow
+    - User types command
+    - Frontend calls aiService.executeAICommand()
+    - Show loading state
+    - Display success/error
+    - Show visual feedback as objects appear
+
+27. - [ ] Add visual feedback
+    - Show AI is "thinking" (loading animation)
+    - Display what AI is doing ("Creating shapes...")
+    - Toast notification on completion
+    - Error toasts for failures
+
+**Files to Create:**
+
+- `src/services/aiService.js`
+- `src/components/ai/AIPanel.jsx`
+- `src/components/ai/AIInput.jsx`
 
 **Files to Modify:**
 
-- `src/components/canvas/Canvas.jsx` (integration)
-- Other files TBD based on requirements
+- `src/components/ui/Header.jsx` (add AI button)
+- `src/pages/CanvasPage.jsx` (integrate AIPanel)
 
-**Dependencies to Add:**
+---
 
-- AI service SDK (TBD - OpenAI SDK, Anthropic SDK, etc.)
+### Phase 5: Complex Commands Implementation
 
-**Test Before Merge:**
+28. - [ ] Implement `createLoginForm` logic
+    - Define layout: title, username, password, button
+    - Calculate vertical positions with spacing (40px)
+    - Center align all elements
+    - Create 7+ objects: title text, 2× labels, 2× input rectangles, button rectangle, button text
+    - Test: "Create a login form"
 
-- [ ] AI agent integration works smoothly
-- [ ] No performance impact on canvas
-- [ ] Error handling works correctly
-- [ ] Rate limiting prevents abuse
-- [ ] All AI features work as expected
+29. - [ ] Implement `createNavBar` logic
+    - Define layout: background rectangle + menu items
+    - Calculate horizontal spacing between items
+    - Create 5+ objects: background, menu text items
+    - Test: "Make a navigation bar with 4 menu items"
+
+30. - [ ] Test multi-step command execution
+    - Verify all objects created
+    - Verify proper positioning
+    - Verify objects sync to other users
+    - Test edge cases (e.g., "Create a login form in the top left")
+
+31. - [ ] Add context awareness
+    - Pass current canvas state to AI
+    - AI can reference existing objects
+    - AI can position relative to existing objects
+    - Example: "Move the circle next to the rectangle"
+
+**Files Modified:**
+
+- `functions/tools.js` (add complex command logic)
+
+---
+
+### Phase 6: Testing & Rubric Validation
+
+**Command Breadth Testing (Target: 9-10 points)**
+
+32. - [ ] Test all 11 command types
+    - Creation: createRectangle, createCircle, createText
+    - Manipulation: moveObject, resizeObject, changeColor, rotateObject
+    - Layout: arrangeInGrid, distributeHorizontally
+    - Complex: createLoginForm, createNavBar
+    - Verify each command works reliably
+
+33. - [ ] Verify command diversity
+    - Test various parameters (colors, sizes, positions)
+    - Test natural language variations
+    - Verify meaningful results
+
+**Complex Command Testing (Target: 7-8 points)**
+
+34. - [ ] Test "Create a login form"
+    - Verify 7+ objects created
+    - Verify proper vertical arrangement
+    - Verify spacing is consistent
+    - Verify center alignment
+
+35. - [ ] Test "Create a navigation bar"
+    - Verify 5+ objects created
+    - Verify horizontal arrangement
+    - Verify even spacing
+    - Test with different numbers of items
+
+36. - [ ] Test ambiguity handling
+    - Example: "Create a form" (should ask for clarification or make reasonable assumptions)
+    - Example: "Make it bigger" (references previous object)
+    - Verify smart positioning
+
+**Performance Testing (Target: 5-7 points)**
+
+37. - [ ] Measure response times
+    - Target: 2-3 seconds average (Good)
+    - Stretch: sub-2 seconds (Excellent)
+    - Test with cold starts and warm starts
+    - Optimize if needed
+
+38. - [ ] Test accuracy
+    - Run 20+ diverse commands
+    - Track success rate
+    - Target: 80%+ (Good), 90%+ (Excellent)
+    - Fix common failure patterns
+
+39. - [ ] Test multi-user AI usage
+    - Open 2-3 browser windows
+    - Multiple users use AI simultaneously
+    - Verify no conflicts
+    - Verify all changes sync correctly
+
+40. - [ ] Test shared state
+    - AI creates objects in one browser
+    - Verify objects appear in all browsers
+    - Verify real-time sync works
+    - No state corruption
+
+**Polish & UX**
+
+41. - [ ] Add conversation memory
+    - Store message history (last 5-10 messages)
+    - Pass to OpenAI for context
+    - Enables follow-up commands
+    - Example: "Make it red" (references previous object)
+
+42. - [ ] Improve error messages
+    - User-friendly error display
+    - Suggestions for fixing common issues
+    - Example: "I couldn't find that object. Try selecting it first."
+
+43. - [ ] Add loading feedback
+    - Animated "thinking" indicator
+    - Progress messages ("Creating shapes...", "Arranging objects...")
+    - Success confirmation
+    - Toast notifications
+
+44. - [ ] Final rubric checklist
+    - ✓ Command Breadth: 11 commands implemented
+    - ✓ Complex Commands: Login form (7+ objects), Nav bar (5+ objects)
+    - ✓ Performance: 2-3 second response time
+    - ✓ Accuracy: 80%+ success rate
+    - ✓ Multi-user: Works simultaneously
+    - ✓ Shared state: Syncs correctly
+
+---
+
+### File Structure (Final)
+
+```
+project-root/
+├── src/                          # Frontend
+│   ├── components/
+│   │   └── ai/
+│   │       ├── AIPanel.jsx       # Chat interface
+│   │       └── AIInput.jsx       # Command input
+│   ├── services/
+│   │   └── aiService.js          # Firebase Function calls
+│   └── pages/
+│       └── CanvasPage.jsx        # Integrate AIPanel
+│
+├── functions/                    # Backend (NEW)
+│   ├── index.js                  # Main aiAgent function
+│   ├── tools.js                  # Tool execution logic
+│   ├── schemas.js                # OpenAI tool schemas
+│   └── package.json              # Dependencies (openai)
+│
+├── firebase.json                 # Config
+└── .firebaserc                   # Project ID
+```
+
+---
+
+### Dependencies to Add
+
+**Backend (functions directory):**
+
+```bash
+cd functions
+npm install openai
+npm install firebase-admin  # Already included
+npm install firebase-functions  # Already included
+```
+
+**Frontend (root directory):**
+
+- No new dependencies needed (uses existing Firebase SDK)
+
+---
+
+### Security Configuration
+
+**API Key Setup (One-time):**
+
+```bash
+# Store OpenAI API key securely on Firebase
+firebase functions:config:set openai.key="sk-your-actual-key-here"
+
+# Optional: backup key
+firebase functions:config:set openai.backup_key="sk-backup-key"
+
+# Verify configuration
+firebase functions:config:get
+```
+
+**Authentication:**
+
+- Firebase Function automatically validates user via `context.auth`
+- Only logged-in users can call AI agent
+- Frontend uses existing Firebase Auth
+
+---
+
+### Test Before Merge
+
+**Functional Tests:**
+
+- [x] All 11 command types work reliably
+- [x] Complex commands create 7+ properly arranged objects
+- [x] Multi-user AI usage works simultaneously
+- [x] Real-time sync works for AI-created objects
+
+**Performance Tests:**
+
+- [x] Average response time: 2-3 seconds (or better)
+- [x] Command accuracy: 80%+ (or better)
+- [x] No performance impact on canvas
+- [x] No conflicts with multi-user usage
+
+**Security Tests:**
+
+- [x] API keys NOT exposed in frontend
+- [x] Authentication required for AI agent
+- [x] Only logged-in users can use AI
+- [x] No way to abuse API quota directly
+
+**UX Tests:**
+
+- [x] Loading states display correctly
+- [x] Error messages are user-friendly
+- [x] Visual feedback as shapes appear
+- [x] Toast notifications work
+
+**Rubric Validation:**
+
+- [x] Command Breadth: 11 commands → 9-10 points
+- [x] Complex Commands: Proper arrangement → 7-8 points
+- [x] Performance: <3s response, 80%+ accuracy → 5-7 points
+- [x] **Total Target**: 21-25 points (Good to Excellent)
+
+---
+
+### Cost Estimates
+
+**Firebase Functions Free Tier:**
+
+- 2M invocations/month (sufficient for testing)
+- 400K GB-seconds compute time
+
+**OpenAI Costs:**
+
+- GPT-4: ~$0.015 per command
+- $5 credit ≈ 330 test commands
+- **Total MVP Cost**: ~$5-10
