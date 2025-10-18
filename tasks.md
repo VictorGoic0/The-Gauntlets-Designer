@@ -1832,15 +1832,18 @@ const objects = useFirestoreStore((state) => state.objects);
 
 ---
 
-### Phase 1: Firebase Functions Setup
+### Phase 1: Firebase Functions Setup ✅ COMPLETE
 
-1. - [ ] Initialize Firebase Functions
+**Important Discovery**: Firebase automatically installs `firebase-functions` v6.x (v2 API), NOT v1. All code must use v2 syntax.
+
+1. - [x] Initialize Firebase Functions ✅
    - Run: `firebase init functions`
-   - Choose JavaScript
+   - Choose JavaScript (recommended for speed)
    - Install dependencies
    - Verify project structure created
+   - **Result**: Created `functions/` directory with `index.js`, `package.json`, `.eslintrc.js`
 
-2. - [ ] Install OpenAI SDK in functions directory
+2. - [x] Install OpenAI SDK in functions directory ✅
 
    ```bash
    cd functions
@@ -1848,28 +1851,79 @@ const objects = useFirestoreStore((state) => state.objects);
    cd ..
    ```
 
-3. - [ ] Set up secure API key storage
+   - **Installed**: `openai@6.5.0`
+
+3. - [x] Set up secure API key storage ✅
+
+   **IMPORTANT - V2 API Key Setup:**
+
+   For Firebase Functions v2, API keys are stored as **secrets** or **environment parameters**, NOT with `functions:config:set`.
+
+   **Method 1: Secrets (Recommended for production)**
 
    ```bash
-   # Store key securely on Firebase (NOT in code)
-   firebase functions:config:set openai.key="sk-your-key-here"
-
-   # Optional: backup key
-   firebase functions:config:set openai.backup_key="sk-backup-key"
-
-   # Verify
-   firebase functions:config:get
+   firebase functions:secrets:set OPENAI_API_KEY
+   # Paste key when prompted
    ```
 
-4. - [ ] Deploy test function
-   - Create simple hello-world function
+   **Method 2: Environment Parameters (Used for MVP)**
+
+   ```javascript
+   // In functions/index.js
+   const { defineString } = require("firebase-functions/params");
+   const openaiApiKey = defineString("OPENAI_API_KEY");
+
+   // Access with: openaiApiKey.value()
+   ```
+
+   **Old v1 method (DOES NOT WORK with v2):**
+
+   ```bash
+   # ❌ This is v1 only - don't use with firebase-functions v6+
+   firebase functions:config:set openai.key="sk-your-key-here"
+   ```
+
+4. - [x] Deploy test function ✅
+   - Created `testFunction` to verify setup
+   - **V2 Syntax Used**:
+
+     ```javascript
+     const { onCall, HttpsError } = require("firebase-functions/v2/https");
+
+     exports.testFunction = onCall((request) => {
+       if (!request.auth) {
+         throw new HttpsError("unauthenticated", "User must be authenticated");
+       }
+       return { success: true, user: { uid: request.auth.uid } };
+     });
+     ```
+
    - Deploy: `firebase deploy --only functions`
-   - Test function works
+   - **Test Button Added**: Created test button in Header.jsx for easy testing
+   - **Frontend Test Wrapper**: Created `src/services/testFunctions.js` for calling function
+   - ✅ **Test Passed**: Auth working, function responds correctly
 
-**Files to Create:**
+**Key V1 vs V2 Differences Discovered:**
 
-- `functions/index.js`
-- `functions/package.json`
+| Feature          | V1 API (firebase-functions 3.x)                    | V2 API (firebase-functions 6.x)                              |
+| ---------------- | -------------------------------------------------- | ------------------------------------------------------------ |
+| Import           | `const functions = require("firebase-functions");` | `const { onCall } = require("firebase-functions/v2/https");` |
+| onCall signature | `functions.https.onCall((data, context) => {})`    | `onCall((request) => {})`                                    |
+| Auth check       | `context.auth`                                     | `request.auth`                                               |
+| Error throw      | `functions.https.HttpsError()`                     | `HttpsError()` from v2/https                                 |
+| Config access    | `functions.config().openai.key`                    | `defineString("OPENAI_API_KEY").value()`                     |
+| Async            | Optional (return promise or use async)             | Same                                                         |
+
+**Files Created:**
+
+- `functions/index.js` (test function with v2 syntax)
+- `functions/package.json` (openai@6.5.0, firebase-functions@6.0.1)
+- `src/services/testFunctions.js` (frontend test wrapper)
+
+**Files Modified:**
+
+- `src/components/ui/Header.jsx` (added test button)
+- `src/main.jsx` (temporarily imported test function - can be removed later)
 
 ---
 
@@ -1877,39 +1931,41 @@ const objects = useFirestoreStore((state) => state.objects);
 
 **Implementation**: Define OpenAI tool schemas and execution logic
 
-**Creation Commands (3)** - Required: 2+ 5. - [ ] `createRectangle` tool
+**Creation Commands (3)** - Required: 2+ ✅ COMPLETE
 
-- Schema: type, x, y, width, height, fill, rotation
-- Execution: Write to Firestore `/projects/shared-canvas/objects`
-- Example: "Create a red rectangle at position 100, 200"
+5. - [x] `createRectangle` tool ✅
+   - Schema: type, x, y, width, height, fill, rotation
+   - Execution: Write to Firestore `/projects/shared-canvas/objects`
+   - Example: "Create a red rectangle at position 100, 200"
 
-6. - [ ] `createCircle` tool
+6. - [x] `createCircle` tool ✅
    - Schema: x, y, radius, fill
    - Execution: Write to Firestore
    - Example: "Add a blue circle"
 
-7. - [ ] `createText` tool
+7. - [x] `createText` tool ✅
    - Schema: x, y, text, fontSize, fill
    - Execution: Write to Firestore
    - Example: "Make a text layer that says 'Hello World'"
 
-**Manipulation Commands (4)** - Required: 2+ 8. - [ ] `moveObject` tool
+**Manipulation Commands (4)** - Required: 2+ ✅ COMPLETE
 
-- Schema: objectId, x, y
-- Execution: Update Firestore object position
-- Example: "Move the circle to the center"
+8. - [x] `moveObject` tool ✅
+   - Schema: objectId, x, y
+   - Execution: Update Firestore object position
+   - Example: "Move the circle to the center"
 
-9. - [ ] `resizeObject` tool
+9. - [x] `resizeObject` tool ✅
    - Schema: objectId, width, height (or radius for circles)
    - Execution: Update Firestore object dimensions
    - Example: "Make the rectangle twice as big"
 
-10. - [ ] `changeColor` tool
+10. - [x] `changeColor` tool ✅
     - Schema: objectId, fill
     - Execution: Update Firestore object fill color
     - Example: "Change the text to red"
 
-11. - [ ] `rotateObject` tool
+11. - [x] `rotateObject` tool ✅
     - Schema: objectId, rotation (degrees)
     - Execution: Update Firestore object rotation
     - Example: "Rotate it 45 degrees"

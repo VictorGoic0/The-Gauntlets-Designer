@@ -2,7 +2,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { signOutUser } from "../../lib/firebase";
 import ConnectionStatus from "./ConnectionStatus";
 import Button from "../design-system/Button";
-import { testFirebaseFunction } from "../../services/testFunctions";
+import { testCreateRectangle } from "../../services/testFunctions";
 import toast from "react-hot-toast";
 
 export default function Header() {
@@ -18,13 +18,14 @@ export default function Header() {
 
   const handleTestFunction = async () => {
     try {
-      const result = await testFirebaseFunction();
-      const keyInfo = result.config?.keyPreview 
-        ? ` Key: ${result.config.keyPreview}` 
-        : "";
-      toast.success(`✅ Function works!${keyInfo}`);
+      const result = await testCreateRectangle();
+      if (result.results && result.results.length > 0) {
+        toast.success(`✅ Rectangle created!`);
+      } else {
+        toast.success(`✅ AI Agent responded: ${result.message}`);
+      }
     } catch (error) {
-      toast.error(`❌ Function failed: ${error.message}`);
+      toast.error(`❌ AI Agent failed: ${error.message}`);
     }
   };
 
@@ -38,7 +39,7 @@ export default function Header() {
             variant="outline"
             size="sm"
           >
-            Test Function
+            Test AI
           </Button>
           <ConnectionStatus />
           <span className="text-gray-300">
