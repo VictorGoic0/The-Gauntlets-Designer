@@ -409,16 +409,16 @@ service cloud.firestore {
 
 ---
 
-### Phase 7: Critical Bug Fixes (Current) - Priority: HIGH
+### Phase 7: Critical Bug Fixes - Priority: HIGH ✅ COMPLETED
 
 **Goal**: Fix remaining collaboration bugs and edge cases
 
-- [ ] Fix simultaneous drag conflict resolution
-- [ ] Fix text rotation issue for new text objects
-- [ ] Add email/password authentication (completed)
-- [ ] Fix text editing race conditions (completed)
-- [ ] Fix transform snap-back issues (completed)
-- [ ] Fix Konva NaN warnings (completed)
+- [x] Fix simultaneous drag conflict resolution
+- [x] Fix text rotation issue for new text objects
+- [x] Add email/password authentication
+- [x] Fix text editing race conditions
+- [x] Fix transform snap-back issues
+- [x] Fix Konva NaN warnings
 
 ---
 
@@ -806,7 +806,356 @@ const TextEditor = () => {
 
 ---
 
-### Phase 9: Polish & Performance (Days 5-7) - Priority: MEDIUM
+### Phase 9: Design System Component Library - Priority: HIGH ✅ COMPLETED
+
+**Goal**: Build a reusable design system for consistent UI patterns
+
+**Status**: ✅ COMPLETE - All components built and integrated
+
+#### Phase I: Building Design System
+
+- [x] Create design tokens (colors, typography, spacing, shadows)
+- [x] Create Card component (elevated, outlined, flat variants)
+- [x] Create Input component (with labels, error/success states, password toggle, icons)
+- [x] Create Button component (primary, secondary, outline, ghost variants with loading states)
+- [x] Setup React Hot Toast for notifications
+- [x] Create comprehensive documentation
+
+#### Phase II: Integration
+
+- [x] Integrate Toast notifications (login, signup, connection status)
+- [x] Integrate Card component into Login/SignUp pages
+- [x] Integrate Button component into Login/SignUp/Header
+- [x] Integrate Input component into Login/SignUp pages
+
+**Benefits**:
+
+- Material-UI inspired modern aesthetic
+- Consistent styling across entire application
+- Full accessibility (ARIA labels, keyboard navigation)
+- Password visibility toggle on password inputs
+- Loading states on buttons
+- Connection status toast notifications
+
+**Files Created**:
+
+- `src/styles/tokens.js`
+- `src/components/design-system/Card.jsx`
+- `src/components/design-system/Input.jsx`
+- `src/components/design-system/Button.jsx`
+- `src/utils/toast.js`
+- `src/components/design-system/README.md`
+
+**Files Modified**:
+
+- `src/App.jsx` (added Toaster)
+- `src/components/auth/Login.jsx`
+- `src/components/auth/SignUp.jsx`
+- `src/components/ui/Header.jsx`
+- `src/components/ui/ConnectionStatus.jsx`
+
+---
+
+### Phase 10: AI Agent Integration - Priority: HIGH (Week MVP Final Feature)
+
+**Goal**: Add AI-powered natural language canvas manipulation
+
+**Status**: In Progress
+
+**Target Rubric Score**: Good-to-Excellent (18-25 points out of 25)
+
+---
+
+#### Architecture: Firebase Functions Backend with OpenAI
+
+**Security-First Approach** (**API Keys NOT Exposed**)
+
+- ✅ OpenAI API key stored securely on Firebase servers (NEVER in frontend code)
+- ✅ Firebase Cloud Functions (serverless) handles all OpenAI API calls
+- ✅ Frontend authenticated via existing Firebase Auth
+- ✅ Users cannot directly access or abuse API quota
+
+**Technology Stack:**
+
+- **Backend**: Firebase Cloud Functions (Node.js serverless)
+- **AI Model**: OpenAI GPT-4 (or GPT-3.5-turbo for speed)
+- **Pattern**: OpenAI Function Calling (not LangChain for MVP simplicity)
+- **Authentication**: Firebase Auth (existing system)
+- **Sync**: Firestore real-time listeners (existing infrastructure)
+
+**System Flow:**
+
+```
+User: "Create 5 blue circles in a row"
+    ↓
+Frontend (React) → Firebase Function: aiAgent()
+    ↓ [Authenticated request with command]
+Firebase Function → OpenAI API (server-side, key secure)
+    ↓ [Tools definition + user command]
+OpenAI GPT-4 → Analyzes & Returns Tool Calls
+    ↓ [5× createShape with calculated positions]
+Firebase Function → Executes Tools
+    ↓ [Writes 5 circle objects to Firestore]
+Firestore → Real-time Sync (existing system)
+    ↓
+All Users → See shapes appear instantly
+```
+
+---
+
+#### Command Implementation (11 Commands - Exceeds "Excellent")
+
+**Creation Commands (3)** - Required: 2+
+
+1. `createRectangle` - "Create a red rectangle at position 100, 200"
+2. `createCircle` - "Add a blue circle"
+3. `createText` - "Make a text layer that says 'Hello World'"
+
+**Manipulation Commands (4)** - Required: 2+ 4. `moveObject` - "Move the circle to the center" 5. `resizeObject` - "Make the rectangle twice as big" 6. `changeColor` - "Change the text to red" 7. `rotateObject` - "Rotate it 45 degrees"
+
+**Layout Commands (2)** - Required: 1+ 8. `arrangeInGrid` - "Arrange these shapes in a 3x3 grid" 9. `distributeHorizontally` - "Space these shapes evenly"
+
+**Complex Commands (2)** - Required: 1+ 10. `createLoginForm` - "Create a login form with username and password fields" 11. `createNavBar` - "Make a navigation bar with 4 menu items"
+
+**Rubric Score**: 11 commands → **Excellent (9-10 points)**
+
+**Complex Command Example:**
+
+```
+User: "Create a login form"
+
+AI Execution Plan:
+1. Create title text: "Login"
+2. Create username label + input rectangle
+3. Create password label + input rectangle
+4. Create submit button (rectangle + text)
+5. Calculate vertical positions with spacing
+6. Center align all elements
+
+Result: 7+ objects properly arranged → Excellent (7-8 points)
+```
+
+---
+
+#### Performance Targets (Rubric Requirements)
+
+**Response Time:**
+
+- **Target**: 2-3 seconds → Good (4-5 points)
+- **Stretch**: Sub-2 seconds → Excellent (6-7 points)
+
+**Breakdown:**
+
+- Firebase Function cold start: 1-2s (first call only)
+- Firebase Function warm: ~200ms
+- OpenAI API response: 1-2s
+- Tool execution (Firestore writes): 100-500ms
+- **Total**: 2-3s average, ~1.5s when warm
+
+**Accuracy**: 80%+ (Good), 90%+ (Excellent)
+
+**Multi-User Support:**
+
+- ✅ Multiple users can use AI simultaneously
+- ✅ All changes sync via existing Firestore
+- ✅ No conflicts (AI acts like any authenticated user)
+
+---
+
+#### Implementation Phases
+
+**Phase 1: Firebase Functions Setup**
+
+- [ ] Initialize Firebase Functions: `firebase init functions`
+- [ ] Install OpenAI SDK in functions directory
+- [ ] Set up secure API key: `firebase functions:config:set openai.key="sk-..."`
+- [ ] Deploy test function to verify setup
+
+**Phase 2: Core Tool Definitions**
+
+- [ ] Define 11 OpenAI tool schemas (JSON format)
+- [ ] Implement tool execution logic in Firebase Function
+- [ ] Test each tool individually
+- [ ] Verify Firestore writes sync correctly
+
+**Phase 3: AI Agent Function**
+
+- [ ] Create main `aiAgent` Firebase Function
+- [ ] Integrate OpenAI API with function calling
+- [ ] Handle tool call parsing and execution
+- [ ] Add error handling, retries, and logging
+
+**Phase 4: Frontend Integration**
+
+- [ ] Create AI chat panel (side drawer or modal)
+- [ ] Build input/output UI components
+- [ ] Implement Firebase Function calls from frontend
+- [ ] Add loading states and visual feedback
+
+**Phase 5: Complex Commands**
+
+- [ ] Implement `createLoginForm` multi-step logic
+- [ ] Implement `createNavBar` with spacing calculations
+- [ ] Test complex command execution
+- [ ] Verify proper object positioning and arrangement
+
+**Phase 6: Testing & Polish**
+
+- [ ] Test all 11 command types
+- [ ] Verify 80%+ accuracy rate
+- [ ] Test multi-user AI usage simultaneously
+- [ ] Add conversation memory (message history)
+- [ ] Final rubric requirements checklist
+
+---
+
+#### File Structure
+
+```
+project-root/
+├── src/                          # Frontend (existing)
+│   ├── components/
+│   │   └── ai/
+│   │       ├── AIPanel.jsx       # Chat interface UI
+│   │       └── AIInput.jsx       # Command input field
+│   └── services/
+│       └── aiService.js          # Frontend → Firebase Function calls
+│
+├── functions/                    # Backend (NEW)
+│   ├── index.js                  # Main aiAgent function
+│   ├── tools.js                  # Tool definitions & execution
+│   ├── schemas.js                # OpenAI tool schemas
+│   └── package.json              # Backend dependencies (openai)
+│
+├── firebase.json                 # Firebase configuration
+└── .firebaserc                   # Firebase project ID
+```
+
+---
+
+#### Security & API Key Management
+
+**OpenAI API Key (100% Secure - NOT Exposed):**
+
+```bash
+# Store secret on Firebase servers (encrypted, never in code)
+firebase functions:config:set openai.key="sk-your-actual-key-here"
+
+# Optional: backup key
+firebase functions:config:set openai.backup_key="sk-backup-key"
+
+# View stored configuration
+firebase functions:config:get
+```
+
+**Firebase Function with Authentication:**
+
+```javascript
+// functions/index.js
+const functions = require("firebase-functions");
+
+exports.aiAgent = functions.https.onCall(async (data, context) => {
+  // Automatic authentication check
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Must be logged in to use AI"
+    );
+  }
+
+  // Access API key securely (frontend NEVER sees this)
+  const apiKey = functions.config().openai.key;
+
+  // Make OpenAI call server-side
+  // ... (key is secure on backend)
+});
+```
+
+**Key Security Guarantees:**
+
+- ✅ API key stored on Firebase servers (encrypted)
+- ✅ Key NEVER appears in frontend code or DevTools
+- ✅ Only authenticated Firebase Functions can access key
+- ✅ Frontend only calls the Firebase Function (requires auth)
+
+---
+
+#### Cost Estimates
+
+**Firebase Functions Free Tier:**
+
+- 2M invocations/month
+- 400K GB-seconds compute time
+- **Sufficient for MVP development and testing**
+
+**OpenAI Costs:**
+
+- GPT-4: ~$0.03 per 1K tokens
+- Average command: ~500 tokens
+- Cost per command: ~$0.015
+- **$5 credit ≈ 330 test commands**
+
+**Total MVP Development Cost:** ~$5-10
+
+---
+
+#### Why These Architecture Choices
+
+**Firebase Functions over other backends:**
+
+- ✅ Already using Firebase ecosystem (Auth, Firestore, Realtime DB)
+- ✅ Serverless - zero server management
+- ✅ Automatic scaling
+- ✅ Built-in authentication integration
+- ✅ Simple deployment: `firebase deploy --only functions`
+- ✅ Free tier adequate for MVP
+
+**OpenAI Function Calling over LangChain:**
+
+- ✅ Simpler implementation (less abstraction)
+- ✅ Faster development (tight timeline)
+- ✅ Direct control over tool execution
+- ✅ Adequate for 11 tools
+- ✅ Can upgrade to LangChain post-MVP if needed
+
+**GPT-4 over GPT-3.5-turbo:**
+
+- ✅ Better at complex multi-step commands
+- ✅ More reliable tool calling
+- ✅ Higher accuracy for rubric requirements
+- ✅ Worth extra cost for better score
+- ✅ Can A/B test both models
+
+---
+
+#### Success Criteria (Rubric Alignment)
+
+**Command Breadth (Target: 9-10 points)**
+
+- ✅ 11 distinct command types implemented
+- ✅ All categories covered: creation, manipulation, layout, complex
+- ✅ Commands are diverse and meaningful
+
+**Complex Command Execution (Target: 7-8 points)**
+
+- ✅ "Create login form" produces 7+ properly arranged elements
+- ✅ Smart positioning with calculated spacing
+- ✅ Multi-step plans execute correctly
+- ✅ Handles ambiguity well
+
+**Performance & Reliability (Target: 5-7 points)**
+
+- ✅ 2-3 second average response time
+- ✅ 80%+ command accuracy
+- ✅ Natural UX with loading feedback
+- ✅ Shared state works flawlessly
+- ✅ Multi-user AI works simultaneously
+
+**Total Target Score**: 21-25 points out of 25 (Good to Excellent)
+
+---
+
+### Phase 11: Polish & Performance (Days 5-7) - Priority: MEDIUM
 
 **Goal**: Optimize and stabilize
 
@@ -873,17 +1222,26 @@ const TextEditor = () => {
 - ✅ Google Sign-In and Email/Password authentication
 - ✅ Deployed and publicly accessible
 
-**Current Focus**: Bug fixes and state management refactor
+**Current Focus**: AI agent integration - final MVP feature
 
-- PR #13: Remaining bug fixes (simultaneous drag conflicts, text rotation)
-- PR #14: State management refactor (centralized store pattern)
+- PR #15: Design System Component Library ✅ COMPLETED
+- PR #16: AI Agent Integration (In Progress) - Week MVP Final Feature
 
-**Next Priorities**:
+**Implementation Approach**:
 
-- Fix remaining collaboration edge cases
-- Implement centralized state management
+- **Firebase Cloud Functions backend** (secure - API keys NOT exposed to frontend)
+- GPT-4 with OpenAI Function Calling (no LangChain for MVP)
+- 11 canvas manipulation tools (exceeds rubric "Excellent" threshold)
+- Natural language interface for canvas operations
+- Real-time sync via existing Firestore infrastructure
+- **Target**: 21-25 points out of 25 (Good to Excellent)
+
+**Next Priorities** (Post-MVP):
+
 - Add multi-select and advanced selection features
 - Layer management system
+- Performance optimization and polish
+- Consider LangChain for advanced agent patterns
 
 ---
 
