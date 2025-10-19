@@ -86,11 +86,16 @@ export const signInWithEmail = async (email, password) => {
 
 export const signOutUser = async () => {
   try {
-    // Remove presence before signing out
+    // Remove presence and selections before signing out
     const user = auth.currentUser;
     if (user) {
+      // Remove presence
       const presenceRef = ref(realtimeDb, `presence/${user.uid}`);
       await set(presenceRef, null);
+
+      // Remove selection (PR #19)
+      const selectionRef = ref(realtimeDb, `selections/${user.uid}`);
+      await set(selectionRef, null);
     }
 
     await signOut(auth);
