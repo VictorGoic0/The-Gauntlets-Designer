@@ -1934,9 +1934,10 @@ const objects = useFirestoreStore((state) => state.objects);
 **Creation Commands (3)** - Required: 2+ ✅ COMPLETE
 
 5. - [x] `createRectangle` tool ✅
-   - Schema: type, x, y, width, height, fill, rotation
-   - Execution: Write to Firestore `/projects/shared-canvas/objects`
-   - Example: "Create a red rectangle at position 100, 200"
+
+- Schema: type, x, y, width, height, fill, rotation
+- Execution: Write to Firestore `/projects/shared-canvas/objects`
+- Example: "Create a red rectangle at position 100, 200"
 
 6. - [x] `createCircle` tool ✅
    - Schema: x, y, radius, fill
@@ -1951,9 +1952,10 @@ const objects = useFirestoreStore((state) => state.objects);
 **Manipulation Commands (4)** - Required: 2+ ✅ COMPLETE
 
 8. - [x] `moveObject` tool ✅
-   - Schema: objectId, x, y
-   - Execution: Update Firestore object position
-   - Example: "Move the circle to the center"
+
+- Schema: objectId, x, y
+- Execution: Update Firestore object position
+- Example: "Move the circle to the center"
 
 9. - [x] `resizeObject` tool ✅
    - Schema: objectId, width, height (or radius for circles)
@@ -2814,101 +2816,203 @@ Realtime Database (Live Positions - Overlays Firestore):
 
 ---
 
-### Phase 1: Header Modernization
+### Phase 1: Header Modernization ✅ COMPLETE
 
-1. - [ ] Refactor Header styling
+1. - [x] Refactor Header styling ✅
    - File: `src/components/ui/Header.jsx`
-   - Replace inline styles with design tokens
-   - Use `colors.neutral[800]` for background
-   - Use `colors.neutral[50]` for text
-   - Apply consistent `spacing` for padding/gaps
+   - Replaced Tailwind classes with design tokens
+   - Used `colors.neutral[800]` for background
+   - Used `colors.neutral[0]` for title, `colors.neutral[300]` for welcome text
+   - Applied consistent `spacing` for padding/gaps
 
-2. - [ ] Modernize Header buttons
-   - AI Assistant button already uses Button component ✅
-   - Ensure Sign Out button uses design system styling
-   - Apply hover states with design tokens
-   - Consistent button spacing
+2. - [x] Modernize Header buttons ✅
+   - AI Assistant button uses Button component ✅
+   - Sign Out button uses Button component ✅
+   - Both buttons use design system styling
+   - Applied consistent button spacing with `spacing[4]`
 
-3. - [ ] Add Header border/shadow
-   - Use design tokens for subtle bottom border
-   - Optional: Add subtle shadow for depth
-   - Separate header from canvas visually
+3. - [x] Add Header border/shadow ✅
+   - Added subtle bottom border using `colors.neutral[700]`
+   - Added elevation shadow using `shadows.elevation[2]`
+   - Header now visually separated from canvas
 
 ---
 
-### Phase 2: Toolbar Modernization
+### Phase 2: Toolbar Modernization ✅ COMPLETE
 
-4. - [ ] Refactor Toolbar layout
+4. - [x] Refactor Toolbar layout ✅
    - File: `src/components/canvas/Toolbar.jsx`
-   - Use design system colors for background
-   - Apply consistent spacing between tool buttons
-   - Add subtle border/shadow
+   - Removed all Tailwind classes
+   - Used `colors.neutral.darker` for background
+   - Applied consistent spacing with `spacing[2]` between buttons, `spacing[3]` for padding
+   - Added subtle border with `colors.neutral.dark` and `shadows.elevation[3]`
+   - Toolbar positioned at `top: spacing[2]` (8px) to hug the top of canvas
+   - Fixed position (absolute) so it stays in place during zoom/pan
 
-5. - [ ] Modernize tool buttons
-   - Apply design tokens for button styling
-   - Active state: `colors.primary[500]` background
-   - Hover state: `colors.neutral[100]` background
-   - Inactive state: `colors.neutral[50]` background
-   - Use design system `borderRadius`
+5. - [x] Modernize tool buttons ✅
+   - Applied design tokens for all button styling
+   - Active state: `colors.primary.base` background, `colors.neutral.white` text
+   - Hover state: `colors.neutral.mediumDark` background, `colors.neutral.white` text
+   - Inactive state: `colors.neutral.dark` background, `colors.neutral.lightBase` text
+   - Used `borderRadius.base` for consistent rounded corners
+   - Icon size standardized to 24px
 
-6. - [ ] Add visual feedback
-   - Smooth transitions using `transitions.default`
-   - Icon color changes on hover/active
-   - Tooltip-like labels on hover (optional)
+6. - [x] Add visual feedback ✅
+   - Smooth transitions using `transitions.duration.shorter` and `transitions.easing.easeInOut`
+   - Icon color changes smoothly on hover/active with transition
+   - Added hover state tracking with `useState` for precise control
+   - Tooltips already present via `title` attribute
 
 ---
 
-### Phase 3: PresencePanel Modernization
+### Phase 2.5: Design Token Refactoring ✅ COMPLETE
 
-7. - [ ] Refactor PresencePanel styling
+**Note:** After Phase 2, color token naming was refactored from numeric keys to semantic names for better clarity and consistency.
+
+**Color Token Naming Change:**
+
+- **Before:** `primary: { 50, 100, 200, ..., 500, ..., 900 }` and `neutral: { 0, 50, 100, ..., 1000 }`
+- **After:** `primary: { lightest, lighter, light, lightBase, mediumLight, base, mediumDark, dark, darker, darkest }` and `neutral: { white, lightest, lighter, light, lightBase, mediumLight, base, mediumDark, dark, darker, darkest, black }`
+
+**Files Updated to Use New Semantic Names:**
+
+1. - [x] `src/styles/tokens.js` - Refactored color scales ✅
+
+2. - [x] `src/components/design-system/Button.jsx` ✅
+   - Updated all color references from numeric to semantic names
+   - `primary[600]` → `primary.mediumDark`
+   - `primary[700]` → `primary.dark`
+   - `primary[800]` → `primary.darker`
+   - `primary[500]` → `primary.base`
+   - `primary[50]` → `primary.lightest`
+   - `primary[100]` → `primary.lighter`
+   - Applied same pattern to secondary colors
+
+3. - [x] `src/components/ui/Header.jsx` ✅
+   - Already using semantic names (completed in Phase 1)
+   - `colors.neutral.darker`, `colors.neutral.white`, `colors.neutral.lightBase`, etc.
+
+4. - [x] `src/components/canvas/Toolbar.jsx` ✅
+   - Already using semantic names (completed in Phase 2)
+   - All references updated to match new naming convention
+
+5. - [x] `src/components/auth/Login.jsx` ✅
+   - Replaced all hardcoded color values with design tokens
+   - `'#111827'` → `colors.neutral.darkest`
+   - `'#4B5563'` → `colors.text.secondary`
+   - `'#6B7280'` → `colors.neutral.base`
+   - `'#2563EB'` → `colors.primary.dark`
+   - `'#ffffff'` → `colors.neutral.white`
+   - `'#D1D5DB'` → `colors.neutral.lightBase`
+   - `'#374151'` → `colors.neutral.dark`
+   - Added design token imports and style objects
+
+6. - [x] `src/components/auth/SignUp.jsx` ✅
+   - Replaced all hardcoded color values with design tokens
+   - Applied same color mappings as Login.jsx
+   - Added design token imports and style objects
+   - Now fully consistent with design system
+
+7. - [x] `src/components/design-system/Input.jsx` ✅
+   - Updated border color from `colors.neutral[300]` → `colors.neutral.lightBase`
+   - Updated focus border from `colors.primary[500]` → `colors.primary.base`
+   - Updated focus shadow from `colors.primary[500]` → `colors.primary.base`
+   - Input focus states now display correctly with proper blue highlight
+
+**Benefits:**
+
+- ✅ Self-documenting code (semantic names explain intent)
+- ✅ Consistent naming with existing semantic tokens (`success.main`, `error.main`)
+- ✅ Better IDE autocomplete and discoverability
+- ✅ Easier to understand and maintain
+- ✅ No more hardcoded color values in auth pages
+- ✅ Input component focus colors working correctly
+
+---
+
+### Phase 3: PresencePanel Modernization ✅ COMPLETE
+
+7. - [x] Refactor PresencePanel styling ✅
    - File: `src/components/canvas/PresencePanel.jsx`
-   - Use Card-like styling with design tokens
-   - Background: `colors.neutral[50]`
-   - Border: `colors.neutral[200]`
-   - Apply `spacing` for padding
+   - Removed all Tailwind classes
+   - Applied design tokens throughout
+   - Background: `colors.neutral.darker` with border and shadow
+   - Positioned at `top: spacing[2]` (8px) to hug the top like toolbar
+   - Right-aligned with `right: spacing[2]` (8px)
+   - Modern card-like appearance with elevation
 
-8. - [ ] Modernize user list display
-   - User avatars/initials with design system colors
-   - Use `typography` tokens for user names
-   - Consistent spacing between users
-   - Smooth animations with `transitions`
+8. - [x] Modernize user list display ✅
+   - User avatars with colored circles (user's assigned color)
+   - Typography: `typography.fontSize.sm` for names, `typography.fontSize.xs` for avatars
+   - Consistent spacing: `spacing[1]` between users, `spacing[2]` internal padding
+   - Smooth hover animations with `transitions.duration.shorter`
+   - Hover state: `colors.neutral.mediumDark` background
+   - Empty state styling with proper messaging
 
-9. - [ ] Add expand/collapse animation
-   - Use design system `transitions.default`
-   - Smooth height animation
-   - Icon rotation on toggle
+9. - [x] Add expand/collapse animation ✅
+   - Smooth toggle button rotation (180deg) using `transform` and `transitions.duration.shorter`
+   - Icon color transitions on hover (gray → white)
+   - Proper ARIA labels for accessibility
+   - Panel content shows/hides with conditional rendering
+   - Green pulsing status dot using CSS animation
+
+**Additional Improvements:**
+
+- Separated `UserItem` component for better hover state management
+- Injected pulse animation via `<style>` tag
+- Proper color hierarchy using semantic token names
+- Consistent with Toolbar and Header design language
 
 ---
 
-### Phase 4: ZoomControls Modernization
+### Phase 4: ZoomControls Modernization ✅ COMPLETE
 
-10. - [ ] Refactor ZoomControls styling
+10. - [x] Refactor ZoomControls styling ✅
     - File: `src/components/canvas/ZoomControls.jsx`
-    - Use design tokens for background/borders
-    - Apply consistent `spacing` for button layout
-    - Add subtle shadow for depth
+    - Removed all Tailwind classes
+    - Applied design tokens throughout
+    - Background: `colors.neutral.darker` with border and shadow
+    - Positioned at `top: spacing[2]` (8px) to hug the top like Toolbar
+    - Left-aligned with `left: spacing[2]` (opposite side from PresencePanel)
+    - Vertical layout with consistent `spacing[2]` gap between buttons
 
-11. - [ ] Modernize zoom buttons
-    - Use design system colors for buttons
-    - Hover state: `colors.neutral[100]`
-    - Active state: `colors.neutral[200]`
-    - Disabled state: `colors.neutral[300]` with opacity
-    - Apply `borderRadius` for rounded corners
+11. - [x] Modernize zoom buttons ✅
+    - All buttons use design system colors
+    - Default state: `colors.neutral.dark` background
+    - Hover state: `colors.neutral.mediumDark` background
+    - Disabled state: `colors.neutral.darkest` with 50% opacity
+    - Smooth transitions using `transitions.duration.shorter`
+    - Proper ARIA labels for accessibility
+    - Icon size: 20px (consistent with Toolbar)
 
-12. - [ ] Improve zoom percentage display
-    - Use design system `typography`
-    - Consistent sizing and spacing
-    - Optional: Make it editable (click to type zoom level)
+12. - [x] Improve zoom percentage display ✅
+    - Uses `typography.fontFamily.mono` for monospaced numbers
+    - Typography: `typography.fontSize.sm`, `typography.fontWeight.medium`
+    - Background: `colors.neutral.darkest` for contrast
+    - Rounded corners with `borderRadius.base`
+    - Consistent padding: `spacing[1]` vertical, `spacing[3]` horizontal
+
+**Additional Improvements:**
+
+- Added hover state tracking with `useState` for precise control
+- Reset button uses smaller text (`typography.fontSize.xs`)
+- Consistent with Toolbar, PresencePanel, and Header design language
+- All buttons have proper disabled states with visual feedback
 
 ---
 
-### Phase 5: Polish & Consistency
+### Phase 5: Polish & Consistency ✅ COMPLETE
 
-13. - [ ] Add ConnectionStatus modernization (if needed)
+13. - [x] Add ConnectionStatus modernization ✅
     - File: `src/components/ui/ConnectionStatus.jsx`
-    - Apply design system colors for status indicators
-    - Connected: `colors.success[500]`
-    - Disconnected: `colors.error[500]`
+    - Removed all Tailwind classes
+    - Applied design tokens throughout
+    - Connected: `colors.success.main` (same green as PresencePanel status dot)
+    - Disconnected: `colors.error.main` (semantic red)
+    - Added pulsing animation to green dot when connected (matches PresencePanel)
+    - Smooth color transitions using `transitions.duration.shorter`
+    - Typography: `typography.fontSize.sm`, `typography.fontWeight.medium`
+    - Consistent with overall design system
 
 14. - [ ] Ensure consistent spacing across all components
     - Use design system `spacing` scale consistently
@@ -2932,13 +3036,36 @@ Realtime Database (Live Positions - Overlays Firestore):
 **Colors:**
 
 ```javascript
-colors.primary[500]; // Primary actions
-colors.neutral[50]; // Light backgrounds
-colors.neutral[800]; // Dark backgrounds
-colors.neutral[200]; // Borders
-colors.success[500]; // Success states
-colors.error[500]; // Error states
+// Primary colors (blue palette)
+colors.primary.lightest; // #e3f2fd
+colors.primary.base; // #2196f3 - Main brand color
+colors.primary.dark; // #1976d2 - Links, hover states
+
+// Neutral colors (gray scale)
+colors.neutral.white; // #ffffff
+colors.neutral.lightest; // #fafafa
+colors.neutral.lightBase; // #e0e0e0 - Light borders
+colors.neutral.base; // #9e9e9e - Divider text
+colors.neutral.dark; // #616161 - Dark text, borders
+colors.neutral.darker; // #424242 - Dark backgrounds
+colors.neutral.darkest; // #212121 - Headings
+
+// Semantic colors
+colors.success.main; // #4caf50
+colors.error.main; // #f44336
+colors.warning.main; // #ff9800
+colors.info.main; // #2196f3
+
+// Text colors
+colors.text.primary; // rgba(0, 0, 0, 0.87)
+colors.text.secondary; // rgba(0, 0, 0, 0.6)
+
+// Background colors
+colors.background.paper; // #ffffff
+colors.background.default; // #fafafa
 ```
+
+**Note:** Color scales use semantic names (`lightest`, `lighter`, `light`, `lightBase`, `mediumLight`, `base`, `mediumDark`, `dark`, `darker`, `darkest`) instead of numeric keys for better clarity and consistency.
 
 **Typography:**
 

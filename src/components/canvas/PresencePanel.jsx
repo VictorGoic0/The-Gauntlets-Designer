@@ -1,6 +1,123 @@
 import { useState } from "react";
 import usePresenceSync from "../../hooks/usePresenceSync";
 import usePresenceStore from "../../stores/presenceStore";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+  typography,
+  transitions,
+} from "../../styles/tokens";
+
+// Static styles - defined outside component for performance
+const containerStyle = {
+  position: "absolute",
+  top: spacing[2],
+  right: spacing[2],
+  zIndex: 50,
+  backgroundColor: colors.neutral.darker,
+  borderRadius: borderRadius.md,
+  boxShadow: shadows.elevation[3],
+  border: `1px solid ${colors.neutral.dark}`,
+  pointerEvents: "auto",
+  minWidth: "200px",
+};
+
+const headerStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: `${spacing[3]} ${spacing[4]}`,
+  borderBottom: `1px solid ${colors.neutral.dark}`,
+};
+
+const headerContentStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: spacing[2],
+};
+
+const statusDotStyle = {
+  width: "8px",
+  height: "8px",
+  backgroundColor: colors.success.main,
+  borderRadius: borderRadius.full,
+  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+};
+
+const headerTextStyle = {
+  color: colors.neutral.white,
+  fontWeight: typography.fontWeight.semibold,
+  fontSize: typography.fontSize.sm,
+  fontFamily: typography.fontFamily.base,
+};
+
+const toggleButtonBaseStyle = {
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: spacing[1],
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: colors.neutral.lightBase,
+  transition: `color ${transitions.duration.shorter} ${transitions.easing.easeInOut}, transform ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+};
+
+const userListContainerStyle = {
+  padding: spacing[2],
+  maxHeight: "384px",
+  overflowY: "auto",
+};
+
+const emptyStateStyle = {
+  padding: `${spacing[6]} ${spacing[4]}`,
+  textAlign: "center",
+  color: colors.neutral.lightBase,
+  fontSize: typography.fontSize.sm,
+  fontFamily: typography.fontFamily.base,
+};
+
+const userListStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: spacing[1],
+};
+
+const userItemBaseStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: spacing[3],
+  padding: `${spacing[2]} ${spacing[3]}`,
+  borderRadius: borderRadius.base,
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+  cursor: "default",
+};
+
+const avatarBaseStyle = {
+  width: "32px",
+  height: "32px",
+  borderRadius: borderRadius.full,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: colors.neutral.white,
+  fontSize: typography.fontSize.xs,
+  fontWeight: typography.fontWeight.bold,
+  flexShrink: 0,
+  fontFamily: typography.fontFamily.base,
+};
+
+const userNameStyle = {
+  color: colors.neutral.lightest,
+  fontSize: typography.fontSize.sm,
+  flex: 1,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  fontFamily: typography.fontFamily.base,
+};
 
 /**
  * PresencePanel component displays a list of online users.
@@ -30,75 +147,121 @@ export default function PresencePanel() {
   };
 
   return (
-    <div 
-      className="absolute z-50 bg-gray-800 rounded-lg shadow-lg border border-gray-700 pointer-events-auto"
-      style={{ top: '1.5rem', right: '1.5rem', left: 'auto' }}
-    >
-      {/* Header with toggle button */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-white font-medium">
-            Online ({onlineUsers.length})
-          </span>
-        </div>
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="text-gray-400 hover:text-white transition-colors"
-          title={isCollapsed ? "Expand" : "Collapse"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className={`h-5 w-5 transition-transform ${
-              isCollapsed ? "rotate-180" : ""
-            }`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+    <>
+      {/* Inject pulse animation */}
+      <style>
+        {`
+          @keyframes pulse {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.5;
+            }
+          }
+        `}
+      </style>
+      
+      <div style={containerStyle}>
+        {/* Header with toggle button */}
+        <div style={headerStyle}>
+          <div style={headerContentStyle}>
+            <div style={statusDotStyle}></div>
+            <span style={headerTextStyle}>
+              Online ({onlineUsers.length})
+            </span>
+          </div>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = colors.neutral.white;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = colors.neutral.lightBase;
+            }}
+            style={{
+              ...toggleButtonBaseStyle,
+              transform: isCollapsed ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+            title={isCollapsed ? "Expand" : "Collapse"}
+            aria-label={isCollapsed ? "Expand user list" : "Collapse user list"}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* User list - hidden when collapsed */}
+        {!isCollapsed && (
+          <div style={userListContainerStyle}>
+            {onlineUsers.length === 0 ? (
+              <div style={emptyStateStyle}>
+                No other users online
+              </div>
+            ) : (
+              <div style={userListStyle}>
+                {onlineUsers.map((user) => (
+                  <UserItem
+                    key={user.userId}
+                    user={user}
+                    getUserInitials={getUserInitials}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// Separate component for user item to handle hover state
+function UserItem({ user, getUserInitials }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Dynamic styles - depend on hover state
+  const userItemStyle = {
+    ...userItemBaseStyle,
+    backgroundColor: isHovered ? colors.neutral.mediumDark : "transparent",
+  };
+
+  const avatarStyle = {
+    ...avatarBaseStyle,
+    backgroundColor: user.userColor,
+  };
+
+  return (
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={userItemStyle}
+    >
+      {/* User avatar with initials */}
+      <div
+        style={avatarStyle}
+        title={user.userEmail}
+      >
+        {getUserInitials(user.userName)}
       </div>
 
-      {/* User list - hidden when collapsed */}
-      {!isCollapsed && (
-        <div className="p-2 max-h-96 overflow-y-auto">
-          {onlineUsers.length === 0 ? (
-            <div className="px-4 py-6 text-center text-gray-400 text-sm">
-              No other users online
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {onlineUsers.map((user) => (
-                <div
-                  key={user.userId}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-700 transition-colors"
-                >
-                  {/* User avatar with initials */}
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: user.userColor }}
-                    title={user.userEmail}
-                  >
-                    {getUserInitials(user.userName)}
-                  </div>
-
-                  {/* User name */}
-                  <span className="text-gray-200 text-sm truncate flex-1">
-                    {user.userName || "Anonymous"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* User name */}
+      <span style={userNameStyle}>
+        {user.userName || "Anonymous"}
+      </span>
     </div>
   );
 }

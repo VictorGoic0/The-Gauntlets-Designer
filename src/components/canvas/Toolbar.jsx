@@ -1,15 +1,54 @@
+import { useState } from "react";
 import useLocalStore from "../../stores/localStore";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+  transitions,
+} from "../../styles/tokens";
+
+// Static styles - defined outside component for performance
+const toolbarStyle = {
+  position: "absolute",
+  top: spacing[2],
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 50,
+  backgroundColor: colors.neutral.darker,
+  borderRadius: borderRadius.md,
+  boxShadow: shadows.elevation[3],
+  border: `1px solid ${colors.neutral.dark}`,
+  padding: spacing[3],
+  display: "flex",
+  flexDirection: "row",
+  gap: spacing[2],
+  pointerEvents: "auto",
+};
+
+const buttonBaseStyle = {
+  padding: spacing[4],
+  borderRadius: borderRadius.base,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  border: "none",
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}, color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+  outline: "none",
+};
 
 /**
  * Toolbar component for canvas tools
  * Features:
  * - Select, Rectangle, Circle, Text tools
  * - Visual indication of active tool
- * - Positioned on the left side of the canvas
+ * - Positioned at the top center of the canvas
  */
 export default function Toolbar() {
   const canvasMode = useLocalStore((state) => state.canvas.mode);
   const setCanvasMode = useLocalStore((state) => state.setCanvasMode);
+  const [hoveredTool, setHoveredTool] = useState(null);
 
   const tools = [
     {
@@ -18,10 +57,10 @@ export default function Toolbar() {
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-[30px] w-[30px]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          style={{ width: "24px", height: "24px" }}
         >
           <path
             strokeLinecap="round"
@@ -38,10 +77,10 @@ export default function Toolbar() {
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-[30px] w-[30px]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          style={{ width: "24px", height: "24px" }}
         >
           <path
             strokeLinecap="round"
@@ -58,10 +97,10 @@ export default function Toolbar() {
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-[30px] w-[30px]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          style={{ width: "24px", height: "24px" }}
         >
           <path
             strokeLinecap="round"
@@ -78,10 +117,10 @@ export default function Toolbar() {
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-[30px] w-[30px]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          style={{ width: "24px", height: "24px" }}
         >
           <path
             strokeLinecap="round"
@@ -94,20 +133,35 @@ export default function Toolbar() {
     },
   ];
 
+  // Dynamic styles - depend on component state
+  const getButtonStyle = (toolId) => {
+    const isActive = canvasMode === toolId;
+    const isHovered = hoveredTool === toolId;
+
+    return {
+      ...buttonBaseStyle,
+      backgroundColor: isActive
+        ? colors.primary.base
+        : isHovered
+        ? colors.neutral.mediumDark
+        : colors.neutral.dark,
+      color: isActive
+        ? colors.neutral.white
+        : isHovered
+        ? colors.neutral.white
+        : colors.neutral.lightBase,
+    };
+  };
+
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-3 flex flex-row gap-2 pointer-events-auto">
+    <div style={toolbarStyle}>
       {tools.map((tool) => (
         <button
           key={tool.id}
           onClick={() => setCanvasMode(tool.id)}
-          className={`
-            p-4 rounded-md transition-all duration-200 flex items-center justify-center
-            ${
-              canvasMode === tool.id
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white"
-            }
-          `}
+          onMouseEnter={() => setHoveredTool(tool.id)}
+          onMouseLeave={() => setHoveredTool(null)}
+          style={getButtonStyle(tool.id)}
           title={tool.name}
           aria-label={tool.name}
         >

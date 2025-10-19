@@ -80,22 +80,22 @@ export default function Button({
   // Variant styles
   const variantStyles = {
     primary: {
-      backgroundColor: colors.primary[600],
-      color: '#ffffff',
+      backgroundColor: colors.primary.mediumDark,
+      color: colors.neutral.white,
       boxShadow: shadows.sm,
-      border: `1px solid ${colors.primary[600]}`,
+      border: `1px solid ${colors.primary.mediumDark}`,
     },
     secondary: {
-      backgroundColor: colors.secondary[600],
-      color: '#ffffff',
+      backgroundColor: colors.secondary.mediumDark,
+      color: colors.neutral.white,
       boxShadow: shadows.sm,
-      border: `1px solid ${colors.secondary[600]}`,
+      border: `1px solid ${colors.secondary.mediumDark}`,
     },
     outline: {
       backgroundColor: 'transparent',
-      color: colors.primary[600],
+      color: colors.primary.mediumDark,
       boxShadow: 'none',
-      border: `1px solid ${colors.primary[600]}`,
+      border: `1px solid ${colors.primary.mediumDark}`,
     },
     ghost: {
       backgroundColor: 'transparent',
@@ -127,21 +127,21 @@ export default function Button({
     switch (variant) {
       case 'primary':
         return {
-          backgroundColor: colors.primary[700],
-          borderColor: colors.primary[700],
+          backgroundColor: colors.primary.dark,
+          borderColor: colors.primary.dark,
           boxShadow: shadows.md,
         };
       case 'secondary':
         return {
-          backgroundColor: colors.secondary[700],
-          borderColor: colors.secondary[700],
+          backgroundColor: colors.secondary.dark,
+          borderColor: colors.secondary.dark,
           boxShadow: shadows.md,
         };
       case 'outline':
         return {
-          backgroundColor: colors.primary[50],
-          borderColor: colors.primary[700],
-          color: colors.primary[700],
+          backgroundColor: colors.primary.lightest,
+          borderColor: colors.primary.dark,
+          color: colors.primary.dark,
         };
       case 'ghost':
         return {
@@ -159,17 +159,17 @@ export default function Button({
     switch (variant) {
       case 'primary':
         return {
-          backgroundColor: colors.primary[800],
-          borderColor: colors.primary[800],
+          backgroundColor: colors.primary.darker,
+          borderColor: colors.primary.darker,
         };
       case 'secondary':
         return {
-          backgroundColor: colors.secondary[800],
-          borderColor: colors.secondary[800],
+          backgroundColor: colors.secondary.darker,
+          borderColor: colors.secondary.darker,
         };
       case 'outline':
         return {
-          backgroundColor: colors.primary[100],
+          backgroundColor: colors.primary.lighter,
         };
       case 'ghost':
         return {
@@ -185,7 +185,7 @@ export default function Button({
     if (disabled || loading) return {};
     
     return {
-      boxShadow: `0 0 0 3px ${colors.primary[500]}33`, // 33 = 20% opacity
+      boxShadow: `0 0 0 3px ${colors.primary.base}33`, // 33 = 20% opacity
     };
   };
 

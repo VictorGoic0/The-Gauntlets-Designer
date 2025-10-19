@@ -1,4 +1,65 @@
+import { useState } from "react";
 import useLocalStore from "../../stores/localStore";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+  typography,
+  transitions,
+} from "../../styles/tokens";
+
+// Static styles - defined outside component for performance
+const containerStyle = {
+  position: "absolute",
+  top: spacing[2],
+  left: spacing[2],
+  zIndex: 50,
+  backgroundColor: colors.neutral.darker,
+  borderRadius: borderRadius.md,
+  boxShadow: shadows.elevation[3],
+  border: `1px solid ${colors.neutral.dark}`,
+  padding: spacing[3],
+  display: "flex",
+  flexDirection: "column",
+  gap: spacing[2],
+  pointerEvents: "auto",
+};
+
+const buttonBaseStyle = {
+  padding: `${spacing[2]} ${spacing[4]}`,
+  borderRadius: borderRadius.base,
+  border: "none",
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+  fontWeight: typography.fontWeight.medium,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  outline: "none",
+};
+
+const percentageStyle = {
+  padding: `${spacing[1]} ${spacing[3]}`,
+  backgroundColor: colors.neutral.darkest,
+  color: colors.neutral.white,
+  textAlign: "center",
+  borderRadius: borderRadius.base,
+  fontFamily: typography.fontFamily.mono,
+  fontSize: typography.fontSize.sm,
+  fontWeight: typography.fontWeight.medium,
+};
+
+const resetButtonBaseStyle = {
+  padding: `${spacing[2]} ${spacing[4]}`,
+  borderRadius: borderRadius.base,
+  border: "none",
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+  fontWeight: typography.fontWeight.medium,
+  fontSize: typography.fontSize.xs,
+  fontFamily: typography.fontFamily.base,
+  outline: "none",
+  cursor: "pointer",
+};
 
 export default function ZoomControls() {
   const stageScale = useLocalStore((state) => state.canvas.stageScale);
@@ -6,6 +67,8 @@ export default function ZoomControls() {
   const MAX_SCALE = useLocalStore((state) => state.canvas.MAX_SCALE);
   const setStageScale = useLocalStore((state) => state.setStageScale);
   const setStagePosition = useLocalStore((state) => state.setStagePosition);
+  
+  const [hoveredButton, setHoveredButton] = useState(null);
 
   // Calculate zoom percentage
   const zoomPercentage = Math.round(stageScale * 100);
@@ -28,20 +91,49 @@ export default function ZoomControls() {
     setStagePosition({ x: 0, y: 0 });
   };
 
+  // Dynamic styles - depend on component state
+  const getButtonStyle = (buttonId, disabled = false) => {
+    const isHovered = hoveredButton === buttonId;
+    
+    return {
+      ...buttonBaseStyle,
+      backgroundColor: disabled
+        ? colors.neutral.darkest
+        : isHovered
+        ? colors.neutral.mediumDark
+        : colors.neutral.dark,
+      color: disabled ? colors.neutral.base : colors.neutral.white,
+      cursor: disabled ? "not-allowed" : "pointer",
+      opacity: disabled ? 0.5 : 1,
+    };
+  };
+
+  const getResetButtonStyle = () => {
+    const isHovered = hoveredButton === "reset";
+    
+    return {
+      ...resetButtonBaseStyle,
+      backgroundColor: isHovered ? colors.neutral.mediumDark : colors.neutral.dark,
+      color: colors.neutral.white,
+    };
+  };
+
   return (
-    <div 
-      className="absolute bottom-6 right-6 z-50 bg-gray-800 rounded-lg shadow-lg p-3 flex flex-col gap-2 border border-gray-700 pointer-events-auto"
-    >
+    <div style={containerStyle}>
       {/* Zoom In Button */}
       <button
         onClick={handleZoomIn}
         disabled={stageScale >= MAX_SCALE}
-        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        onMouseEnter={() => setHoveredButton("zoomIn")}
+        onMouseLeave={() => setHoveredButton(null)}
+        style={getButtonStyle("zoomIn", stageScale >= MAX_SCALE)}
         title="Zoom In"
+        aria-label="Zoom In"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
+          width="20"
+          height="20"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -56,7 +148,7 @@ export default function ZoomControls() {
       </button>
 
       {/* Zoom Percentage Display */}
-      <div className="px-3 py-1 bg-gray-900 text-white text-center rounded-md font-mono text-sm">
+      <div style={percentageStyle}>
         {zoomPercentage}%
       </div>
 
@@ -64,12 +156,16 @@ export default function ZoomControls() {
       <button
         onClick={handleZoomOut}
         disabled={stageScale <= MIN_SCALE}
-        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        onMouseEnter={() => setHoveredButton("zoomOut")}
+        onMouseLeave={() => setHoveredButton(null)}
+        style={getButtonStyle("zoomOut", stageScale <= MIN_SCALE)}
         title="Zoom Out"
+        aria-label="Zoom Out"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
+          width="20"
+          height="20"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -86,8 +182,11 @@ export default function ZoomControls() {
       {/* Reset Zoom Button */}
       <button
         onClick={handleResetZoom}
-        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors font-medium text-xs"
+        onMouseEnter={() => setHoveredButton("reset")}
+        onMouseLeave={() => setHoveredButton(null)}
+        style={getResetButtonStyle()}
         title="Reset Zoom (100%)"
+        aria-label="Reset Zoom to 100%"
       >
         Reset
       </button>

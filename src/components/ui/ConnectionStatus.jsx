@@ -2,6 +2,35 @@ import { useState, useEffect, useRef } from "react";
 import { ref, onValue } from "firebase/database";
 import { realtimeDb } from "../../lib/firebase";
 import { showSuccess, showWarning } from "../../utils/toast";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  typography,
+  transitions,
+} from "../../styles/tokens";
+
+// Static styles - defined outside component for performance
+const containerStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: spacing[2],
+};
+
+const statusTextStyle = {
+  fontSize: typography.fontSize.sm,
+  fontWeight: typography.fontWeight.medium,
+  color: colors.neutral.lightBase,
+  fontFamily: typography.fontFamily.base,
+  transition: `color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+};
+
+const statusDotBaseStyle = {
+  width: "10px",
+  height: "10px",
+  borderRadius: borderRadius.full,
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+};
 
 export default function ConnectionStatus() {
   // UI state - what we display to the user
@@ -54,23 +83,43 @@ export default function ConnectionStatus() {
     };
   }, []);
 
+  // Dynamic styles - depend on connection state
+  const statusDotStyle = {
+    ...statusDotBaseStyle,
+    backgroundColor: isConnected ? colors.success.main : colors.error.main,
+    ...(isConnected && {
+      animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+    }),
+  };
+
   return (
-    <div className="flex items-center" style={{ gap: '0.5rem' }}>
-      {/* Status text */}
-      <span className="text-sm font-medium text-gray-300">
-        {isConnected ? "Connected" : "Disconnected"}
-      </span>
+    <>
+      {/* Inject pulse animation for connected state */}
+      {isConnected && (
+        <style>
+          {`
+            @keyframes pulse {
+              0%, 100% {
+                opacity: 1;
+              }
+              50% {
+                opacity: 0.5;
+              }
+            }
+          `}
+        </style>
+      )}
       
-      {/* Status indicator dot */}
-      <div
-        style={{
-          width: '12px',
-          height: '12px',
-          borderRadius: '50%',
-          backgroundColor: isConnected ? '#22c55e' : '#ef4444'
-        }}
-      />
-    </div>
+      <div style={containerStyle}>
+        {/* Status text */}
+        <span style={statusTextStyle}>
+          {isConnected ? "Connected" : "Disconnected"}
+        </span>
+        
+        {/* Status indicator dot */}
+        <div style={statusDotStyle} />
+      </div>
+    </>
   );
 }
 
