@@ -2,18 +2,15 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import {
   ref,
-  set,
+  set as dbSet,
   onDisconnect,
   serverTimestamp,
-  onValue,
 } from "firebase/database";
 import {
   doc,
   setDoc,
   deleteDoc,
-  collection,
-  onSnapshot,
-  query,
+  serverTimestamp as firestoreServerTimestamp,
 } from "firebase/firestore";
 import { realtimeDb, db } from "../lib/firebase";
 import { getUserColor } from "../utils/userColors";
@@ -136,7 +133,7 @@ const usePresenceStore = create(
       // Connection state actions
       setConnectionState: (isConnected, isOffline = false) =>
         set(
-          (state) => ({
+          () => ({
             connection: { isConnected, isOffline },
           }),
           false,
@@ -156,7 +153,7 @@ const usePresenceStore = create(
           await onDisconnect(presenceRef).remove();
 
           // Write presence data
-          await set(presenceRef, {
+          await dbSet(presenceRef, {
             userName: currentUser.displayName || "Anonymous",
             userEmail: currentUser.email || "",
             userColor: userColor,
@@ -177,7 +174,7 @@ const usePresenceStore = create(
             `presence/shared-canvas/${currentUser.uid}`
           );
 
-          await set(presenceRef, {
+          await dbSet(presenceRef, {
             userName: currentUser.displayName || "Anonymous",
             userEmail: currentUser.email || "",
             userColor: userColor,
@@ -196,7 +193,7 @@ const usePresenceStore = create(
             realtimeDb,
             `presence/shared-canvas/${currentUser.uid}`
           );
-          await set(presenceRef, null);
+          await dbSet(presenceRef, null);
         } catch (error) {
           console.error("Error removing presence:", error);
           get().setPresenceError(error);
@@ -220,7 +217,7 @@ const usePresenceStore = create(
             y: position.y,
             userName: currentUser.displayName || "Anonymous",
             userColor: userColor,
-            lastSeen: serverTimestamp(),
+            lastSeen: firestoreServerTimestamp(),
           });
         } catch (error) {
           console.error("Error updating cursor position:", error);
@@ -242,53 +239,6 @@ const usePresenceStore = create(
           console.error("Error removing cursor:", error);
           get().setCursorsError(error);
         }
-      },
-
-      // Helper methods
-      getOnlineUsers: () => {
-        const state = get();
-        return state.presence.onlineUsers;
-      },
-
-      getRemoteCursors: () => {
-        const state = get();
-        return state.cursors.remoteCursors;
-      },
-
-      getLocalCursorPosition: () => {
-        const state = get();
-        return state.cursors.localPosition;
-      },
-
-      isPresenceLoading: () => {
-        const state = get();
-        return state.presence.isLoading;
-      },
-
-      isCursorsLoading: () => {
-        const state = get();
-        return state.cursors.isLoading;
-      },
-
-      getPresenceLastSyncTime: () => {
-        const state = get();
-        return state.presence.lastSyncTime;
-      },
-
-      getCursorsLastSyncTime: () => {
-        const state = get();
-        return state.cursors.lastSyncTime;
-      },
-
-      // Filter cursors to only show users who are in the presence list (online)
-      getVisibleCursors: () => {
-        const state = get();
-        const onlineUserIds = state.presence.onlineUsers.map(
-          (user) => user.userId
-        );
-        return state.cursors.remoteCursors.filter((cursor) =>
-          onlineUserIds.includes(cursor.userId)
-        );
       },
 
       // Clear all state (for cleanup)
