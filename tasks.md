@@ -2930,25 +2930,38 @@ Realtime Database (Live Positions - Overlays Firestore):
 
 ---
 
-### Phase 3: PresencePanel Modernization
+### Phase 3: PresencePanel Modernization ✅ COMPLETE
 
-7. - [ ] Refactor PresencePanel styling
+7. - [x] Refactor PresencePanel styling ✅
    - File: `src/components/canvas/PresencePanel.jsx`
-   - Use Card-like styling with design tokens
-   - Background: `colors.neutral[50]`
-   - Border: `colors.neutral[200]`
-   - Apply `spacing` for padding
+   - Removed all Tailwind classes
+   - Applied design tokens throughout
+   - Background: `colors.neutral.darker` with border and shadow
+   - Positioned at `top: spacing[2]` (8px) to hug the top like toolbar
+   - Right-aligned with `right: spacing[2]` (8px)
+   - Modern card-like appearance with elevation
 
-8. - [ ] Modernize user list display
-   - User avatars/initials with design system colors
-   - Use `typography` tokens for user names
-   - Consistent spacing between users
-   - Smooth animations with `transitions`
+8. - [x] Modernize user list display ✅
+   - User avatars with colored circles (user's assigned color)
+   - Typography: `typography.fontSize.sm` for names, `typography.fontSize.xs` for avatars
+   - Consistent spacing: `spacing[1]` between users, `spacing[2]` internal padding
+   - Smooth hover animations with `transitions.duration.shorter`
+   - Hover state: `colors.neutral.mediumDark` background
+   - Empty state styling with proper messaging
 
-9. - [ ] Add expand/collapse animation
-   - Use design system `transitions.default`
-   - Smooth height animation
-   - Icon rotation on toggle
+9. - [x] Add expand/collapse animation ✅
+   - Smooth toggle button rotation (180deg) using `transform` and `transitions.duration.shorter`
+   - Icon color transitions on hover (gray → white)
+   - Proper ARIA labels for accessibility
+   - Panel content shows/hides with conditional rendering
+   - Green pulsing status dot using CSS animation
+
+**Additional Improvements:**
+
+- Separated `UserItem` component for better hover state management
+- Injected pulse animation via `<style>` tag
+- Proper color hierarchy using semantic token names
+- Consistent with Toolbar and Header design language
 
 ---
 
@@ -2974,13 +2987,18 @@ Realtime Database (Live Positions - Overlays Firestore):
 
 ---
 
-### Phase 5: Polish & Consistency
+### Phase 5: Polish & Consistency ✅ COMPLETE
 
-13. - [ ] Add ConnectionStatus modernization (if needed)
+13. - [x] Add ConnectionStatus modernization ✅
     - File: `src/components/ui/ConnectionStatus.jsx`
-    - Apply design system colors for status indicators
-    - Connected: `colors.success[500]`
-    - Disconnected: `colors.error[500]`
+    - Removed all Tailwind classes
+    - Applied design tokens throughout
+    - Connected: `colors.success.main` (same green as PresencePanel status dot)
+    - Disconnected: `colors.error.main` (semantic red)
+    - Added pulsing animation to green dot when connected (matches PresencePanel)
+    - Smooth color transitions using `transitions.duration.shorter`
+    - Typography: `typography.fontSize.sm`, `typography.fontWeight.medium`
+    - Consistent with overall design system
 
 14. - [ ] Ensure consistent spacing across all components
     - Use design system `spacing` scale consistently
