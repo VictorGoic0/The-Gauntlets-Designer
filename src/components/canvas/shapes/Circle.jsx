@@ -7,10 +7,11 @@ import useLocalStore from "../../../stores/localStore";
  * Features:
  * - Renders a Konva Circle with given properties
  * - Shows selection border when selected
+ * - Shows remote selection borders from other users (PR #19)
  * - Handles click for selection
  * - Default radius: 50px
  */
-export default function Circle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, onTransform, onTransformEnd, canvasWidth, canvasHeight }) {
+export default function Circle({ shapeProps, isSelected, remoteSelectors = [], onSelect, onDragStart, onDragMove, onDragEnd, onTransform, onTransformEnd, canvasWidth, canvasHeight }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
   const canvasMode = useLocalStore((state) => state.canvas.mode);
@@ -105,8 +106,28 @@ export default function Circle({ shapeProps, isSelected, onSelect, onDragStart, 
     };
   };
 
+  // Get count of remote selectors
+  const remoteSelectorsCount = remoteSelectors.length;
+  const hasRemoteSelectors = remoteSelectorsCount > 0;
+
   return (
     <>
+      {/* Remote selection borders (PR #19) - rendered behind the shape */}
+      {hasRemoteSelectors && remoteSelectors.map((selector, index) => (
+        <KonvaCircle
+          key={`remote-selection-${selector.userId}`}
+          x={shapeProps.x}
+          y={shapeProps.y}
+          radius={(shapeProps.radius || 50) + 4 + (index * 3)} // Offset outward for nested borders
+          rotation={shapeProps.rotation || 0}
+          stroke={selector.userColor}
+          strokeWidth={3}
+          fill="transparent"
+          listening={false} // Don't interfere with events
+          opacity={0.8}
+        />
+      ))}
+      
       <KonvaCircle
         ref={shapeRef}
         {...shapeProps}
@@ -119,7 +140,7 @@ export default function Circle({ shapeProps, isSelected, onSelect, onDragStart, 
         onDragEnd={handleDragEnd}
         onTransform={handleTransform}
         onTransformEnd={handleTransformEnd}
-        // Visual feedback when selected
+        // Visual feedback when selected by current user
         strokeWidth={isSelected ? 2 : 0}
         stroke={isSelected ? "#3B82F6" : undefined}
       />

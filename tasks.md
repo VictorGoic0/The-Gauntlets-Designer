@@ -2614,7 +2614,6 @@ Realtime Database (Live Positions - Overlays Firestore):
 2. - [ ] Create selection tracking hook
    - File: Create `src/hooks/useSelectionTracking.js`
    - Write current user's selection to Realtime DB on selection change
-   - Throttle updates (100ms) to reduce writes
    - Set up `onDisconnect().remove()` for cleanup
    - Handle deselection (write null or remove entry)
 
@@ -2689,7 +2688,7 @@ Realtime Database (Live Positions - Overlays Firestore):
     - User disconnects → onDisconnect removes selection
     - Object deleted while selected by others → Clear stale selections
     - User selects object that doesn't exist → Ignore gracefully
-    - Rapid selection changes → Throttle updates (100ms)
+    - Rapid selection changes → Updates written immediately (no throttling needed)
 
 13. - [ ] Test multi-user scenarios
     - Two users select same object → Both see each other's border
@@ -2735,7 +2734,7 @@ Realtime Database (Live Positions - Overlays Firestore):
 - [ ] Two users select same object → Both see each other's borders
 - [ ] User disconnects → Selection border disappears for others
 - [ ] Object deleted while selected → Selection cleared gracefully
-- [ ] Rapid selection changes → Updates throttled, no spam
+- [ ] Rapid selection changes → Updates written immediately
 
 **Visual Tests:**
 
@@ -2749,7 +2748,7 @@ Realtime Database (Live Positions - Overlays Firestore):
 
 - [ ] No FPS drops with 10+ users selecting objects
 - [ ] Selection tracking doesn't slow canvas interactions
-- [ ] Realtime DB writes throttled properly (max ~10/sec per user)
+- [ ] Realtime DB writes minimal (one per selection change)
 
 **Edge Case Tests:**
 

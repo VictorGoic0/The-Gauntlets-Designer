@@ -44,6 +44,18 @@ const usePresenceStore = create(
         lastSyncTime: null,
       },
 
+      // Selection state (PR #19)
+      selections: {
+        // Array of remote user selections: { userId, objectId, userName, userColor, timestamp }
+        remoteSelections: [],
+        // Loading state
+        isLoading: true,
+        // Error state
+        error: null,
+        // Last sync timestamp
+        lastSyncTime: null,
+      },
+
       // Connection state
       connection: {
         isConnected: true,
@@ -128,6 +140,40 @@ const usePresenceStore = create(
           }),
           false,
           "setCursorsError"
+        ),
+
+      // Selection actions (PR #19)
+      setRemoteSelections: (selections) =>
+        set(
+          (state) => ({
+            selections: {
+              ...state.selections,
+              remoteSelections: selections,
+              isLoading: false,
+              lastSyncTime: new Date(),
+              error: null,
+            },
+          }),
+          false,
+          "setRemoteSelections"
+        ),
+
+      setSelectionsLoading: (isLoading) =>
+        set(
+          (state) => ({
+            selections: { ...state.selections, isLoading },
+          }),
+          false,
+          "setSelectionsLoading"
+        ),
+
+      setSelectionsError: (error) =>
+        set(
+          (state) => ({
+            selections: { ...state.selections, error, isLoading: false },
+          }),
+          false,
+          "setSelectionsError"
         ),
 
       // Connection state actions
@@ -241,6 +287,44 @@ const usePresenceStore = create(
         }
       },
 
+      // Selection operations (async) - PR #19
+      updateSelection: async (currentUser, objectId) => {
+        try {
+          const userColor = getUserColor(currentUser.uid);
+          const selectionRef = ref(
+            realtimeDb,
+            `selections/${currentUser.uid}`
+          );
+
+          // Set up onDisconnect to remove selection when user disconnects
+          await onDisconnect(selectionRef).remove();
+
+          // Write selection data
+          await dbSet(selectionRef, {
+            objectId: objectId,
+            userName: currentUser.displayName || "Anonymous",
+            userColor: userColor,
+            timestamp: serverTimestamp(),
+          });
+        } catch (error) {
+          console.error("Error updating selection:", error);
+          get().setSelectionsError(error);
+        }
+      },
+
+      removeSelection: async (currentUser) => {
+        try {
+          const selectionRef = ref(
+            realtimeDb,
+            `selections/${currentUser.uid}`
+          );
+          await dbSet(selectionRef, null);
+        } catch (error) {
+          console.error("Error removing selection:", error);
+          get().setSelectionsError(error);
+        }
+      },
+
       // Clear all state (for cleanup)
       clearAll: () =>
         set(
@@ -254,6 +338,12 @@ const usePresenceStore = create(
             cursors: {
               remoteCursors: [],
               localPosition: { x: 0, y: 0 },
+              isLoading: true,
+              error: null,
+              lastSyncTime: null,
+            },
+            selections: {
+              remoteSelections: [],
               isLoading: true,
               error: null,
               lastSyncTime: null,

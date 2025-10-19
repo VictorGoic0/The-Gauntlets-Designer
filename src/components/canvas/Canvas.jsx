@@ -5,6 +5,8 @@ import useCursorTracking from "../../hooks/useCursorTracking";
 import useCursorSync from "../../hooks/useCursorSync";
 import usePresence from "../../hooks/usePresence";
 import usePresenceSync from "../../hooks/usePresenceSync";
+import useSelectionTracking from "../../hooks/useSelectionTracking";
+import useSelectionSync from "../../hooks/useSelectionSync";
 import useObjectSync from "../../hooks/useObjectSync";
 import useLocalStore from "../../stores/localStore";
 import usePresenceStore from "../../stores/presenceStore";
@@ -83,11 +85,18 @@ export default function Canvas() {
   usePresence(true);
   usePresenceSync(); // Sets up Realtime DB listener, writes to Presence Store
   
+  // Selection tracking and syncing (PR #19)
+  useSelectionTracking(); // Tracks current user's selection
+  useSelectionSync(); // Syncs remote users' selections
+  
   // Read remote cursors from Presence Store
   const remoteCursors = usePresenceStore((state) => state.cursors.remoteCursors);
   
   // Read online users from Presence Store
   const onlineUsers = usePresenceStore((state) => state.presence.onlineUsers);
+  
+  // Read remote selections from Presence Store (PR #19)
+  const remoteSelections = usePresenceStore((state) => state.selections.remoteSelections);
   
   // Only mark objects as "active" if they're CURRENTLY being manipulated
   // This prevents remote updates during the actual drag/transform
@@ -133,6 +142,19 @@ export default function Canvas() {
         y: cursor.y * stageScale + stagePosition.y,
       }));
   }, [remoteCursors, onlineUsers, stageScale, stagePosition]);
+
+  // Get remote selectors for each object (PR #19)
+  // Maps objectId -> array of users who have selected it
+  const getRemoteSelectors = useCallback((objectId) => {
+    return remoteSelections
+      .filter((selection) => selection.objectId === objectId)
+      .filter((selection) => selection.userId !== currentUser?.uid) // Exclude current user
+      .map((selection) => ({
+        userId: selection.userId,
+        userName: selection.userName,
+        userColor: selection.userColor,
+      }));
+  }, [remoteSelections, currentUser]);
 
   // Canvas dimensions (logical canvas size)
   const CANVAS_WIDTH = 5000;
@@ -484,6 +506,7 @@ export default function Canvas() {
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
+                    remoteSelectors={getRemoteSelectors(obj.id)}
                     onSelect={() => selectObject(obj.id)}
                     onDragStart={() => handleObjectDragStart(obj.id)}
                     onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width, height: obj.height })}
@@ -509,6 +532,7 @@ export default function Canvas() {
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
+                    remoteSelectors={getRemoteSelectors(obj.id)}
                     onSelect={() => selectObject(obj.id)}
                     onDragStart={() => handleObjectDragStart(obj.id)}
                     onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { radius: obj.radius })}
@@ -537,6 +561,7 @@ export default function Canvas() {
                       opacity: isDragging ? 0.6 : 1,
                     }}
                     isSelected={isSelected(obj.id)}
+                    remoteSelectors={getRemoteSelectors(obj.id)}
                     onSelect={() => selectObject(obj.id)}
                     onDragStart={() => handleObjectDragStart(obj.id)}
                     onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width || 200, height: 50 })}
