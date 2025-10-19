@@ -5,6 +5,7 @@ import { showSuccess, showError } from "../../utils/toast";
 import Card from "../design-system/Card";
 import Button from "../design-system/Button";
 import Input from "../design-system/Input";
+import { colors, typography, spacing } from "../../styles/tokens";
 
 // Firebase Auth error code to user-friendly message mapping
 export const AUTH_ERROR_MESSAGES = {
@@ -81,14 +82,49 @@ export default function Login() {
     }
   };
 
+  const titleStyle = {
+    fontSize: typography.fontSize['3xl'],
+    fontWeight: typography.fontWeight.bold,
+    color: colors.neutral.darkest,
+    margin: 0,
+    fontFamily: typography.fontFamily.base,
+  };
+
+  const subtitleStyle = {
+    marginTop: spacing[2],
+    fontSize: typography.fontSize.sm,
+    color: colors.text.secondary,
+    fontFamily: typography.fontFamily.base,
+  };
+
+  const dividerTextStyle = {
+    padding: `0 ${spacing[2]}`,
+    backgroundColor: colors.background.paper,
+    color: colors.neutral.base,
+    fontSize: typography.fontSize.sm,
+  };
+
+  const linkStyle = {
+    color: colors.primary.dark,
+    fontWeight: typography.fontWeight.medium,
+    textDecoration: 'none',
+  };
+
+  const googleButtonStyle = {
+    width: '240px',
+    backgroundColor: colors.neutral.white,
+    borderColor: colors.neutral.lightBase,
+    color: colors.neutral.dark,
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 px-4 py-12">
       <Card variant="elevated" padding="lg" style={{ width: '420px', minHeight: '400px' }}>
         <div className="text-center">
-          <h2 className="text-3xl font-bold" style={{ color: '#111827' }}>
+          <h2 style={titleStyle}>
             Welcome to Goico's Artist
           </h2>
-          <p className="mt-2 text-sm" style={{ color: '#4B5563' }}>
+          <p style={subtitleStyle}>
             Real-time collaborative canvas for creative teams
           </p>
         </div>
@@ -138,7 +174,7 @@ export default function Login() {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white" style={{ color: '#6B7280' }}>Or continue with</span>
+              <span style={dividerTextStyle}>Or continue with</span>
             </div>
           </div>
 
@@ -149,7 +185,7 @@ export default function Login() {
               variant="outline"
               size="md"
               disabled={loading}
-              style={{ width: '240px', backgroundColor: '#ffffff', borderColor: '#D1D5DB', color: '#374151' }}
+              style={googleButtonStyle}
             >
             <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24">
               <path
@@ -175,12 +211,12 @@ export default function Login() {
 
           {/* Link to Sign Up */}
           <div className="text-center">
-            <p className="text-sm" style={{ color: '#4B5563' }}>
+            <p className="text-sm" style={{ color: colors.text.secondary }}>
               Don't have an account?{" "}
               <Link
                 to="/signup"
                 className="font-medium hover:text-blue-500"
-                style={{ color: '#2563EB' }}
+                style={linkStyle}
               >
                 Sign up
               </Link>

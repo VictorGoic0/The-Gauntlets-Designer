@@ -16,8 +16,8 @@ export default function Header({ onOpenAI }) {
   };
 
   const headerStyle = {
-    backgroundColor: colors.neutral[800],
-    borderBottom: `1px solid ${colors.neutral[700]}`,
+    backgroundColor: colors.neutral.darker,
+    borderBottom: `1px solid ${colors.neutral.dark}`,
     boxShadow: shadows.elevation[2],
   };
 
@@ -33,7 +33,7 @@ export default function Header({ onOpenAI }) {
   const titleStyle = {
     fontSize: typography.fontSize["2xl"],
     fontWeight: typography.fontWeight.bold,
-    color: colors.neutral[0],
+    color: colors.neutral.white,
     margin: 0,
     fontFamily: typography.fontFamily.base,
   };
@@ -45,7 +45,7 @@ export default function Header({ onOpenAI }) {
   };
 
   const welcomeTextStyle = {
-    color: colors.neutral[300],
+    color: colors.neutral.lightBase,
     fontSize: typography.fontSize.sm,
     fontWeight: typography.fontWeight.medium,
     fontFamily: typography.fontFamily.base,

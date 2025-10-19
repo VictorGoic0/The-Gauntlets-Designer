@@ -99,7 +99,7 @@ export default function Input({
     lineHeight: typography.lineHeight.normal,
     color: colors.text.primary,
     backgroundColor: disabled ? colors.action.disabledBackground : colors.background.paper,
-    border: `1px solid ${colors.neutral[300]}`,
+    border: `1px solid ${colors.neutral.lightBase}`,
     borderRadius: borderRadius.base,
     outline: 'none',
     transition: `border-color ${transitions.duration.short} ${transitions.easing.easeInOut}, box-shadow ${transitions.duration.short} ${transitions.easing.easeInOut}`,
@@ -125,8 +125,8 @@ export default function Input({
     };
   } else if (isFocused) {
     inputStateStyles = {
-      borderColor: colors.primary[500],
-      boxShadow: `0 0 0 3px ${colors.primary[500]}1A`, // 1A = 10% opacity
+      borderColor: colors.primary.base,
+      boxShadow: `0 0 0 3px ${colors.primary.base}1A`, // 1A = 10% opacity
     };
   }
 

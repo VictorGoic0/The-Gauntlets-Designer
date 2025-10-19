@@ -12,46 +12,46 @@
 export const colors = {
   // Primary - Blue palette (main brand color)
   primary: {
-    50: "#e3f2fd",
-    100: "#bbdefb",
-    200: "#90caf9",
-    300: "#64b5f6",
-    400: "#42a5f5",
-    500: "#2196f3", // Main
-    600: "#1e88e5",
-    700: "#1976d2",
-    800: "#1565c0",
-    900: "#0d47a1",
+    lightest: "#e3f2fd",
+    lighter: "#bbdefb",
+    light: "#90caf9",
+    lightBase: "#64b5f6",
+    mediumLight: "#42a5f5",
+    base: "#2196f3", // Main brand color
+    mediumDark: "#1e88e5",
+    dark: "#1976d2",
+    darker: "#1565c0",
+    darkest: "#0d47a1",
   },
 
   // Secondary - Purple/Indigo palette (accent color)
   secondary: {
-    50: "#f3e5f5",
-    100: "#e1bee7",
-    200: "#ce93d8",
-    300: "#ba68c8",
-    400: "#ab47bc",
-    500: "#9c27b0", // Main
-    600: "#8e24aa",
-    700: "#7b1fa2",
-    800: "#6a1b9a",
-    900: "#4a148c",
+    lightest: "#f3e5f5",
+    lighter: "#e1bee7",
+    light: "#ce93d8",
+    lightBase: "#ba68c8",
+    mediumLight: "#ab47bc",
+    base: "#9c27b0", // Main accent color
+    mediumDark: "#8e24aa",
+    dark: "#7b1fa2",
+    darker: "#6a1b9a",
+    darkest: "#4a148c",
   },
 
   // Neutral - Gray palette (text, backgrounds, borders)
   neutral: {
-    0: "#ffffff",
-    50: "#fafafa",
-    100: "#f5f5f5",
-    200: "#eeeeee",
-    300: "#e0e0e0",
-    400: "#bdbdbd",
-    500: "#9e9e9e",
-    600: "#757575",
-    700: "#616161",
-    800: "#424242",
-    900: "#212121",
-    1000: "#000000",
+    white: "#ffffff",
+    lightest: "#fafafa",
+    lighter: "#f5f5f5",
+    light: "#eeeeee",
+    lightBase: "#e0e0e0",
+    mediumLight: "#bdbdbd",
+    base: "#9e9e9e",
+    mediumDark: "#757575",
+    dark: "#616161",
+    darker: "#424242",
+    darkest: "#212121",
+    black: "#000000",
   },
 
   // Semantic colors
