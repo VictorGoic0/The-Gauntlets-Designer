@@ -2,18 +2,15 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import {
   ref,
-  set,
+  set as dbSet,
   onDisconnect,
   serverTimestamp,
-  onValue,
 } from "firebase/database";
 import {
   doc,
   setDoc,
   deleteDoc,
-  collection,
-  onSnapshot,
-  query,
+  serverTimestamp as firestoreServerTimestamp,
 } from "firebase/firestore";
 import { realtimeDb, db } from "../lib/firebase";
 import { getUserColor } from "../utils/userColors";
@@ -39,6 +36,18 @@ const usePresenceStore = create(
         remoteCursors: [],
         // Local cursor position (for current user)
         localPosition: { x: 0, y: 0 },
+        // Loading state
+        isLoading: true,
+        // Error state
+        error: null,
+        // Last sync timestamp
+        lastSyncTime: null,
+      },
+
+      // Selection state (PR #19)
+      selections: {
+        // Array of remote user selections: { userId, objectId, userName, userColor, timestamp }
+        remoteSelections: [],
         // Loading state
         isLoading: true,
         // Error state
@@ -133,10 +142,44 @@ const usePresenceStore = create(
           "setCursorsError"
         ),
 
+      // Selection actions (PR #19)
+      setRemoteSelections: (selections) =>
+        set(
+          (state) => ({
+            selections: {
+              ...state.selections,
+              remoteSelections: selections,
+              isLoading: false,
+              lastSyncTime: new Date(),
+              error: null,
+            },
+          }),
+          false,
+          "setRemoteSelections"
+        ),
+
+      setSelectionsLoading: (isLoading) =>
+        set(
+          (state) => ({
+            selections: { ...state.selections, isLoading },
+          }),
+          false,
+          "setSelectionsLoading"
+        ),
+
+      setSelectionsError: (error) =>
+        set(
+          (state) => ({
+            selections: { ...state.selections, error, isLoading: false },
+          }),
+          false,
+          "setSelectionsError"
+        ),
+
       // Connection state actions
       setConnectionState: (isConnected, isOffline = false) =>
         set(
-          (state) => ({
+          () => ({
             connection: { isConnected, isOffline },
           }),
           false,
@@ -156,7 +199,7 @@ const usePresenceStore = create(
           await onDisconnect(presenceRef).remove();
 
           // Write presence data
-          await set(presenceRef, {
+          await dbSet(presenceRef, {
             userName: currentUser.displayName || "Anonymous",
             userEmail: currentUser.email || "",
             userColor: userColor,
@@ -177,7 +220,7 @@ const usePresenceStore = create(
             `presence/shared-canvas/${currentUser.uid}`
           );
 
-          await set(presenceRef, {
+          await dbSet(presenceRef, {
             userName: currentUser.displayName || "Anonymous",
             userEmail: currentUser.email || "",
             userColor: userColor,
@@ -196,7 +239,7 @@ const usePresenceStore = create(
             realtimeDb,
             `presence/shared-canvas/${currentUser.uid}`
           );
-          await set(presenceRef, null);
+          await dbSet(presenceRef, null);
         } catch (error) {
           console.error("Error removing presence:", error);
           get().setPresenceError(error);
@@ -220,7 +263,7 @@ const usePresenceStore = create(
             y: position.y,
             userName: currentUser.displayName || "Anonymous",
             userColor: userColor,
-            lastSeen: serverTimestamp(),
+            lastSeen: firestoreServerTimestamp(),
           });
         } catch (error) {
           console.error("Error updating cursor position:", error);
@@ -244,51 +287,42 @@ const usePresenceStore = create(
         }
       },
 
-      // Helper methods
-      getOnlineUsers: () => {
-        const state = get();
-        return state.presence.onlineUsers;
+      // Selection operations (async) - PR #19
+      updateSelection: async (currentUser, objectId) => {
+        try {
+          const userColor = getUserColor(currentUser.uid);
+          const selectionRef = ref(
+            realtimeDb,
+            `selections/${currentUser.uid}`
+          );
+
+          // Set up onDisconnect to remove selection when user disconnects
+          await onDisconnect(selectionRef).remove();
+
+          // Write selection data
+          await dbSet(selectionRef, {
+            objectId: objectId,
+            userName: currentUser.displayName || "Anonymous",
+            userColor: userColor,
+            timestamp: serverTimestamp(),
+          });
+        } catch (error) {
+          console.error("Error updating selection:", error);
+          get().setSelectionsError(error);
+        }
       },
 
-      getRemoteCursors: () => {
-        const state = get();
-        return state.cursors.remoteCursors;
-      },
-
-      getLocalCursorPosition: () => {
-        const state = get();
-        return state.cursors.localPosition;
-      },
-
-      isPresenceLoading: () => {
-        const state = get();
-        return state.presence.isLoading;
-      },
-
-      isCursorsLoading: () => {
-        const state = get();
-        return state.cursors.isLoading;
-      },
-
-      getPresenceLastSyncTime: () => {
-        const state = get();
-        return state.presence.lastSyncTime;
-      },
-
-      getCursorsLastSyncTime: () => {
-        const state = get();
-        return state.cursors.lastSyncTime;
-      },
-
-      // Filter cursors to only show users who are in the presence list (online)
-      getVisibleCursors: () => {
-        const state = get();
-        const onlineUserIds = state.presence.onlineUsers.map(
-          (user) => user.userId
-        );
-        return state.cursors.remoteCursors.filter((cursor) =>
-          onlineUserIds.includes(cursor.userId)
-        );
+      removeSelection: async (currentUser) => {
+        try {
+          const selectionRef = ref(
+            realtimeDb,
+            `selections/${currentUser.uid}`
+          );
+          await dbSet(selectionRef, null);
+        } catch (error) {
+          console.error("Error removing selection:", error);
+          get().setSelectionsError(error);
+        }
       },
 
       // Clear all state (for cleanup)
@@ -304,6 +338,12 @@ const usePresenceStore = create(
             cursors: {
               remoteCursors: [],
               localPosition: { x: 0, y: 0 },
+              isLoading: true,
+              error: null,
+              lastSyncTime: null,
+            },
+            selections: {
+              remoteSelections: [],
               isLoading: true,
               error: null,
               lastSyncTime: null,

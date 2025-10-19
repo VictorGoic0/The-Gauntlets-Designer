@@ -1,4 +1,4 @@
-import { Rect, Transformer } from "react-konva";
+import { Rect, Transformer, Group } from "react-konva";
 import { useRef, useEffect } from "react";
 import useLocalStore from "../../../stores/localStore";
 
@@ -7,9 +7,10 @@ import useLocalStore from "../../../stores/localStore";
  * Features:
  * - Renders a Konva Rect with given properties
  * - Shows selection border when selected
+ * - Shows remote selection borders from other users (PR #19)
  * - Handles click for selection
  */
-export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStart, onDragMove, onDragEnd, onTransform, onTransformEnd, canvasWidth, canvasHeight }) {
+export default function Rectangle({ shapeProps, isSelected, remoteSelectors = [], onSelect, onDragStart, onDragMove, onDragEnd, onTransform, onTransformEnd, canvasWidth, canvasHeight }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
   const canvasMode = useLocalStore((state) => state.canvas.mode);
@@ -107,8 +108,29 @@ export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStar
     };
   };
 
+  // Get count of remote selectors for badge display
+  const remoteSelectorsCount = remoteSelectors.length;
+  const hasRemoteSelectors = remoteSelectorsCount > 0;
+
   return (
     <>
+      {/* Remote selection borders (PR #19) - rendered behind the shape */}
+      {hasRemoteSelectors && remoteSelectors.map((selector, index) => (
+        <Rect
+          key={`remote-selection-${selector.userId}`}
+          x={shapeProps.x - 4 - (index * 3)} // Offset outward for nested borders
+          y={shapeProps.y - 4 - (index * 3)}
+          width={(shapeProps.width || 100) + 8 + (index * 6)}
+          height={(shapeProps.height || 100) + 8 + (index * 6)}
+          rotation={shapeProps.rotation || 0}
+          stroke={selector.userColor}
+          strokeWidth={3}
+          fill="transparent"
+          listening={false} // Don't interfere with events
+          opacity={0.8}
+        />
+      ))}
+      
       <Rect
         ref={shapeRef}
         {...shapeProps}
@@ -121,7 +143,7 @@ export default function Rectangle({ shapeProps, isSelected, onSelect, onDragStar
         onDragEnd={handleDragEnd}
         onTransform={handleTransform}
         onTransformEnd={handleTransformEnd}
-        // Visual feedback when selected
+        // Visual feedback when selected by current user
         strokeWidth={isSelected ? 2 : 0}
         stroke={isSelected ? "#3B82F6" : undefined}
       />

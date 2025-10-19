@@ -386,6 +386,27 @@ export const removeCursor = async (currentUser) => {
 };
 
 /**
+ * Update selection in Realtime DB (PR #19)
+ * @param {string} objectId - Object ID that is now selected
+ * @param {Object} currentUser - Current user object
+ */
+export const updateSelection = async (objectId, currentUser) => {
+  if (!currentUser) return;
+
+  await usePresenceStore.getState().updateSelection(currentUser, objectId);
+};
+
+/**
+ * Remove selection from Realtime DB (PR #19)
+ * @param {Object} currentUser - Current user object
+ */
+export const removeSelection = async (currentUser) => {
+  if (!currentUser) return;
+
+  await usePresenceStore.getState().removeSelection(currentUser);
+};
+
+/**
  * Get active object IDs (for preventing remote updates during drag/transform)
  * @returns {Object} Object with active object IDs
  */
@@ -440,6 +461,10 @@ export const actions = {
   updatePresence,
   removePresence,
   removeCursor,
+
+  // Selection tracking (PR #19)
+  updateSelection,
+  removeSelection,
 
   // Utility operations
   getActiveObjectIds,
