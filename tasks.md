@@ -2760,3 +2760,261 @@ Realtime Database (Live Positions - Overlays Firestore):
 **Estimated Time**: 4-6 hours
 
 **Dependencies**: PR #18 (optional - can be done independently)
+
+---
+
+## PR #20: UI Modernization
+
+**Goal**: Modernize canvas UI components to follow the design system (colors, typography, spacing)
+
+**Architecture**: Apply design tokens to Header, Toolbar, PresencePanel, and ZoomControls
+
+**Motivation**: Create a cohesive, professional look across the entire application using the established design system
+
+---
+
+### Scope
+
+**Components to Modernize:**
+
+1. **Header** (`src/components/ui/Header.jsx`)
+
+   - Apply design system colors
+   - Use design system typography
+   - Consistent spacing and padding
+   - Modern button styling (AI Assistant, Sign Out)
+
+2. **Toolbar** (`src/components/canvas/Toolbar.jsx`)
+
+   - Apply design system colors
+   - Modern tool button styling
+   - Hover/active states using design tokens
+   - Consistent icon sizing and spacing
+
+3. **PresencePanel** (`src/components/canvas/PresencePanel.jsx`)
+
+   - Apply design system colors
+   - Use Card-like styling
+   - Modern user avatar/initials display
+   - Smooth animations using design tokens
+
+4. **ZoomControls** (`src/components/canvas/ZoomControls.jsx`)
+   - Apply design system colors
+   - Modern button styling
+   - Consistent spacing and layout
+   - Use design system border radius
+
+**Design System Tokens to Apply:**
+
+- `colors` - Primary, neutral, semantic colors
+- `typography` - Font sizes, weights, line heights
+- `spacing` - Consistent padding, margins, gaps
+- `borderRadius` - Consistent rounded corners
+- `transitions` - Smooth animations
+
+---
+
+### Phase 1: Header Modernization
+
+1. - [ ] Refactor Header styling
+   - File: `src/components/ui/Header.jsx`
+   - Replace inline styles with design tokens
+   - Use `colors.neutral[800]` for background
+   - Use `colors.neutral[50]` for text
+   - Apply consistent `spacing` for padding/gaps
+
+2. - [ ] Modernize Header buttons
+   - AI Assistant button already uses Button component ✅
+   - Ensure Sign Out button uses design system styling
+   - Apply hover states with design tokens
+   - Consistent button spacing
+
+3. - [ ] Add Header border/shadow
+   - Use design tokens for subtle bottom border
+   - Optional: Add subtle shadow for depth
+   - Separate header from canvas visually
+
+---
+
+### Phase 2: Toolbar Modernization
+
+4. - [ ] Refactor Toolbar layout
+   - File: `src/components/canvas/Toolbar.jsx`
+   - Use design system colors for background
+   - Apply consistent spacing between tool buttons
+   - Add subtle border/shadow
+
+5. - [ ] Modernize tool buttons
+   - Apply design tokens for button styling
+   - Active state: `colors.primary[500]` background
+   - Hover state: `colors.neutral[100]` background
+   - Inactive state: `colors.neutral[50]` background
+   - Use design system `borderRadius`
+
+6. - [ ] Add visual feedback
+   - Smooth transitions using `transitions.default`
+   - Icon color changes on hover/active
+   - Tooltip-like labels on hover (optional)
+
+---
+
+### Phase 3: PresencePanel Modernization
+
+7. - [ ] Refactor PresencePanel styling
+   - File: `src/components/canvas/PresencePanel.jsx`
+   - Use Card-like styling with design tokens
+   - Background: `colors.neutral[50]`
+   - Border: `colors.neutral[200]`
+   - Apply `spacing` for padding
+
+8. - [ ] Modernize user list display
+   - User avatars/initials with design system colors
+   - Use `typography` tokens for user names
+   - Consistent spacing between users
+   - Smooth animations with `transitions`
+
+9. - [ ] Add expand/collapse animation
+   - Use design system `transitions.default`
+   - Smooth height animation
+   - Icon rotation on toggle
+
+---
+
+### Phase 4: ZoomControls Modernization
+
+10. - [ ] Refactor ZoomControls styling
+    - File: `src/components/canvas/ZoomControls.jsx`
+    - Use design tokens for background/borders
+    - Apply consistent `spacing` for button layout
+    - Add subtle shadow for depth
+
+11. - [ ] Modernize zoom buttons
+    - Use design system colors for buttons
+    - Hover state: `colors.neutral[100]`
+    - Active state: `colors.neutral[200]`
+    - Disabled state: `colors.neutral[300]` with opacity
+    - Apply `borderRadius` for rounded corners
+
+12. - [ ] Improve zoom percentage display
+    - Use design system `typography`
+    - Consistent sizing and spacing
+    - Optional: Make it editable (click to type zoom level)
+
+---
+
+### Phase 5: Polish & Consistency
+
+13. - [ ] Add ConnectionStatus modernization (if needed)
+    - File: `src/components/ui/ConnectionStatus.jsx`
+    - Apply design system colors for status indicators
+    - Connected: `colors.success[500]`
+    - Disconnected: `colors.error[500]`
+
+14. - [ ] Ensure consistent spacing across all components
+    - Use design system `spacing` scale consistently
+    - Verify padding, margins, gaps are from design tokens
+    - No hardcoded pixel values for spacing
+
+15. - [ ] Add smooth transitions
+    - Apply `transitions.default` to interactive elements
+    - Hover states fade in smoothly
+    - Button presses have subtle scale effect (optional)
+
+16. - [ ] Cross-browser testing
+    - Verify styling works in Chrome, Firefox, Edge
+    - Check dark mode compatibility (if applicable)
+    - Ensure no layout shifts
+
+---
+
+### Design Token Reference
+
+**Colors:**
+
+```javascript
+colors.primary[500]; // Primary actions
+colors.neutral[50]; // Light backgrounds
+colors.neutral[800]; // Dark backgrounds
+colors.neutral[200]; // Borders
+colors.success[500]; // Success states
+colors.error[500]; // Error states
+```
+
+**Typography:**
+
+```javascript
+typography.fontSize.sm; // Small text
+typography.fontSize.base; // Body text
+typography.fontWeight.medium; // Emphasis
+```
+
+**Spacing:**
+
+```javascript
+spacing[2]; // 8px
+spacing[3]; // 12px
+spacing[4]; // 16px
+spacing[6]; // 24px
+```
+
+**Border Radius:**
+
+```javascript
+borderRadius.sm; // 4px
+borderRadius.md; // 8px
+borderRadius.lg; // 12px
+```
+
+**Transitions:**
+
+```javascript
+transitions.default; // 200ms ease
+transitions.fast; // 150ms ease
+```
+
+---
+
+### Files to Modify
+
+- `src/components/ui/Header.jsx` - Apply design tokens
+- `src/components/canvas/Toolbar.jsx` - Apply design tokens
+- `src/components/canvas/PresencePanel.jsx` - Apply design tokens
+- `src/components/canvas/ZoomControls.jsx` - Apply design tokens
+- `src/components/ui/ConnectionStatus.jsx` - Apply design tokens (optional)
+
+---
+
+### Test Before Merge
+
+**Visual Tests:**
+
+- [ ] Header looks modern and cohesive with design system
+- [ ] Toolbar buttons have clear active/hover states
+- [ ] PresencePanel has clean, card-like appearance
+- [ ] ZoomControls match design system aesthetic
+- [ ] All colors come from design tokens (no hardcoded colors)
+- [ ] Spacing is consistent across all components
+- [ ] Transitions are smooth and professional
+
+**Functional Tests:**
+
+- [ ] All components still function correctly after styling changes
+- [ ] Buttons are still clickable and responsive
+- [ ] PresencePanel expand/collapse works smoothly
+- [ ] ZoomControls buttons work correctly
+- [ ] No layout shifts or visual bugs
+
+**Cross-Component Consistency:**
+
+- [ ] Header matches Login/SignUp page styling
+- [ ] Canvas UI components feel cohesive
+- [ ] Color palette is consistent throughout app
+- [ ] Typography is consistent (font sizes, weights)
+
+---
+
+**Estimated Time**: 3-4 hours
+
+**Dependencies**: PR #15 (Design System Component Library - already complete)
+
+**Note**: This PR focuses on styling only. Creating actual design system components (e.g., `Toolbar` as a reusable component) can be done in a future PR.

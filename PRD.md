@@ -1392,6 +1392,93 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
 
 ---
 
+### Phase 11.75: UI Modernization (PR #20) - Priority: MEDIUM
+
+**Goal**: Modernize canvas UI components to follow the design system
+
+**Status**: 🔄 PLANNED
+
+**Motivation**: Apply design system tokens (colors, typography, spacing) to create a cohesive, professional look across the entire canvas interface
+
+**Scope**: Header, Toolbar, PresencePanel, ZoomControls, ConnectionStatus
+
+#### Components to Modernize
+
+1. **Header** - Apply design tokens, modern button styling, consistent spacing
+2. **Toolbar** - Design system colors, modern tool buttons, hover/active states
+3. **PresencePanel** - Card-like styling, modern user display, smooth animations
+4. **ZoomControls** - Design system colors, modern buttons, consistent layout
+5. **ConnectionStatus** - Design system colors for status indicators (optional)
+
+#### Design Tokens to Apply
+
+- **Colors**: Primary, neutral, semantic colors from design system
+- **Typography**: Font sizes, weights, line heights
+- **Spacing**: Consistent padding, margins, gaps
+- **Border Radius**: Consistent rounded corners
+- **Transitions**: Smooth animations for interactions
+
+#### Implementation Plan
+
+**Phase 1: Header Modernization**
+
+- [ ] Refactor Header styling with design tokens
+- [ ] Modernize Header buttons (AI Assistant, Sign Out)
+- [ ] Add subtle border/shadow for visual separation
+
+**Phase 2: Toolbar Modernization**
+
+- [ ] Refactor Toolbar layout with design system colors
+- [ ] Modernize tool buttons with hover/active states
+- [ ] Add smooth transitions and visual feedback
+
+**Phase 3: PresencePanel Modernization**
+
+- [ ] Refactor PresencePanel with Card-like styling
+- [ ] Modernize user list display with avatars/initials
+- [ ] Add expand/collapse animation
+
+**Phase 4: ZoomControls Modernization**
+
+- [ ] Refactor ZoomControls styling with design tokens
+- [ ] Modernize zoom buttons with consistent styling
+- [ ] Improve zoom percentage display
+
+**Phase 5: Polish & Consistency**
+
+- [ ] Add ConnectionStatus modernization (if needed)
+- [ ] Ensure consistent spacing across all components
+- [ ] Add smooth transitions to interactive elements
+- [ ] Cross-browser testing
+
+**Key Design Decisions:**
+
+- ✅ Apply design tokens, no hardcoded colors/spacing
+- ✅ Maintain existing functionality, styling changes only
+- ✅ Smooth transitions using design system transitions
+- ✅ Match Login/SignUp page aesthetic
+- ✅ Future: Convert to reusable design system components
+
+**Files to Modify:**
+
+- `src/components/ui/Header.jsx`
+- `src/components/canvas/Toolbar.jsx`
+- `src/components/canvas/PresencePanel.jsx`
+- `src/components/canvas/ZoomControls.jsx`
+- `src/components/ui/ConnectionStatus.jsx` (optional)
+
+**Estimated Time**: 3-4 hours
+
+**Benefits:**
+
+- Cohesive visual design across entire app
+- Professional, modern aesthetic
+- Consistent user experience
+- Matches Login/SignUp page styling
+- Foundation for future design system component library
+
+---
+
 ### Phase 12: Polish & Performance - Priority: MEDIUM
 
 **Goal**: Optimize and stabilize
@@ -1487,10 +1574,17 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
   - [ ] Zero breaking changes (fallback pattern)
 
 - **PR #19: Selection Tracking** 🔄 PLANNED
+
   - [ ] Track user selections in Realtime DB
   - [ ] Show colored borders on objects selected by others
   - [ ] Improve collaboration awareness
   - [ ] Figma-like collaborative UX
+
+- **PR #20: UI Modernization** 🔄 PLANNED
+  - [ ] Apply design system to canvas UI components
+  - [ ] Modernize Header, Toolbar, PresencePanel, ZoomControls
+  - [ ] Create cohesive visual design
+  - [ ] Match Login/SignUp page aesthetic
 
 **Architecture Highlights**:
 
@@ -1505,6 +1599,7 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
 - Complete PR #17 (AI advanced features + rubric validation)
 - Implement PR #18 (real-time object dragging)
 - Implement PR #19 (selection tracking with colored borders)
+- Implement PR #20 (UI modernization with design system)
 - Add multi-select and advanced selection features
 - Layer management system
 - Final performance optimization and polish
