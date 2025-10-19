@@ -2965,25 +2965,39 @@ Realtime Database (Live Positions - Overlays Firestore):
 
 ---
 
-### Phase 4: ZoomControls Modernization
+### Phase 4: ZoomControls Modernization ✅ COMPLETE
 
-10. - [ ] Refactor ZoomControls styling
+10. - [x] Refactor ZoomControls styling ✅
     - File: `src/components/canvas/ZoomControls.jsx`
-    - Use design tokens for background/borders
-    - Apply consistent `spacing` for button layout
-    - Add subtle shadow for depth
+    - Removed all Tailwind classes
+    - Applied design tokens throughout
+    - Background: `colors.neutral.darker` with border and shadow
+    - Positioned at `top: spacing[2]` (8px) to hug the top like Toolbar
+    - Left-aligned with `left: spacing[2]` (opposite side from PresencePanel)
+    - Vertical layout with consistent `spacing[2]` gap between buttons
 
-11. - [ ] Modernize zoom buttons
-    - Use design system colors for buttons
-    - Hover state: `colors.neutral[100]`
-    - Active state: `colors.neutral[200]`
-    - Disabled state: `colors.neutral[300]` with opacity
-    - Apply `borderRadius` for rounded corners
+11. - [x] Modernize zoom buttons ✅
+    - All buttons use design system colors
+    - Default state: `colors.neutral.dark` background
+    - Hover state: `colors.neutral.mediumDark` background
+    - Disabled state: `colors.neutral.darkest` with 50% opacity
+    - Smooth transitions using `transitions.duration.shorter`
+    - Proper ARIA labels for accessibility
+    - Icon size: 20px (consistent with Toolbar)
 
-12. - [ ] Improve zoom percentage display
-    - Use design system `typography`
-    - Consistent sizing and spacing
-    - Optional: Make it editable (click to type zoom level)
+12. - [x] Improve zoom percentage display ✅
+    - Uses `typography.fontFamily.mono` for monospaced numbers
+    - Typography: `typography.fontSize.sm`, `typography.fontWeight.medium`
+    - Background: `colors.neutral.darkest` for contrast
+    - Rounded corners with `borderRadius.base`
+    - Consistent padding: `spacing[1]` vertical, `spacing[3]` horizontal
+
+**Additional Improvements:**
+
+- Added hover state tracking with `useState` for precise control
+- Reset button uses smaller text (`typography.fontSize.xs`)
+- Consistent with Toolbar, PresencePanel, and Header design language
+- All buttons have proper disabled states with visual feedback
 
 ---
 

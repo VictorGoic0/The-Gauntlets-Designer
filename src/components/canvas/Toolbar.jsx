@@ -8,6 +8,36 @@ import {
   transitions,
 } from "../../styles/tokens";
 
+// Static styles - defined outside component for performance
+const toolbarStyle = {
+  position: "absolute",
+  top: spacing[2],
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 50,
+  backgroundColor: colors.neutral.darker,
+  borderRadius: borderRadius.md,
+  boxShadow: shadows.elevation[3],
+  border: `1px solid ${colors.neutral.dark}`,
+  padding: spacing[3],
+  display: "flex",
+  flexDirection: "row",
+  gap: spacing[2],
+  pointerEvents: "auto",
+};
+
+const buttonBaseStyle = {
+  padding: spacing[4],
+  borderRadius: borderRadius.base,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  border: "none",
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}, color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+  outline: "none",
+};
+
 /**
  * Toolbar component for canvas tools
  * Features:
@@ -103,35 +133,13 @@ export default function Toolbar() {
     },
   ];
 
-  const toolbarStyle = {
-    position: "absolute",
-    top: spacing[2],
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 50,
-    backgroundColor: colors.neutral.darker,
-    borderRadius: borderRadius.md,
-    boxShadow: shadows.elevation[3],
-    border: `1px solid ${colors.neutral.dark}`,
-    padding: spacing[3],
-    display: "flex",
-    flexDirection: "row",
-    gap: spacing[2],
-    pointerEvents: "auto",
-  };
-
+  // Dynamic styles - depend on component state
   const getButtonStyle = (toolId) => {
     const isActive = canvasMode === toolId;
     const isHovered = hoveredTool === toolId;
 
     return {
-      padding: spacing[4],
-      borderRadius: borderRadius.base,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      cursor: "pointer",
-      border: "none",
+      ...buttonBaseStyle,
       backgroundColor: isActive
         ? colors.primary.base
         : isHovered
@@ -142,8 +150,6 @@ export default function Toolbar() {
         : isHovered
         ? colors.neutral.white
         : colors.neutral.lightBase,
-      transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}, color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
-      outline: "none",
     };
   };
 

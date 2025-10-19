@@ -10,6 +10,28 @@ import {
   transitions,
 } from "../../styles/tokens";
 
+// Static styles - defined outside component for performance
+const containerStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: spacing[2],
+};
+
+const statusTextStyle = {
+  fontSize: typography.fontSize.sm,
+  fontWeight: typography.fontWeight.medium,
+  color: colors.neutral.lightBase,
+  fontFamily: typography.fontFamily.base,
+  transition: `color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+};
+
+const statusDotBaseStyle = {
+  width: "10px",
+  height: "10px",
+  borderRadius: borderRadius.full,
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+};
+
 export default function ConnectionStatus() {
   // UI state - what we display to the user
   const [isConnected, setIsConnected] = useState(false);
@@ -61,26 +83,10 @@ export default function ConnectionStatus() {
     };
   }, []);
 
-  const containerStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: spacing[2],
-  };
-
-  const statusTextStyle = {
-    fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.medium,
-    color: colors.neutral.lightBase,
-    fontFamily: typography.fontFamily.base,
-    transition: `color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
-  };
-
+  // Dynamic styles - depend on connection state
   const statusDotStyle = {
-    width: "10px",
-    height: "10px",
-    borderRadius: borderRadius.full,
+    ...statusDotBaseStyle,
     backgroundColor: isConnected ? colors.success.main : colors.error.main,
-    transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
     ...(isConnected && {
       animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
     }),

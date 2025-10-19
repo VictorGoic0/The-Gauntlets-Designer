@@ -10,6 +10,115 @@ import {
   transitions,
 } from "../../styles/tokens";
 
+// Static styles - defined outside component for performance
+const containerStyle = {
+  position: "absolute",
+  top: spacing[2],
+  right: spacing[2],
+  zIndex: 50,
+  backgroundColor: colors.neutral.darker,
+  borderRadius: borderRadius.md,
+  boxShadow: shadows.elevation[3],
+  border: `1px solid ${colors.neutral.dark}`,
+  pointerEvents: "auto",
+  minWidth: "200px",
+};
+
+const headerStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: `${spacing[3]} ${spacing[4]}`,
+  borderBottom: `1px solid ${colors.neutral.dark}`,
+};
+
+const headerContentStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: spacing[2],
+};
+
+const statusDotStyle = {
+  width: "8px",
+  height: "8px",
+  backgroundColor: colors.success.main,
+  borderRadius: borderRadius.full,
+  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+};
+
+const headerTextStyle = {
+  color: colors.neutral.white,
+  fontWeight: typography.fontWeight.semibold,
+  fontSize: typography.fontSize.sm,
+  fontFamily: typography.fontFamily.base,
+};
+
+const toggleButtonBaseStyle = {
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: spacing[1],
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: colors.neutral.lightBase,
+  transition: `color ${transitions.duration.shorter} ${transitions.easing.easeInOut}, transform ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+};
+
+const userListContainerStyle = {
+  padding: spacing[2],
+  maxHeight: "384px",
+  overflowY: "auto",
+};
+
+const emptyStateStyle = {
+  padding: `${spacing[6]} ${spacing[4]}`,
+  textAlign: "center",
+  color: colors.neutral.lightBase,
+  fontSize: typography.fontSize.sm,
+  fontFamily: typography.fontFamily.base,
+};
+
+const userListStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: spacing[1],
+};
+
+const userItemBaseStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: spacing[3],
+  padding: `${spacing[2]} ${spacing[3]}`,
+  borderRadius: borderRadius.base,
+  transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
+  cursor: "default",
+};
+
+const avatarBaseStyle = {
+  width: "32px",
+  height: "32px",
+  borderRadius: borderRadius.full,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: colors.neutral.white,
+  fontSize: typography.fontSize.xs,
+  fontWeight: typography.fontWeight.bold,
+  flexShrink: 0,
+  fontFamily: typography.fontFamily.base,
+};
+
+const userNameStyle = {
+  color: colors.neutral.lightest,
+  fontSize: typography.fontSize.sm,
+  flex: 1,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  fontFamily: typography.fontFamily.base,
+};
+
 /**
  * PresencePanel component displays a list of online users.
  * Features:
@@ -35,118 +144,6 @@ export default function PresencePanel() {
       return `${names[0][0]}${names[1][0]}`.toUpperCase();
     }
     return userName.substring(0, 2).toUpperCase();
-  };
-
-  // Container styles
-  const containerStyle = {
-    position: "absolute",
-    top: spacing[2], // 8px - hugs the top like toolbar
-    right: spacing[2], // 8px from right
-    zIndex: 50,
-    backgroundColor: colors.neutral.darker,
-    borderRadius: borderRadius.md,
-    boxShadow: shadows.elevation[3],
-    border: `1px solid ${colors.neutral.dark}`,
-    pointerEvents: "auto",
-    minWidth: "200px",
-  };
-
-  // Header styles
-  const headerStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: `${spacing[3]} ${spacing[4]}`,
-    borderBottom: `1px solid ${colors.neutral.dark}`,
-  };
-
-  const headerContentStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: spacing[2],
-  };
-
-  const statusDotStyle = {
-    width: "8px",
-    height: "8px",
-    backgroundColor: colors.success.main,
-    borderRadius: borderRadius.full,
-    animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-  };
-
-  const headerTextStyle = {
-    color: colors.neutral.white,
-    fontWeight: typography.fontWeight.semibold,
-    fontSize: typography.fontSize.sm,
-    fontFamily: typography.fontFamily.base,
-  };
-
-  const toggleButtonStyle = {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    padding: spacing[1],
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: colors.neutral.lightBase,
-    transition: `color ${transitions.duration.shorter} ${transitions.easing.easeInOut}, transform ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
-  };
-
-  // User list styles
-  const userListContainerStyle = {
-    padding: spacing[2],
-    maxHeight: "384px", // 96 * 4 = 384px
-    overflowY: "auto",
-  };
-
-  const emptyStateStyle = {
-    padding: `${spacing[6]} ${spacing[4]}`,
-    textAlign: "center",
-    color: colors.neutral.lightBase,
-    fontSize: typography.fontSize.sm,
-    fontFamily: typography.fontFamily.base,
-  };
-
-  const userListStyle = {
-    display: "flex",
-    flexDirection: "column",
-    gap: spacing[1],
-  };
-
-  const userItemStyle = (isHovered) => ({
-    display: "flex",
-    alignItems: "center",
-    gap: spacing[3],
-    padding: `${spacing[2]} ${spacing[3]}`,
-    borderRadius: borderRadius.base,
-    backgroundColor: isHovered ? colors.neutral.mediumDark : "transparent",
-    transition: `background-color ${transitions.duration.shorter} ${transitions.easing.easeInOut}`,
-    cursor: "default",
-  });
-
-  const avatarStyle = {
-    width: "32px",
-    height: "32px",
-    borderRadius: borderRadius.full,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: colors.neutral.white,
-    fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.bold,
-    flexShrink: 0,
-    fontFamily: typography.fontFamily.base,
-  };
-
-  const userNameStyle = {
-    color: colors.neutral.lightest,
-    fontSize: typography.fontSize.sm,
-    flex: 1,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    fontFamily: typography.fontFamily.base,
   };
 
   return (
@@ -183,7 +180,7 @@ export default function PresencePanel() {
               e.currentTarget.style.color = colors.neutral.lightBase;
             }}
             style={{
-              ...toggleButtonStyle,
+              ...toggleButtonBaseStyle,
               transform: isCollapsed ? "rotate(180deg)" : "rotate(0deg)",
             }}
             title={isCollapsed ? "Expand" : "Collapse"}
@@ -221,9 +218,6 @@ export default function PresencePanel() {
                     key={user.userId}
                     user={user}
                     getUserInitials={getUserInitials}
-                    userItemStyle={userItemStyle}
-                    avatarStyle={avatarStyle}
-                    userNameStyle={userNameStyle}
                   />
                 ))}
               </div>
@@ -236,18 +230,29 @@ export default function PresencePanel() {
 }
 
 // Separate component for user item to handle hover state
-function UserItem({ user, getUserInitials, userItemStyle, avatarStyle, userNameStyle }) {
+function UserItem({ user, getUserInitials }) {
   const [isHovered, setIsHovered] = useState(false);
+
+  // Dynamic styles - depend on hover state
+  const userItemStyle = {
+    ...userItemBaseStyle,
+    backgroundColor: isHovered ? colors.neutral.mediumDark : "transparent",
+  };
+
+  const avatarStyle = {
+    ...avatarBaseStyle,
+    backgroundColor: user.userColor,
+  };
 
   return (
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={userItemStyle(isHovered)}
+      style={userItemStyle}
     >
       {/* User avatar with initials */}
       <div
-        style={{ ...avatarStyle, backgroundColor: user.userColor }}
+        style={avatarStyle}
         title={user.userEmail}
       >
         {getUserInitials(user.userName)}
