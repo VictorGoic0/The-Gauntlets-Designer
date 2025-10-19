@@ -3,17 +3,20 @@ import { ref, set, onDisconnect, serverTimestamp } from "firebase/database";
 import { realtimeDb } from "../lib/firebase";
 import { useAuth } from "./useAuth";
 import { getUserColor } from "../utils/userColors";
+import useConnectionState from "./useConnectionState";
 
 /**
  * Hook to manage user presence in Realtime Database.
  * - Writes presence data on mount
  * - Uses onDisconnect() to automatically remove presence when browser closes
  * - Updates lastSeen timestamp periodically for activity tracking
+ * - Reacts to connection state changes for instant reconnection updates
  *
  * @param {boolean} enabled - Whether presence tracking is enabled
  */
 export function usePresence(enabled = true) {
   const { currentUser } = useAuth();
+  const isConnected = useConnectionState();
   const intervalRef = useRef(null);
   const UPDATE_INTERVAL_MS = 30000; // 30 seconds
 
@@ -76,6 +79,32 @@ export function usePresence(enabled = true) {
       });
     };
   }, [enabled, currentUser]);
+
+  // React to connection state changes - update presence immediately on reconnect
+  useEffect(() => {
+    if (!enabled || !currentUser || !isConnected) return;
+
+    const userColor = getUserColor(currentUser.uid);
+    const presenceRef = ref(realtimeDb, `presence/${currentUser.uid}`);
+
+    // On reconnect, immediately update presence
+    const updatePresenceOnReconnect = async () => {
+      try {
+        await onDisconnect(presenceRef).remove();
+        await set(presenceRef, {
+          userName: currentUser.displayName || "Anonymous",
+          userEmail: currentUser.email || "",
+          userColor: userColor,
+          isOnline: true,
+          lastSeen: serverTimestamp(),
+        });
+      } catch (error) {
+        console.error("Error updating presence on reconnect:", error);
+      }
+    };
+
+    updatePresenceOnReconnect();
+  }, [isConnected, enabled, currentUser]);
 }
 
 export default usePresence;

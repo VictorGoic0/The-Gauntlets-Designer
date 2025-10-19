@@ -3,6 +3,7 @@ import { ref, set, onDisconnect, serverTimestamp } from "firebase/database";
 import { realtimeDb } from "../lib/firebase";
 import { useAuth } from "./useAuth";
 import { getUserColor } from "../utils/userColors";
+import useConnectionState from "./useConnectionState";
 
 /**
  * Hook to track local cursor position and sync to Realtime Database.
@@ -23,6 +24,7 @@ export function useCursorTracking(
   containerOffset = { x: 0, y: 0 }
 ) {
   const { currentUser } = useAuth();
+  const isConnected = useConnectionState();
   const lastUpdateRef = useRef(0);
   const cursorPositionRef = useRef({ x: 0, y: 0 });
   const THROTTLE_MS = 45; // ~22 updates per second for <50ms perceived latency
@@ -86,6 +88,36 @@ export function useCursorTracking(
       });
     };
   }, [enabled, currentUser, stagePosition, stageScale, containerOffset]);
+
+  // React to connection state changes - update cursor immediately on reconnect
+  useEffect(() => {
+    if (!enabled || !currentUser || !isConnected) return;
+
+    const userColor = getUserColor(currentUser.uid);
+    const cursorRef = ref(realtimeDb, `cursors/${currentUser.uid}`);
+
+    // On reconnect, send last known cursor position immediately
+    const updateCursorOnReconnect = async () => {
+      try {
+        await onDisconnect(cursorRef).remove();
+
+        // If we have a last known position, send it immediately
+        if (cursorPositionRef.current) {
+          await set(cursorRef, {
+            x: cursorPositionRef.current.x,
+            y: cursorPositionRef.current.y,
+            userName: currentUser.displayName || "Anonymous",
+            userColor: userColor,
+            lastSeen: serverTimestamp(),
+          });
+        }
+      } catch (error) {
+        console.error("Error updating cursor on reconnect:", error);
+      }
+    };
+
+    updateCursorOnReconnect();
+  }, [isConnected, enabled, currentUser]);
 }
 
 export default useCursorTracking;
