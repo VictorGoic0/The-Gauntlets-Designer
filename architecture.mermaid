@@ -1,102 +1,281 @@
 graph TB
-    subgraph "Client Browser A"
-        A1[React App]
-        A2["AuthContext<br/>(Google user state)"]
-        A3["CanvasContext<br/>(canvas state)"]
-        A4["Canvas Component<br/>(5,000 x 5,000px)"]
-        A5["Konva Stage/Layer<br/>(pan & zoom)"]
-        A6[Shape Components]
-        A7["useCursorTracking<br/>(100ms throttle)"]
-        A8["useObjectSync<br/>(shared-canvas)"]
-        A9["usePresence<br/>(onDisconnect)"]
+    subgraph "Client Browser - User Session"
+        subgraph "React Application"
+            APP[App.jsx]
+            AUTH_PROVIDER["AuthProvider<br/>(AuthContext)"]
+            CANVAS_PAGE[CanvasPage.jsx]
+            
+            APP --> AUTH_PROVIDER
+            AUTH_PROVIDER --> CANVAS_PAGE
+        end
         
-        A1 --> A2
-        A1 --> A3
-        A2 --> A4
-        A3 --> A4
-        A4 --> A5
-        A5 --> A6
-        A4 --> A7
-        A4 --> A8
-        A4 --> A9
-    end
-    
-    subgraph "Client Browser B"
-        B1[React App]
-        B2["AuthContext<br/>(Google user state)"]
-        B3["CanvasContext<br/>(canvas state)"]
-        B4["Canvas Component<br/>(5,000 x 5,000px)"]
-        B5["Konva Stage/Layer<br/>(pan & zoom)"]
-        B6[Shape Components]
-        B7["useCursorTracking<br/>(100ms throttle)"]
-        B8["useObjectSync<br/>(shared-canvas)"]
-        B9["usePresence<br/>(onDisconnect)"]
+        subgraph "Authentication Flow"
+            LOGIN[Login.jsx]
+            SIGNUP[SignUp.jsx]
+            AUTH_FLOW{User Action}
+            
+            AUTH_FLOW -->|Google Sign-In| GOOGLE_AUTH[Google OAuth]
+            AUTH_FLOW -->|Email/Password| EMAIL_AUTH[Email Auth]
+            GOOGLE_AUTH --> AUTH_SUCCESS[Firebase Auth Token]
+            EMAIL_AUTH --> AUTH_SUCCESS
+            AUTH_SUCCESS --> AUTH_PROVIDER
+        end
         
-        B1 --> B2
-        B1 --> B3
-        B2 --> B4
-        B3 --> B4
-        B4 --> B5
-        B5 --> B6
-        B4 --> B7
-        B4 --> B8
-        B4 --> B9
+        subgraph "Zustand State Management"
+            subgraph "Local Store"
+                LOCAL_CANVAS["canvas:<br/>mode, stagePosition,<br/>stageScale"]
+                LOCAL_SELECTION["selection:<br/>selectedObjectIds"]
+                LOCAL_DRAGGING["dragging:<br/>localObjectPositions,<br/>draggingObjectId"]
+                LOCAL_TRANSFORMS["transforms:<br/>localObjectTransforms,<br/>transformingObjectId"]
+                LOCAL_OPTIMISTIC["optimisticObjects:<br/>data (local IDs)"]
+            end
+            
+            subgraph "Firestore Store"
+                FS_OBJECTS["objects:<br/>data, sorted,<br/>isLoading"]
+                FS_PENDING["pendingUpdates:<br/>{objectId: object}"]
+                FS_CURRENT["currentObjectsMap:<br/>{objectId: object}"]
+                FS_CONNECTION["connection:<br/>isConnected, isOffline"]
+            end
+            
+            subgraph "Presence Store"
+                PS_USERS["presence:<br/>onlineUsers"]
+                PS_CURSORS["cursors:<br/>remoteCursors,<br/>localPosition"]
+                PS_SELECTIONS["selections:<br/>remoteSelections"]
+                PS_POSITIONS["objectPositions:<br/>data {x, y, timestamp}"]
+                PS_CONNECTION["connection:<br/>isConnected, isOffline"]
+            end
+        end
+        
+        subgraph "Canvas Components"
+            CANVAS[Canvas.jsx]
+            TOOLBAR[Toolbar.jsx]
+            HEADER[Header.jsx]
+            PRESENCE_PANEL[PresencePanel.jsx]
+            ZOOM_CONTROLS[ZoomControls.jsx]
+            AI_PANEL[AIPanel.jsx]
+            
+            CANVAS_PAGE --> HEADER
+            CANVAS_PAGE --> TOOLBAR
+            CANVAS_PAGE --> CANVAS
+            CANVAS_PAGE --> PRESENCE_PANEL
+            CANVAS_PAGE --> ZOOM_CONTROLS
+            CANVAS_PAGE --> AI_PANEL
+        end
+        
+        subgraph "Konva Canvas Layer"
+            STAGE["Konva Stage<br/>(pan & zoom)"]
+            LAYER["Konva Layer<br/>(5000x5000px)"]
+            RECT["Rectangle Components"]
+            CIRCLE["Circle Components"]
+            TEXT["Text Components"]
+            CURSORS["Remote Cursors"]
+            SELECTION_BORDERS["Selection Borders<br/>(colored by user)"]
+            
+            CANVAS --> STAGE
+            STAGE --> LAYER
+            LAYER --> RECT
+            LAYER --> CIRCLE
+            LAYER --> TEXT
+            LAYER --> CURSORS
+            LAYER --> SELECTION_BORDERS
+        end
+        
+        subgraph "Hooks Layer"
+            HOOK_OBJECT_SYNC["useObjectSync<br/>(Firestore listener)"]
+            HOOK_PRESENCE["usePresence<br/>(writes presence)"]
+            HOOK_PRESENCE_SYNC["usePresenceSync<br/>(reads presence)"]
+            HOOK_CURSOR_TRACK["useCursorTracking<br/>(50ms throttle)"]
+            HOOK_CURSOR_SYNC["useCursorSync<br/>(reads cursors)"]
+            HOOK_SELECTION_TRACK["useSelectionTracking<br/>(writes selection)"]
+            HOOK_SELECTION_SYNC["useSelectionSync<br/>(reads selections)"]
+            HOOK_POSITIONS["useObjectPositions<br/>(reads positions)"]
+            HOOK_CONNECTION["useConnectionState<br/>(monitors Firebase)"]
+            
+            CANVAS --> HOOK_OBJECT_SYNC
+            CANVAS --> HOOK_PRESENCE
+            CANVAS --> HOOK_PRESENCE_SYNC
+            CANVAS --> HOOK_CURSOR_TRACK
+            CANVAS --> HOOK_CURSOR_SYNC
+            CANVAS --> HOOK_SELECTION_TRACK
+            CANVAS --> HOOK_SELECTION_SYNC
+            CANVAS --> HOOK_POSITIONS
+            CANVAS --> HOOK_CONNECTION
+        end
+        
+        subgraph "Actions Layer"
+            ACTIONS["actions.js<br/>(business logic)"]
+            ACTION_CREATE["createShape()"]
+            ACTION_MOVE["moveObject()"]
+            ACTION_DRAG_END["finishDrag()"]
+            ACTION_TRANSFORM["finishTransform()"]
+            ACTION_DELETE["deleteObjects()"]
+            
+            CANVAS --> ACTIONS
+            ACTIONS --> ACTION_CREATE
+            ACTIONS --> ACTION_MOVE
+            ACTIONS --> ACTION_DRAG_END
+            ACTIONS --> ACTION_TRANSFORM
+            ACTIONS --> ACTION_DELETE
+        end
     end
     
     subgraph "Firebase Backend"
-        F1["Firebase Auth<br/>(Google Sign-In Only)"]
-        F2[Firestore Database]
-        
-        subgraph "Firestore Collections<br/>(Shared Canvas)"
-            F3["projects/shared-canvas/objects<br/>(with server timestamps)"]
-            F4["projects/shared-canvas/cursors<br/>(auto-deleted via onDisconnect)"]
-            F5["projects/shared-canvas/presence<br/>(auto-cleaned via onDisconnect)"]
+        subgraph "Firebase Authentication"
+            FB_AUTH["Firebase Auth<br/>(Google + Email/Password)"]
         end
         
-        F2 --> F3
-        F2 --> F4
-        F2 --> F5
+        subgraph "Firestore Database"
+            FS_DB["Firestore"]
+            
+            subgraph "projects/shared-canvas"
+                FS_OBJECTS_COL["objects/{objectId}<br/>type, width, height,<br/>fill, rotation, zIndex,<br/>x, y (fallback),<br/>createdAt, lastEditedAt"]
+                FS_CURSORS_COL["cursors/{userId}<br/>x, y, userName,<br/>userColor, lastSeen"]
+            end
+            
+            FS_DB --> FS_OBJECTS_COL
+            FS_DB --> FS_CURSORS_COL
+        end
+        
+        subgraph "Realtime Database"
+            RT_DB["Realtime Database"]
+            
+            subgraph "Real-time Paths"
+                RT_PRESENCE["presence/shared-canvas/{userId}<br/>userName, userEmail,<br/>userColor, isOnline,<br/>lastSeen<br/>(onDisconnect cleanup)"]
+                RT_SELECTIONS["selections/{userId}<br/>objectId, userName,<br/>userColor, timestamp<br/>(onDisconnect cleanup)"]
+                RT_POSITIONS["objectPositions/{objectId}<br/>x, y, timestamp<br/>(live drag positions)"]
+            end
+            
+            RT_DB --> RT_PRESENCE
+            RT_DB --> RT_SELECTIONS
+            RT_DB --> RT_POSITIONS
+        end
+        
+        subgraph "Cloud Functions"
+            CF_AI["aiAgent()<br/>(OpenAI GPT-3.5-Turbo)"]
+            CF_TOOLS["tools.js<br/>(7 creation +<br/>manipulation tools)"]
+            CF_AI --> CF_TOOLS
+        end
     end
     
-    subgraph "Real-Time Data Flow"
-        direction LR
-        R1["onSnapshot Listeners"]
-        R2["Write Operations<br/>(with server timestamps)"]
-        R3["Optimistic Updates<br/>(incl. deletion priority)"]
-        R4["10 Color Palette<br/>(random assignment)"]
+    subgraph "External Services"
+        OPENAI["OpenAI API<br/>(GPT-3.5-Turbo)<br/>(key stored server-side)"]
+        CF_AI --> OPENAI
     end
     
-    A2 -->|Google Sign-In| F1
-    B2 -->|Google Sign-In| F1
+    %% Authentication Flow
+    LOGIN --> AUTH_FLOW
+    SIGNUP --> AUTH_FLOW
+    GOOGLE_AUTH -.->|OAuth redirect| FB_AUTH
+    EMAIL_AUTH -.->|credentials| FB_AUTH
+    FB_AUTH -.->|auth token| AUTH_SUCCESS
     
-    A7 -->|Write cursor every 100ms<br/>10 colors, interpolation<br/>Target: <50ms latency| F4
-    B7 -->|Write cursor every 100ms<br/>10 colors, interpolation<br/>Target: <50ms latency| F4
+    %% Store Connections
+    HOOK_OBJECT_SYNC --> FS_OBJECTS
+    ACTION_CREATE --> LOCAL_OPTIMISTIC
+    ACTION_CREATE --> FS_OBJECTS_COL
+    ACTION_CREATE --> RT_POSITIONS
     
-    A8 -->|Write object changes<br/>Last-write-wins<br/>Optimistic deletion| F3
-    B8 -->|Write object changes<br/>Last-write-wins<br/>Optimistic deletion| F3
+    HOOK_PRESENCE --> PS_USERS
+    HOOK_PRESENCE_SYNC --> PS_USERS
+    HOOK_CURSOR_TRACK --> PS_CURSORS
+    HOOK_CURSOR_SYNC --> PS_CURSORS
+    HOOK_SELECTION_TRACK --> PS_SELECTIONS
+    HOOK_SELECTION_SYNC --> PS_SELECTIONS
+    HOOK_POSITIONS --> PS_POSITIONS
+    HOOK_CONNECTION --> PS_CONNECTION
+    HOOK_CONNECTION --> FS_CONNECTION
     
-    A9 -->|Write presence data<br/>onDisconnect cleanup| F5
-    B9 -->|Write presence data<br/>onDisconnect cleanup| F5
+    %% Data Flows - Object Creation
+    ACTION_CREATE -->|1. Add optimistic| LOCAL_OPTIMISTIC
+    ACTION_CREATE -->|2. Write properties| FS_OBJECTS_COL
+    ACTION_CREATE -->|3. Write position| RT_POSITIONS
+    FS_OBJECTS_COL -->|4. Listener update| HOOK_OBJECT_SYNC
+    HOOK_OBJECT_SYNC -->|5. Reconcile ID| FS_OBJECTS
+    LOCAL_OPTIMISTIC -->|6. Remove optimistic| LOCAL_OPTIMISTIC
     
-    F4 -->|onSnapshot updates<br/>Cursor interpolation| A7
-    F4 -->|onSnapshot updates<br/>Cursor interpolation| B7
+    %% Data Flows - Object Dragging (PR #18)
+    ACTION_MOVE -->|1. Update local overlay| LOCAL_DRAGGING
+    ACTION_MOVE -->|2. Write position only| RT_POSITIONS
+    RT_POSITIONS -->|3. Broadcast to all users| HOOK_POSITIONS
+    HOOK_POSITIONS -->|4. Update store| PS_POSITIONS
+    ACTION_DRAG_END -->|5. Final position| RT_POSITIONS
+    ACTION_DRAG_END -->|6. Clear local overlay| LOCAL_DRAGGING
     
-    F3 -->|onSnapshot updates<br/>Server timestamps| A8
-    F3 -->|onSnapshot updates<br/>Server timestamps| B8
+    %% Data Flows - Cursor Tracking
+    HOOK_CURSOR_TRACK -->|Throttled 50ms| FS_CURSORS_COL
+    FS_CURSORS_COL -->|onSnapshot| HOOK_CURSOR_SYNC
+    HOOK_CURSOR_SYNC -->|Update| PS_CURSORS
+    PS_CURSORS -->|Render| CURSORS
     
-    F5 -->|onSnapshot updates| A9
-    F5 -->|onSnapshot updates| B9
+    %% Data Flows - Presence
+    HOOK_PRESENCE -->|onDisconnect cleanup| RT_PRESENCE
+    RT_PRESENCE -->|onValue listener| HOOK_PRESENCE_SYNC
+    HOOK_PRESENCE_SYNC -->|Update| PS_USERS
+    PS_USERS -->|Display| PRESENCE_PANEL
     
-    A8 -.->|Optimistic update<br/>Instant local| A6
-    B8 -.->|Optimistic update<br/>Instant local| B6
+    %% Data Flows - Selection Tracking (PR #19)
+    LOCAL_SELECTION -->|On selection change| HOOK_SELECTION_TRACK
+    HOOK_SELECTION_TRACK -->|Write selection| RT_SELECTIONS
+    RT_SELECTIONS -->|onValue listener| HOOK_SELECTION_SYNC
+    HOOK_SELECTION_SYNC -->|Update| PS_SELECTIONS
+    PS_SELECTIONS -->|Render colored borders| SELECTION_BORDERS
     
-    F3 -.->|Server reconciliation<br/>Timestamp-based| A8
-    F3 -.->|Server reconciliation<br/>Timestamp-based| B8
+    %% Data Flows - Conflict Resolution
+    FS_OBJECTS_COL -->|Remote update during drag| FS_PENDING
+    ACTION_DRAG_END -->|Compare timestamps| FS_PENDING
+    FS_PENDING -->|Last-write-wins| FS_OBJECTS
     
-    style F1 fill:#FFA500
-    style F2 fill:#4285F4
-    style F3 fill:#34A853
-    style F4 fill:#34A853
-    style F5 fill:#34A853
-    style A1 fill:#61DAFB
-    style B1 fill:#61DAFB
+    %% Data Flows - Object Deletion
+    ACTION_DELETE -->|1. Remove local| LOCAL_SELECTION
+    ACTION_DELETE -->|2. Delete from Firestore| FS_OBJECTS_COL
+    ACTION_DELETE -->|3. Delete from Realtime DB| RT_POSITIONS
+    ACTION_DELETE -->|4. Remove selection| RT_SELECTIONS
+    
+    %% Data Flows - AI Agent
+    AI_PANEL -->|User command + auth| CF_AI
+    CF_AI -->|Function calling| OPENAI
+    OPENAI -->|Tool calls| CF_TOOLS
+    CF_TOOLS -->|Create objects| FS_OBJECTS_COL
+    CF_TOOLS -->|Write positions| RT_POSITIONS
+    FS_OBJECTS_COL -->|Sync to all users| HOOK_OBJECT_SYNC
+    
+    %% Data Flows - Rendering Pipeline
+    FS_OBJECTS -->|Firestore objects| CANVAS
+    PS_POSITIONS -->|Realtime positions| CANVAS
+    LOCAL_DRAGGING -->|Local overlays| CANVAS
+    LOCAL_TRANSFORMS -->|Local transforms| CANVAS
+    LOCAL_OPTIMISTIC -->|Optimistic objects| CANVAS
+    CANVAS -->|Merge priority:<br/>1. Local overlay<br/>2. RT position<br/>3. FS position| LAYER
+    
+    %% Store to Component Connections
+    LOCAL_CANVAS --> CANVAS
+    LOCAL_CANVAS --> ZOOM_CONTROLS
+    LOCAL_SELECTION --> CANVAS
+    LOCAL_OPTIMISTIC --> CANVAS
+    FS_OBJECTS --> RECT
+    FS_OBJECTS --> CIRCLE
+    FS_OBJECTS --> TEXT
+    PS_USERS --> PRESENCE_PANEL
+    PS_CURSORS --> CURSORS
+    PS_SELECTIONS --> SELECTION_BORDERS
+    
+    %% Styling
+    style FB_AUTH fill:#FFA500
+    style FS_DB fill:#4285F4
+    style RT_DB fill:#FFCA28
+    style CF_AI fill:#34A853
+    style OPENAI fill:#10A37F
+    style LOCAL_CANVAS fill:#E3F2FD
+    style LOCAL_SELECTION fill:#E3F2FD
+    style LOCAL_DRAGGING fill:#E3F2FD
+    style LOCAL_TRANSFORMS fill:#E3F2FD
+    style LOCAL_OPTIMISTIC fill:#E3F2FD
+    style FS_OBJECTS fill:#F3E5F5
+    style FS_PENDING fill:#F3E5F5
+    style FS_CURRENT fill:#F3E5F5
+    style PS_USERS fill:#E8F5E9
+    style PS_CURSORS fill:#E8F5E9
+    style PS_SELECTIONS fill:#E8F5E9
+    style PS_POSITIONS fill:#E8F5E9
+    style CANVAS fill:#61DAFB
+    style ACTIONS fill:#FF6B6B
