@@ -293,7 +293,7 @@ export default function AIPanel({ isOpen, onClose }) {
                         padding: `${spacing[2]} ${spacing[4]}`,
                         backgroundColor:
                           message.type === "user"
-                            ? colors.primary[600]
+                            ? colors.primary.mediumDark
                             : message.type === "error"
                             ? colors.error.main
                             : colors.background.default,

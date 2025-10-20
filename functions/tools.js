@@ -11,6 +11,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
+const realtimeDb = admin.database(); // Add Realtime Database reference
 
 /**
  * OpenAI Tool Schema for createRectangle
@@ -82,6 +83,18 @@ async function executeCreateRectangle(args, userId) {
     .doc("shared-canvas")
     .collection("objects")
     .add(objectData);
+
+  // PR #18: Write position to Realtime DB for live position tracking
+  try {
+    await realtimeDb.ref(`objectPositions/${docRef.id}`).set({
+      x: args.x,
+      y: args.y,
+      timestamp: admin.database.ServerValue.TIMESTAMP,
+    });
+  } catch (positionError) {
+    console.error("Error writing position to Realtime DB:", positionError);
+    // Continue anyway - object exists in Firestore
+  }
 
   return {
     success: true,
@@ -207,6 +220,18 @@ async function executeCreateCircle(args, userId) {
     .collection("objects")
     .add(objectData);
 
+  // PR #18: Write position to Realtime DB for live position tracking
+  try {
+    await realtimeDb.ref(`objectPositions/${docRef.id}`).set({
+      x: args.x,
+      y: args.y,
+      timestamp: admin.database.ServerValue.TIMESTAMP,
+    });
+  } catch (positionError) {
+    console.error("Error writing position to Realtime DB:", positionError);
+    // Continue anyway - object exists in Firestore
+  }
+
   return {
     success: true,
     objectId: docRef.id,
@@ -245,6 +270,18 @@ async function executeCreateText(args, userId) {
     .doc("shared-canvas")
     .collection("objects")
     .add(objectData);
+
+  // PR #18: Write position to Realtime DB for live position tracking
+  try {
+    await realtimeDb.ref(`objectPositions/${docRef.id}`).set({
+      x: args.x,
+      y: args.y,
+      timestamp: admin.database.ServerValue.TIMESTAMP,
+    });
+  } catch (positionError) {
+    console.error("Error writing position to Realtime DB:", positionError);
+    // Continue anyway - object exists in Firestore
+  }
 
   return {
     success: true,
