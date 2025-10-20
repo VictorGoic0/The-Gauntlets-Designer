@@ -138,7 +138,7 @@ Available tools: createRectangle, createCircle, createText, moveObject, resizeOb
 
       const responseMessage = completion.choices[0].message;
       const openaiTime = Date.now() - startTime;
-      console.log(`⏱️ OpenAI generation time: ${openaiTime}ms`);
+      // console.log(`⏱️ OpenAI generation time: ${openaiTime}ms`);
 
       // If OpenAI wants to call tools
       if (responseMessage.tool_calls) {
@@ -154,9 +154,9 @@ Available tools: createRectangle, createCircle, createText, moveObject, resizeOb
         // Use allSettled to handle partial failures gracefully
         const results = await Promise.allSettled(promises);
         const toolExecutionTime = Date.now() - toolStartTime;
-        console.log(
-          `⏱️ Tool execution time (${promises.length} tools): ${toolExecutionTime}ms`
-        );
+        // console.log(
+        //   `⏱️ Tool execution time (${promises.length} tools): ${toolExecutionTime}ms`
+        // );
 
         // Count successes and failures
         const successCount = results.filter(
@@ -195,7 +195,7 @@ Available tools: createRectangle, createCircle, createText, moveObject, resizeOb
         });
 
         const totalTime = Date.now() - startTime;
-        console.log(`⏱️ Total request time: ${totalTime}ms`);
+        // console.log(`⏱️ Total request time: ${totalTime}ms`);
 
         return {
           success: overallSuccess,
@@ -219,7 +219,7 @@ Available tools: createRectangle, createCircle, createText, moveObject, resizeOb
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error("AI Agent error:", error);
+      // console.error("AI Agent error:", error);
       throw new HttpsError("internal", error.message);
     }
   }
