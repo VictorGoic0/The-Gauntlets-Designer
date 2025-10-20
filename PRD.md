@@ -548,6 +548,8 @@ service cloud.firestore {
 
 - Online users list
 - User cursors
+- User selections (PR #19)
+- Object positions (PR #18)
 - Connection status
 - Auto-cleanup via onDisconnect()
 - Structure:
@@ -571,6 +573,36 @@ service cloud.firestore {
       userColor: string,
       lastSeen: timestamp
     }
+  },
+  selections: { // PR #19: Selection Tracking
+    remoteSelections: [
+      {
+        userId: string,
+        objectId: string,
+        userName: string,
+        userColor: string,
+        timestamp: number
+      }
+    ],
+    isLoading: boolean,
+    error: string | null,
+    lastSyncTime: number
+  },
+  objectPositions: { // PR #18: Real-Time Object Positions
+    data: {
+      [objectId]: {
+        x: number,
+        y: number,
+        timestamp: number
+      }
+    },
+    isLoading: boolean,
+    error: string | null,
+    lastSyncTime: number
+  },
+  connection: {
+    isConnected: boolean,
+    isOffline: boolean
   },
   connectionStatus: 'connected' | 'disconnected' | 'connecting'
 }
