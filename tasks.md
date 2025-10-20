@@ -2767,7 +2767,7 @@ Realtime Database (Live Positions - Overlays Firestore):
 
 **Status**: ✅ COMPLETE
 
-**Actual Time**: ~3 hours
+**Actual Time**: 30 min
 
 **Dependencies**: None
 
@@ -3218,7 +3218,7 @@ transitions.fast; // 150ms ease
 
 **Status**: ✅ COMPLETE
 
-**Actual Time**: ~4 hours
+**Actual Time**: ~1 hour
 
 **Dependencies**: PR #15 (Design System Component Library - complete)
 
