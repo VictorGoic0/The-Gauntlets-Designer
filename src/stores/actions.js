@@ -1,5 +1,6 @@
 import { collection, addDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { ref, set as dbSet, serverTimestamp } from "firebase/database";
+import { db, realtimeDb } from "../lib/firebase";
 import useLocalStore from "./localStore";
 import useFirestoreStore from "./firestoreStore";
 import usePresenceStore from "./presenceStore";
@@ -74,6 +75,23 @@ export const createShape = async (
     // Reconcile: swap local ID → Firestore ID in Local Store
     // The Firestore listener will pick up the object and add it to Firestore Store
     useLocalStore.getState().reconcileObjectId(localId, firestoreId);
+
+    // PR #18: Write initial position to Realtime DB
+    // This happens AFTER getting Firestore ID (can't write to Realtime DB without object ID)
+    try {
+      const positionRef = ref(realtimeDb, `objectPositions/${firestoreId}`);
+      await dbSet(positionRef, {
+        x,
+        y,
+        timestamp: serverTimestamp(),
+      });
+    } catch (positionError) {
+      console.error(
+        "Error writing initial position to Realtime DB:",
+        positionError
+      );
+      // Non-fatal: Object still created in Firestore, will fall back to Firestore position
+    }
   } catch (error) {
     console.error("Error creating shape:", error);
     // Remove optimistic object on error
@@ -95,7 +113,7 @@ export const startDrag = (objectId) => {
  * @param {Object} newPosition - New position {x, y}
  * @param {Object} objectSize - Object size for constraint calculations
  */
-export const moveObject = (objectId, newPosition, objectSize) => {
+export const moveObject = async (objectId, newPosition, objectSize) => {
   // Constrain position within canvas bounds
   let constrainedX, constrainedY;
 
@@ -124,6 +142,20 @@ export const moveObject = (objectId, newPosition, objectSize) => {
   useLocalStore
     .getState()
     .setLocalObjectPosition(objectId, constrainedPosition);
+
+  // PR #18: Write to Realtime DB for high-frequency updates
+  // This allows other users to see real-time drag movement
+  try {
+    const positionRef = ref(realtimeDb, `objectPositions/${objectId}`);
+    await dbSet(positionRef, {
+      x: constrainedX,
+      y: constrainedY,
+      timestamp: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error("Error updating position in Realtime DB:", error);
+    // Non-fatal: Local update still applied
+  }
 };
 
 /**
@@ -172,17 +204,24 @@ export const finishDrag = async (
   // Check if object is still optimistic (not yet synced to Firestore)
   const isOptimistic = useLocalStore.getState().isObjectOptimistic(objectId);
 
+  // PR #18: Write final position to Realtime DB ONLY (not Firestore)
+  // Position is now exclusively managed by Realtime DB after initial creation
   if (!isOptimistic) {
-    // Only write to Firestore if object exists there
-    // Optimistic objects will get their updates when they're created
-    await useFirestoreStore
-      .getState()
-      .updateObjectInFirestore(
-        objectId,
-        { x: constrainedX, y: constrainedY },
-        currentUser.uid
-      );
+    // Only write if object has been synced to Firestore (has Firestore ID)
+    try {
+      const positionRef = ref(realtimeDb, `objectPositions/${objectId}`);
+      await dbSet(positionRef, {
+        x: constrainedX,
+        y: constrainedY,
+        timestamp: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error writing final position to Realtime DB:", error);
+      // Non-fatal: Local update still applied
+    }
   }
+  // Note: For optimistic objects, position will be written to Realtime DB
+  // after Firestore ID is generated in createShape()
 
   // Keep local position until remote update arrives and matches
   // Canvas useEffect will clear it when remote position matches local
@@ -253,6 +292,21 @@ export const deleteObjects = async (objectIds, currentUser) => {
   try {
     // Delete from Firestore
     await useFirestoreStore.getState().deleteObjectsFromFirestore(objectIds);
+
+    // PR #18: Clean up Realtime DB positions
+    // Delete positions for all deleted objects
+    for (const objectId of objectIds) {
+      try {
+        const positionRef = ref(realtimeDb, `objectPositions/${objectId}`);
+        await dbSet(positionRef, null); // Delete by setting to null
+      } catch (positionError) {
+        console.error(
+          `Error deleting position for ${objectId}:`,
+          positionError
+        );
+        // Non-fatal: Object still deleted from Firestore
+      }
+    }
   } catch (error) {
     console.error("Error deleting objects:", error);
     // Could implement rollback here if needed

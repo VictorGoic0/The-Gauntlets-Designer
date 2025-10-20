@@ -8,6 +8,7 @@ import usePresenceSync from "../../hooks/usePresenceSync";
 import useSelectionTracking from "../../hooks/useSelectionTracking";
 import useSelectionSync from "../../hooks/useSelectionSync";
 import useObjectSync from "../../hooks/useObjectSync";
+import useObjectPositions from "../../hooks/useObjectPositions";
 import useLocalStore from "../../stores/localStore";
 import usePresenceStore from "../../stores/presenceStore";
 import useFirestoreStore from "../../stores/firestoreStore";
@@ -89,6 +90,9 @@ export default function Canvas() {
   useSelectionTracking(); // Tracks current user's selection
   useSelectionSync(); // Syncs remote users' selections
   
+  // Object position syncing (PR #18)
+  useObjectPositions(); // Syncs object positions from Realtime DB
+  
   // Read remote cursors from Presence Store
   const remoteCursors = usePresenceStore((state) => state.cursors.remoteCursors);
   
@@ -97,6 +101,9 @@ export default function Canvas() {
   
   // Read remote selections from Presence Store (PR #19)
   const remoteSelections = usePresenceStore((state) => state.selections.remoteSelections);
+  
+  // Read object positions from Presence Store (PR #18)
+  const objectPositions = usePresenceStore((state) => state.objectPositions.data);
   
   // Only mark objects as "active" if they're CURRENTLY being manipulated
   // This prevents remote updates during the actual drag/transform
@@ -124,9 +131,25 @@ export default function Canvas() {
   const optimisticObjectsData = useLocalStore((state) => state.optimisticObjects.data);
   
   // Combine Firestore objects and optimistic objects
+  // Then merge with Realtime DB positions (PR #18)
   const objects = useMemo(() => {
-    return [...firestoreObjects, ...Object.values(optimisticObjectsData)];
-  }, [firestoreObjects, optimisticObjectsData]);
+    const combined = [...firestoreObjects, ...Object.values(optimisticObjectsData)];
+    
+    // Merge: Realtime DB position overrides Firestore position
+    // Priority: Realtime DB > Firestore
+    // (Local overlays will be applied later during rendering)
+    return combined.map((obj) => {
+      const realtimePosition = objectPositions[obj.id];
+      if (realtimePosition) {
+        return {
+          ...obj,
+          x: realtimePosition.x,
+          y: realtimePosition.y,
+        };
+      }
+      return obj;
+    });
+  }, [firestoreObjects, optimisticObjectsData, objectPositions]);
   
   // Filter cursors to only show users who are in the presence list (online)
   // Then convert from canvas coordinates to screen coordinates for rendering

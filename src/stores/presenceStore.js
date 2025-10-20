@@ -56,6 +56,18 @@ const usePresenceStore = create(
         lastSyncTime: null,
       },
 
+      // Object positions state (PR #18)
+      objectPositions: {
+        // Map of objectId -> { x, y, timestamp }
+        data: {},
+        // Loading state
+        isLoading: true,
+        // Error state
+        error: null,
+        // Last sync timestamp
+        lastSyncTime: null,
+      },
+
       // Connection state
       connection: {
         isConnected: true,
@@ -176,6 +188,43 @@ const usePresenceStore = create(
           "setSelectionsError"
         ),
 
+      // Object positions actions (PR #18)
+      setObjectPositions: (positions) =>
+        set(
+          (state) => ({
+            objectPositions: {
+              ...state.objectPositions,
+              data: positions,
+              isLoading: false,
+              lastSyncTime: Date.now(),
+            },
+          }),
+          false,
+          "setObjectPositions"
+        ),
+
+      setPositionsLoading: (isLoading) =>
+        set(
+          (state) => ({
+            objectPositions: { ...state.objectPositions, isLoading },
+          }),
+          false,
+          "setPositionsLoading"
+        ),
+
+      setPositionsError: (error) =>
+        set(
+          (state) => ({
+            objectPositions: {
+              ...state.objectPositions,
+              error,
+              isLoading: false,
+            },
+          }),
+          false,
+          "setPositionsError"
+        ),
+
       // Connection state actions
       setConnectionState: (isConnected, isOffline = false) =>
         set(
@@ -291,10 +340,7 @@ const usePresenceStore = create(
       updateSelection: async (currentUser, objectId) => {
         try {
           const userColor = getUserColor(currentUser.uid);
-          const selectionRef = ref(
-            realtimeDb,
-            `selections/${currentUser.uid}`
-          );
+          const selectionRef = ref(realtimeDb, `selections/${currentUser.uid}`);
 
           // Set up onDisconnect to remove selection when user disconnects
           await onDisconnect(selectionRef).remove();
@@ -314,10 +360,7 @@ const usePresenceStore = create(
 
       removeSelection: async (currentUser) => {
         try {
-          const selectionRef = ref(
-            realtimeDb,
-            `selections/${currentUser.uid}`
-          );
+          const selectionRef = ref(realtimeDb, `selections/${currentUser.uid}`);
           await dbSet(selectionRef, null);
         } catch (error) {
           console.error("Error removing selection:", error);
@@ -344,6 +387,12 @@ const usePresenceStore = create(
             },
             selections: {
               remoteSelections: [],
+              isLoading: true,
+              error: null,
+              lastSyncTime: null,
+            },
+            objectPositions: {
+              data: {},
               isLoading: true,
               error: null,
               lastSyncTime: null,
