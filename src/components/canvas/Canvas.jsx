@@ -126,6 +126,9 @@ export default function Canvas() {
   const firestoreObjects = useFirestoreStore((state) => state.objects.sorted);
   const loading = useFirestoreStore((state) => state.objects.isLoading);
   
+  // Read object positions loading state (PR #18)
+  const objectPositionsLoading = usePresenceStore((state) => state.objectPositions.isLoading);
+  
   // Read optimistic objects data from Local Store (not yet synced)
   // Return the data object itself to avoid recreating arrays
   const optimisticObjectsData = useLocalStore((state) => state.optimisticObjects.data);
@@ -499,8 +502,8 @@ export default function Canvas() {
               name="background"
             />
             
-            {/* Render all canvas objects */}
-            {!loading && objects.map((obj) => {
+            {/* Render all canvas objects - wait for both Firestore and Realtime DB positions (PR #18) */}
+            {!loading && !objectPositionsLoading && objects.map((obj) => {
               // Use local transform if object is being transformed, otherwise use Firestore data
               const localTransform = localObjectTransforms[obj.id];
               const position = localTransform ? { x: localTransform.x, y: localTransform.y } : 
@@ -604,8 +607,8 @@ export default function Canvas() {
         </Stage>
       )}
 
-      {/* Loading state overlay */}
-      {loading && <LoadingState />}
+      {/* Loading state overlay - wait for both Firestore and Realtime DB (PR #18) */}
+      {(loading || objectPositionsLoading) && <LoadingState />}
 
       {/* Cursor overlay - HTML elements for simplicity */}
       {/* Only show cursors for users who are currently present/online */}

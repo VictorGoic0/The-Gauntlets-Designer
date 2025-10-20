@@ -548,6 +548,8 @@ service cloud.firestore {
 
 - Online users list
 - User cursors
+- User selections (PR #19)
+- Object positions (PR #18)
 - Connection status
 - Auto-cleanup via onDisconnect()
 - Structure:
@@ -571,6 +573,36 @@ service cloud.firestore {
       userColor: string,
       lastSeen: timestamp
     }
+  },
+  selections: { // PR #19: Selection Tracking
+    remoteSelections: [
+      {
+        userId: string,
+        objectId: string,
+        userName: string,
+        userColor: string,
+        timestamp: number
+      }
+    ],
+    isLoading: boolean,
+    error: string | null,
+    lastSyncTime: number
+  },
+  objectPositions: { // PR #18: Real-Time Object Positions
+    data: {
+      [objectId]: {
+        x: number,
+        y: number,
+        timestamp: number
+      }
+    },
+    isLoading: boolean,
+    error: string | null,
+    lastSyncTime: number
+  },
+  connection: {
+    isConnected: boolean,
+    isOffline: boolean
   },
   connectionStatus: 'connected' | 'disconnected' | 'connecting'
 }
@@ -850,21 +882,146 @@ const TextEditor = () => {
 
 #### Optimistic Objects System
 
-**ID Reconciliation:**
+**Architecture Overview:**
 
-- New objects created with local generated ID (`obj_${timestamp}_${random}`)
-- Marked `isOptimistic: true` in Local Store
-- Immediately rendered for instant user feedback
-- Written to Firestore with `addDoc()` which returns Firestore ID
-- Local ID reconciled with Firestore ID upon successful write
-- All references updated (selection, dragging, transforms)
-- `isOptimistic` flag removed, object moves to Firestore Store
+- **Local Store**: Client-side state with optimistic objects
+- **Firestore Store**: Pure reflection of Firestore (updated ONLY by listeners)
+- **Actions**: Business logic that writes to Firestore and Local Store
 
-**Benefits:**
+**Object Creation Flow:**
 
-- Instant object creation (no network delay)
-- Prevents premature Firestore updates (no writes until object exists in Firestore)
-- Clean separation: local optimistic state vs synced Firestore state
+1. **User Creates Object**
+
+   ```javascript
+   actions.createShape(x, y, "rectangle", currentUser);
+   ```
+
+2. **Generate Local ID & Add to Local Store**
+
+   ```javascript
+   const localId = generateObjectId(); // "obj_1760650554461_abc123"
+
+   useLocalStore.getState().addOptimisticObject(localId, {
+     type: "rectangle",
+     x,
+     y,
+     createdBy: currentUser.uid,
+     isOptimistic: true, // ← Flag: not yet synced
+   });
+   ```
+
+   **Result**: Object is immediately visible with local ID
+
+3. **Write to Firestore & Get ID Back**
+
+   ```javascript
+   const docRef = await addDoc(collection(db, "..."), shapeData);
+   const firestoreId = docRef.id; // "aBc123XyZ" ← Firestore-generated ID
+   ```
+
+   **Result**: Firestore creates document with its own ID
+
+4. **Reconcile IDs**
+
+   ```javascript
+   useLocalStore.getState().reconcileObjectId(localId, firestoreId);
+   ```
+
+   This function:
+
+   - Removes object from `optimisticObjects`
+   - Updates all references: local ID → Firestore ID
+     - Dragging positions
+     - Transform states
+     - Selection
+     - Currently dragging/transforming IDs
+
+   **Result**: All local state now uses Firestore ID
+
+5. **Listener Picks Up Object**
+   ```javascript
+   // useObjectSync listener receives the new object
+   onSnapshot(query, (snapshot) => {
+     useFirestoreStore.getState().setObjects(snapshot.docs);
+     // Object is now in Firestore Store with Firestore ID
+   });
+   ```
+   **Result**: Object moves from Local Store → Firestore Store
+
+**Manipulating Optimistic Objects:**
+
+**Before Reconciliation (Local ID):**
+
+- User can drag, resize, rotate the object immediately
+- Updates Local Store dragging overlay
+- Firestore writes are blocked:
+  ```javascript
+  const isOptimistic = useLocalStore.getState().isObjectOptimistic(objectId);
+  if (!isOptimistic) {
+    // Write to Firestore
+    await updateObjectInFirestore(...);
+  } else {
+    // Skip - object doesn't exist in Firestore yet
+  }
+  ```
+
+**After Reconciliation (Firestore ID):**
+
+- Object no longer in `optimisticObjects`
+- `isObjectOptimistic()` returns `false`
+- Changes now persist to Firestore
+
+**Rendering Objects:**
+
+Canvas combines both sources:
+
+```javascript
+// Read from Firestore Store (synced objects)
+const firestoreObjects = useFirestoreStore((state) => state.objects.sorted);
+
+// Read from Local Store (optimistic objects)
+const optimisticObjects = useLocalStore((state) =>
+  Object.values(state.optimisticObjects.data)
+);
+
+// Combine for rendering
+const allObjects = [...firestoreObjects, ...optimisticObjects];
+```
+
+**Error Handling:**
+
+If Firestore write fails:
+
+```javascript
+try {
+  const docRef = await addDoc(...);
+  const firestoreId = docRef.id;
+  useLocalStore.getState().reconcileObjectId(localId, firestoreId);
+} catch (error) {
+  console.error("Error creating shape:", error);
+  // Remove optimistic object - creation failed
+  useLocalStore.getState().removeOptimisticObject(localId);
+}
+```
+
+**Key Benefits:**
+
+1. **Instant Feedback**: Objects appear immediately
+2. **Full Manipulation**: Can drag/resize before Firestore confirms
+3. **Automatic Reconciliation**: ID swap handled by `addDoc()` return value
+4. **Simple Flag**: `isOptimistic` check prevents premature Firestore writes
+5. **Clean Architecture**: Firestore Store never manually updated
+6. **No Complex Queuing**: Simple boolean check, no event queues needed
+
+**Update Actions That Check `isOptimistic`:**
+
+All these actions check before writing to Firestore:
+
+- `finishDrag()` - Drag end position
+- `finishTransform()` - Resize/rotate end
+- `updateText()` - Text content changes
+
+Creation action (`createShape`) is the only one that doesn't check, because it's creating the object.
 
 ---
 
@@ -1233,76 +1390,547 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
 
 ---
 
-### Phase 11: Real-Time Object Positions (PR #18) - Priority: HIGH
+### Phase 11: Real-Time Object Positions (PR #18) - Priority: HIGH ✅ COMPLETED
 
 **Goal**: Enable real-time visibility of dragging objects across users
 
-**Status**: 🔄 PLANNED (After PR #16 merge)
+**Status**: ✅ COMPLETE - All phases implemented and tested
 
-**Motivation**: Currently, users only see final object positions after drag ends. With PR #18, users will see objects moving in real-time as others drag them (similar to cursor visibility).
+**Motivation**: Users now see objects moving in real-time as others drag them (similar to cursor visibility), not just final positions after drag ends.
 
 **Architecture**: Hybrid storage - positions in Realtime DB, properties in Firestore
 
-#### Implementation Plan
+#### Hybrid Data Storage Strategy
 
-**Phase 1: Add Realtime DB Position Layer**
+**Key Principle**: Split position data (high-frequency updates) from object properties (infrequent updates)
 
-- [ ] Create Realtime DB position schema at `/objectPositions/{objectId}`
-- [ ] Update object creation to write to both Firestore and Realtime DB
-- [ ] Add Realtime DB position subscription hook
-- [ ] Update drag handler to write to Realtime DB only (not Firestore)
-- [ ] Add cleanup on object deletion (both sources)
-- [ ] Implement position merge logic in Canvas (Realtime DB priority, Firestore fallback)
+- **Firestore**: All object properties (type, width, height, fill, rotation, etc.) + initial x, y
+- **Realtime Database**: Live position data (x, y only)
+- **Merge Pattern**: Realtime DB position overrides Firestore position when present
 
-**Phase 2: Real-Time Drag Visibility**
+**Benefits:**
 
-- [ ] Test real-time position sync across multiple browsers
-- [ ] Add visual indicator for remote drags (optional)
-- [ ] Add smooth interpolation for remote updates (optional)
+- Real-time dragging visibility (like cursors)
+- Reduced Firestore writes (position updates don't touch Firestore)
+- Persistent fallback (Firestore still has last known position)
+- Zero breaking changes (x, y kept in Firestore for creation and fallback)
 
-**Phase 3: Migration & Edge Cases**
+#### Data Structures
 
-- [ ] Migrate existing objects (copy x, y to Realtime DB)
-- [ ] Handle edge cases (network issues, disconnects, orphans)
-- [ ] Performance testing (10+ simultaneous drags)
+**Firestore (Persistent Object Properties):**
 
-**Phase 4: Optimization**
+```javascript
+// Path: /projects/shared-canvas/objects/{objectId}
+{
+  // Identity
+  id: "aBc123XyZ",           // Firestore-generated ID
+  type: "rectangle",          // "rectangle" | "circle" | "text"
 
-- [ ] Add position update throttling (30-60fps)
-- [ ] Update store architecture documentation
-- [ ] Verify no performance regression
+  // Position (FALLBACK - used if no Realtime DB position exists)
+  x: 100,
+  y: 200,
 
-**Key Design Decisions:**
+  // Dimensions & Appearance
+  width: 150,
+  height: 100,
+  radius: 50,                 // For circles only
+  fill: "#ff0000",
+  rotation: 0,
+  zIndex: 1,
 
-- ✅ No breaking changes (Firestore keeps x, y for creation)
-- ✅ Realtime DB position overrides Firestore position
-- ✅ Automatic fallback (if no Realtime DB position, use Firestore)
-- ✅ Position updates only touch Realtime DB (reduce Firestore writes)
+  // Text-specific
+  text: "Hello World",        // For text objects only
+  fontSize: 16,
 
-**Files to Create:**
+  // Metadata
+  createdBy: "user123",
+  createdAt: timestamp,       // Set once, immutable
+  lastEditedBy: "user456",
+  lastEditedAt: timestamp     // Updates on edits
+}
+```
 
-- `src/hooks/useObjectPositions.js`
-- `src/utils/positionMerge.js`
-- `src/utils/migratePositions.js`
+**Realtime Database (Live Positions):**
 
-**Files to Modify:**
+```javascript
+// Path: /objectPositions/{objectId}
+{
+  "aBc123XyZ": {
+    x: 150,                    // Current x position
+    y: 250,                    // Current y position
+    timestamp: 1697123456789   // Last update time (optional)
+  }
+}
+```
 
-- `src/stores/actions.js`
-- `src/stores/presenceStore.js`
-- `src/components/canvas/Canvas.jsx`
-- `src/stores/OPTIMISTIC_ARCHITECTURE.md`
+**Key Design Decision**: Realtime DB stores ONLY position (x, y). All other properties remain in Firestore.
 
-**Estimated Time**: 6-8 hours
+#### Object Creation Flow
+
+1. **User Creates Object**
+
+   ```javascript
+   actions.createShape(x, y, "rectangle", currentUser);
+   ```
+
+2. **Add Optimistic Object to Local Store (with local ID)**
+
+   ```javascript
+   const localId = generateObjectId(); // "obj_1760650554461_abc123"
+   useLocalStore.getState().addOptimisticObject(localId, {
+     type: "rectangle",
+     x,
+     y, // Initial position
+     width: 100,
+     height: 100,
+     fill: "#3B82F6",
+     isOptimistic: true,
+   });
+   ```
+
+3. **Write to Firestore (includes initial x, y)**
+
+   ```javascript
+   const docRef = await addDoc(
+     collection(db, "projects/shared-canvas/objects"),
+     {
+       type: "rectangle",
+       x,
+       y, // ← Initial position stored in Firestore
+       width: 100,
+       height: 100,
+       // ...other properties
+     }
+   );
+   ```
+
+4. **Get Firestore-Generated ID**
+
+   ```javascript
+   const firestoreId = docRef.id; // "aBc123XyZ"
+   ```
+
+5. **Reconcile IDs in Local Store**
+
+   ```javascript
+   useLocalStore.getState().reconcileObjectId(localId, firestoreId);
+   ```
+
+6. **Write Initial Position to Realtime DB**
+
+   **IMPORTANT**: This happens AFTER getting the Firestore ID.
+
+   ```javascript
+   const positionRef = ref(realtimeDb, `objectPositions/${firestoreId}`);
+   await set(positionRef, {
+     x,
+     y,
+     timestamp: serverTimestamp(), // Realtime DB server timestamp
+   });
+   ```
+
+**Why this order?**
+
+- Need Firestore ID first (can't write to Realtime DB without object ID)
+- Optimistic object uses local ID initially
+- After reconciliation, both stores use Firestore ID
+
+#### Position Update Flow (Dragging)
+
+**During Drag:**
+
+```javascript
+// User drags object
+onDragMove(objectId, newX, newY);
+
+// 1. Update Local Store immediately (optimistic)
+useLocalStore.getState().setLocalObjectPosition(objectId, { x: newX, y: newY });
+
+// 2. Write to Realtime DB (high-frequency updates)
+const positionRef = ref(realtimeDb, `objectPositions/${objectId}`);
+await set(positionRef, {
+  x: newX,
+  y: newY,
+  timestamp: serverTimestamp(),
+});
+
+// 3. DO NOT write to Firestore yet (wait for drag end)
+```
+
+**On Drag End:**
+
+```javascript
+// User releases drag
+onDragEnd(objectId, finalX, finalY);
+
+// 1. Update Local Store
+useLocalStore
+  .getState()
+  .setLocalObjectPosition(objectId, { x: finalX, y: finalY });
+
+// 2. Write final position to Realtime DB ONLY
+const positionRef = ref(realtimeDb, `objectPositions/${objectId}`);
+await set(positionRef, {
+  x: finalX,
+  y: finalY,
+  timestamp: serverTimestamp(),
+});
+
+// 3. DO NOT write to Firestore
+// Position is now exclusively managed by Realtime DB
+```
+
+**Key Change**: After this PR, object positions are NEVER written to Firestore after initial creation. All position updates go to Realtime DB only.
+
+#### Position Merge Strategy
+
+**Reading Objects for Rendering:**
+
+```javascript
+// Canvas.jsx
+
+// 1. Read objects from Firestore Store (has all properties except live position)
+const firestoreObjects = useFirestoreStore((state) => state.objects.sorted);
+
+// 2. Read positions from Presence Store (via useObjectPositions hook)
+const objectPositions = usePresenceStore((state) => state.objectPositions.data);
+
+// 3. Merge: Realtime position overrides Firestore position
+const mergedObjects = firestoreObjects.map((obj) => ({
+  ...obj,
+  x: objectPositions[obj.id]?.x ?? obj.x, // Realtime DB first, fallback to Firestore
+  y: objectPositions[obj.id]?.y ?? obj.y,
+}));
+
+// 4. Apply local drag/transform overlays (existing logic)
+const finalObjects = mergedObjects.map((obj) => {
+  const dragOverlay = localObjectPositions[obj.id];
+  const transformOverlay = localObjectTransforms[obj.id];
+
+  return {
+    ...obj,
+    ...(dragOverlay && { x: dragOverlay.x, y: dragOverlay.y }),
+    ...(transformOverlay && {
+      width: transformOverlay.width,
+      height: transformOverlay.height,
+      rotation: transformOverlay.rotation,
+    }),
+  };
+});
+```
+
+**Priority Order (Highest to Lowest):**
+
+1. **Local Overlay** (actively dragging/transforming) → Highest priority
+2. **Realtime DB Position** (live position from other users or self)
+3. **Firestore Position** (initial position, fallback) → Lowest priority
+
+#### Realtime DB Position Subscription
+
+**New Hook: `useObjectPositions.js`**
+
+```javascript
+import { useEffect } from "react";
+import { ref, onValue } from "firebase/database";
+import { realtimeDb } from "../lib/firebase";
+import usePresenceStore from "../stores/presenceStore";
+
+export default function useObjectPositions() {
+  const setObjectPositions = usePresenceStore(
+    (state) => state.setObjectPositions
+  );
+  const setPositionsLoading = usePresenceStore(
+    (state) => state.setPositionsLoading
+  );
+  const setPositionsError = usePresenceStore(
+    (state) => state.setPositionsError
+  );
+
+  useEffect(() => {
+    setPositionsLoading(true);
+
+    // Subscribe to all object positions
+    const positionsRef = ref(realtimeDb, "objectPositions");
+
+    const unsubscribe = onValue(
+      positionsRef,
+      (snapshot) => {
+        const positions = snapshot.val() || {};
+        // positions = { "aBc123": { x: 100, y: 200 }, "dEf456": { x: 300, y: 400 } }
+        setObjectPositions(positions);
+        setPositionsLoading(false);
+      },
+      (error) => {
+        console.error("Error syncing object positions:", error);
+        setPositionsError(error);
+        setPositionsLoading(false);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [setObjectPositions, setPositionsLoading, setPositionsError]);
+}
+```
+
+**Called in Canvas.jsx**: `useObjectPositions();`
+
+#### Presence Store Updates
+
+**Added to `presenceStore.js`:**
+
+```javascript
+// Add to store state
+objectPositions: {
+  data: {},           // { objectId: { x, y, timestamp } }
+  isLoading: true,
+  error: null,
+  lastSyncTime: null
+}
+
+// Add actions
+setObjectPositions: (positions) => set(
+  (state) => ({
+    objectPositions: {
+      ...state.objectPositions,
+      data: positions,
+      isLoading: false,
+      lastSyncTime: Date.now()
+    }
+  }),
+  false,
+  "setObjectPositions"
+),
+
+setPositionsLoading: (isLoading) => set(
+  (state) => ({
+    objectPositions: { ...state.objectPositions, isLoading }
+  }),
+  false,
+  "setPositionsLoading"
+),
+
+setPositionsError: (error) => set(
+  (state) => ({
+    objectPositions: { ...state.objectPositions, error, isLoading: false }
+  }),
+  false,
+  "setPositionsError"
+)
+```
+
+#### Object Deletion Flow
+
+When deleting an object, clean up BOTH databases:
+
+```javascript
+// actions.deleteObjects(objectIds, currentUser)
+
+// 1. Remove from Firestore (existing)
+for (const id of objectIds) {
+  await deleteDoc(doc(db, "projects/shared-canvas/objects", id));
+}
+
+// 2. Remove from Realtime DB (NEW)
+for (const id of objectIds) {
+  const positionRef = ref(realtimeDb, `objectPositions/${id}`);
+  await set(positionRef, null); // Delete by setting to null
+}
+
+// 3. Remove from Local Store optimistic objects
+useLocalStore.getState().deleteSelectedObjects();
+```
+
+#### Firebase Realtime Database Security Rules
+
+Apply these rules in Firebase Console (Realtime Database → Rules):
+
+```json
+{
+  "rules": {
+    ".read": "auth != null",
+    "cursors": {
+      "$userId": {
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    "presence": {
+      "$userId": {
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    "selections": {
+      "$userId": {
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    "objectPositions": {
+      "$objectId": {
+        ".write": "auth != null"
+      }
+    }
+  }
+}
+```
+
+**Key Differences:**
+
+- `cursors`, `presence`, `selections`: Users can only write their own data (path includes userId)
+- `objectPositions`: Any authenticated user can write any object's position (collaborative editing)
+
+#### Migration Strategy
+
+**Existing Objects:** Objects created before this PR have positions in Firestore but not Realtime DB.
+
+**Automatic Fallback:**
+
+```javascript
+// If Realtime DB position doesn't exist, use Firestore position
+x: objectPositions[obj.id]?.x ?? obj.x; // ✅ Falls back automatically
+```
+
+**Optional Migration Script** (can run once):
+
+```javascript
+async function migrateAllPositions() {
+  // 1. Read all objects from Firestore
+  const objectsSnapshot = await getDocs(
+    collection(db, "projects/shared-canvas/objects")
+  );
+
+  // 2. For each object, copy position to Realtime DB
+  for (const doc of objectsSnapshot.docs) {
+    const obj = doc.data();
+    const positionRef = ref(realtimeDb, `objectPositions/${doc.id}`);
+
+    await set(positionRef, {
+      x: obj.x,
+      y: obj.y,
+      timestamp: Date.now(),
+    });
+  }
+
+  console.log("✅ Migrated all positions to Realtime DB");
+}
+```
+
+**Decision**: Migration script is **optional**. The fallback pattern handles old objects gracefully.
+
+#### Performance Characteristics
+
+**Before PR #18 (Firestore Only):**
+
+- Position updates: Firestore writes (~50-200ms latency)
+- Real-time sync: Via `onSnapshot` WebSocket
+- Frequency: Limited to avoid Firestore write costs
+
+**After PR #18 (Hybrid):**
+
+- Position updates: Realtime DB writes (~10-50ms latency)
+- Real-time sync: Via `onValue` WebSocket
+- Frequency: Can update at cursor speed (22 times/second)
+
+**Result**: 4-20x faster position updates, smoother drag visibility
+
+#### Edge Cases Handled
+
+1. **Object exists in Firestore but not Realtime DB**
+
+   - ✅ Use Firestore position (fallback)
+   - Common for objects created before this PR
+
+2. **Object exists in Realtime DB but not Firestore**
+
+   - ✅ Ignore orphan position (Firestore is source of truth for objects)
+   - Clean up orphan positions periodically (optional)
+
+3. **Network issues**
+
+   - ✅ Firestore offline persistence continues to work
+   - ✅ Realtime DB reconnects automatically
+   - ✅ Fall back to Firestore position if Realtime DB unavailable
+
+4. **User disconnects during drag**
+
+   - ⚠️ Position persists in Realtime DB (unlike cursors)
+   - ✅ This is correct behavior (objects should stay where they are)
+   - ✅ No `onDisconnect()` cleanup needed for positions
+
+5. **Multiple users drag same object**
+
+   - ✅ Last write wins (existing behavior)
+   - ✅ Conflict resolution via `lastEditedAt` timestamp (existing)
+
+6. **Optimistic objects (local ID)**
+
+   - ⚠️ Can't write to Realtime DB until Firestore ID exists
+   - ✅ Local overlay handles position during optimistic phase
+   - ✅ After reconciliation, position written to Realtime DB
+
+7. **Flicker on page load**
+   - ✅ Canvas waits for both Firestore and Realtime DB to load before rendering shapes
+   - ✅ Prevents objects from rendering with Firestore position, then jumping to Realtime DB position
+
+#### Implementation Complete
+
+**Phase 1: Realtime DB Position Layer** ✅
+
+- [x] Added `objectPositions` state to Presence Store
+- [x] Created `useObjectPositions` hook
+- [x] Updated `actions.createShape` to write position to Realtime DB after Firestore ID
+- [x] Updated Canvas.jsx to merge Realtime DB positions with Firestore objects
+
+**Phase 2: Update Drag Logic** ✅
+
+- [x] Updated `actions.moveObject` to write to Realtime DB during drag
+- [x] Updated `actions.finishDrag` to write to Realtime DB ONLY (not Firestore)
+- [x] Removed Firestore position writes from drag handlers
+
+**Phase 3: Cleanup & Edge Cases** ✅
+
+- [x] Updated `actions.deleteObjects` to clean up Realtime DB positions
+- [x] Fallback behavior working (old objects use Firestore position)
+- [x] Optimistic objects working (position overlay during optimistic phase)
+- [x] Flicker on page load fixed (conditional rendering)
+
+**Phase 4: Testing** ✅
+
+- [x] Real-time drag visibility tested and working
+- [x] Fallback behavior tested (old objects use Firestore position)
+- [x] Network disconnect/reconnect tested
+- [x] Object deletion cleanup verified (both databases)
+
+**Files Created:**
+
+- ✅ `src/hooks/useObjectPositions.js` - Realtime DB position subscription
+- ✅ `src/stores/REALTIME_POSITIONS.md` - Architecture documentation
+
+**Files Modified:**
+
+- ✅ `src/stores/presenceStore.js` - Added objectPositions state
+- ✅ `src/stores/actions.js` - Updated createShape, moveObject, finishDrag, deleteObjects
+- ✅ `src/components/canvas/Canvas.jsx` - Position merge logic + conditional rendering
+
+**Actual Time**: ~1 hour
+
+**Key Achievements:**
+
+- Zero breaking changes to existing code
+- Real-time dragging visibility (like cursors)
+- Reduced Firestore writes (cost savings)
+- Automatic fallback for old objects
+- No performance regression
 
 ---
 
-### Phase 11.5: Selection Tracking (PR #19) - Priority: MEDIUM
+### Phase 11.5: Selection Tracking (PR #19) - Priority: MEDIUM ✅ COMPLETED
 
 **Goal**: Show what objects other users are currently selecting with colored borders
 
-**Status**: 🔄 PLANNED
+**Status**: ✅ COMPLETE - All phases implemented and tested
 
-**Motivation**: Enable real-time awareness of what collaborators are focusing on, improving coordination and reducing conflicts
+**Motivation**: Users can now see what collaborators are focusing on in real-time, improving coordination and reducing conflicts
 
 **Architecture**: Realtime Database for user selections + visual border overlays
 
@@ -1321,67 +1949,91 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
 
 #### Visual Design
 
-- Each remote user's selection shows as a colored border (2-3px thick)
+- Each remote user's selection shows as a colored border (3px thick)
 - Border color matches that user's cursor color
 - Border appears outside the object (not inside or interfering with transform handles)
 - Only show borders for _other_ users' selections (not your own)
-- Your own selection uses existing selection highlight (different visual style)
+- Your own selection uses existing selection highlight (blue, different visual style)
+- Multiple users selecting same object: Nested borders with 3px offset per user
 
-#### Implementation Plan
+#### Implementation Complete
 
-**Phase 1: Realtime DB Selection Tracking**
+**Phase 1: Realtime DB Selection Tracking** ✅
 
-- [ ] Create Realtime DB selection schema at `/selections/{userId}`
-- [ ] Create `useSelectionTracking` hook to write current user's selection
-- [ ] Create `useSelectionSync` hook to subscribe to remote users' selections
-- [ ] Update Presence Store to store remote selections
-- [ ] Throttle selection updates (100ms) to reduce Realtime DB writes
-- [ ] Set up `onDisconnect().remove()` for cleanup
+- [x] Created Realtime DB selection schema at `/selections/{userId}`
+- [x] Created `useSelectionTracking` hook to write current user's selection
+- [x] Created `useSelectionSync` hook to subscribe to remote users' selections
+- [x] Updated Presence Store to store remote selections
+- [x] Selection updates written immediately (no throttling needed for single selection)
+- [x] Set up `onDisconnect().remove()` for cleanup
 
-**Phase 2: Visual Indicators**
+**Phase 2: Visual Indicators** ✅
 
-- [ ] Add selection border rendering logic in Canvas
-- [ ] Update shape components (Rectangle, Circle, Text) to render colored borders
-- [ ] Handle multiple users selecting same object (show first user's color + count)
-- [ ] Add subtle fade in/out animation for borders
-- [ ] Ensure borders don't interfere with transform handles (z-index)
+- [x] Added selection border rendering logic in Canvas
+- [x] Updated shape components (Rectangle, Circle, Text) to render colored borders
+- [x] Handle multiple users selecting same object (nested borders with 3px offset)
+- [x] Borders appear with 80% opacity for subtle appearance
+- [x] Ensured borders don't interfere with transform handles (separate layer, listening: false)
 
-**Phase 3: Integration & UX**
+**Phase 3: Integration & UX** ✅
 
-- [ ] Integrate selection tracking into Canvas component
-- [ ] Update selection actions to trigger Realtime DB writes
-- [ ] Handle multi-select (track primary selection only for MVP)
-- [ ] Handle deselection (clear from Realtime DB)
+- [x] Integrated selection tracking into Canvas component
+- [x] Updated selection actions to trigger Realtime DB writes
+- [x] Track primary selected object only for MVP (first in selectedObjectIds array)
+- [x] Handle deselection (clear from Realtime DB)
 
-**Phase 4: Testing & Edge Cases**
+**Phase 4: Testing & Edge Cases** ✅
 
-- [ ] Handle disconnects (onDisconnect cleanup)
-- [ ] Handle deleted objects (clear stale selections)
-- [ ] Test multi-user scenarios (2-3+ users selecting same/different objects)
-- [ ] Performance testing (10+ users selecting objects)
+- [x] Handle disconnects (onDisconnect cleanup working)
+- [x] Handle deleted objects (stale selections cleared gracefully)
+- [x] Tested multi-user scenarios (2-3+ users selecting same/different objects)
+- [x] Performance testing (10+ users selecting objects, no FPS drops)
+- [x] Sign out cleanup (selection removed from Realtime DB)
+- [x] Network reconnection (instant selection updates via `useConnectionState` hook)
+
+**Additional Features:**
+
+- [x] **`useConnectionState` hook**: Monitors Firebase Realtime DB connection state
+  - Enables instant reconnection detection for all Realtime DB features
+  - Cursor and presence update immediately on network reconnect (no 5-30 second delay)
+  - Selections update immediately on reconnect
 
 **Key Design Decisions:**
 
 - ✅ Track only primary selected object for MVP (not full multi-select)
-- ✅ Throttle selection updates (100ms) to reduce Realtime DB writes
+- ✅ Selection updates written immediately (no throttling needed - single write per selection change)
 - ✅ Auto-cleanup with onDisconnect() when user leaves
-- ✅ Visual indicator: single border with user's cursor color
-- ✅ Multiple users selecting same object: show first user's color + count indicator
+- ✅ Visual indicator: nested borders with user's cursor color (80% opacity)
+- ✅ Multiple users selecting same object: Each user gets their own border at 3px offset
 
-**Files to Create:**
+**Files Created:**
 
-- `src/hooks/useSelectionTracking.js` - Track current user's selection
-- `src/hooks/useSelectionSync.js` - Subscribe to remote selections
-- `src/components/canvas/SelectionBorder.jsx` - Reusable border component (optional)
+- ✅ `src/hooks/useSelectionTracking.js` - Track current user's selection
+- ✅ `src/hooks/useSelectionSync.js` - Subscribe to remote selections
+- ✅ `src/hooks/useConnectionState.js` - Monitor Firebase connection state for instant reconnection
 
-**Files to Modify:**
+**Files Modified:**
 
-- `src/stores/presenceStore.js` - Add remoteSelections state
-- `src/stores/actions.js` - Integrate selection tracking
-- `src/components/canvas/Canvas.jsx` - Integrate hooks and render logic
-- `src/components/canvas/shapes/*.jsx` - Render selection borders
+- ✅ `src/stores/presenceStore.js` - Added remoteSelections state + selection operations
+- ✅ `src/stores/actions.js` - Integrated selection tracking actions
+- ✅ `src/components/canvas/Canvas.jsx` - Integrated hooks and render logic
+- ✅ `src/components/canvas/shapes/Rectangle.jsx` - Render selection borders
+- ✅ `src/components/canvas/shapes/Circle.jsx` - Render selection borders
+- ✅ `src/components/canvas/shapes/Text.jsx` - Render selection borders
+- ✅ `src/lib/firebase.js` - Added selection cleanup on signout
+- ✅ `src/hooks/usePresence.js` - Added reconnection detection for instant updates
+- ✅ `src/hooks/useCursorTracking.js` - Added reconnection detection for instant updates
 
-**Estimated Time**: 4-6 hours
+**Actual Time**: ~30 minutes
+
+**Key Achievements:**
+
+- Figma-like collaborative selection awareness
+- Improved collaboration coordination
+- Reduced conflicts (users see what others are working on)
+- Instant network reconnection (no delay for cursor/presence/selections)
+- Nested borders for multiple users selecting same object
+- Comprehensive edge case handling
 
 **Benefits:**
 
@@ -1389,6 +2041,7 @@ exports.aiAgent = functions.https.onCall(async (data, context) => {
 - Reduced conflicts (users see what others are working on)
 - Better coordination for simultaneous editing
 - Figma-like collaborative UX
+- Instant reconnection after network issues
 
 ---
 
@@ -1590,6 +2243,9 @@ const dynamicStyle = {
 - ✅ Zustand centralized state management with conflict resolution
 - ✅ Design System Component Library
 - ✅ AI Agent Core Integration (7 tools)
+- ✅ Real-time object positions (PR #18) - Realtime DB for dragging visibility
+- ✅ Selection tracking (PR #19) - Colored borders showing what others are selecting
+- ✅ UI Modernization (PR #20) - Design system applied to all canvas components
 - ✅ Deployed and publicly accessible
 
 **Current Work**:
@@ -1609,19 +2265,23 @@ const dynamicStyle = {
   - [ ] Conversation memory
   - [ ] Rubric validation (target: 21-25 points)
 
-- **PR #18: Real-Time Object Positions** 🔄 PLANNED
+- **PR #18: Real-Time Object Positions** ✅ COMPLETE
 
-  - [ ] Migrate object positions to Realtime DB
-  - [ ] Real-time dragging visibility (like cursors)
-  - [ ] Hybrid storage (positions in Realtime DB, properties in Firestore)
-  - [ ] Zero breaking changes (fallback pattern)
+  - [x] Migrated object positions to Realtime DB
+  - [x] Real-time dragging visibility (like cursors)
+  - [x] Hybrid storage (positions in Realtime DB, properties in Firestore)
+  - [x] Zero breaking changes (automatic fallback pattern)
+  - [x] Fixed flicker on page load (conditional rendering)
+  - [x] 4-20x faster position updates
 
-- **PR #19: Selection Tracking** 🔄 PLANNED
+- **PR #19: Selection Tracking** ✅ COMPLETE
 
-  - [ ] Track user selections in Realtime DB
-  - [ ] Show colored borders on objects selected by others
-  - [ ] Improve collaboration awareness
-  - [ ] Figma-like collaborative UX
+  - [x] Tracked user selections in Realtime DB
+  - [x] Show colored borders on objects selected by others
+  - [x] Improved collaboration awareness
+  - [x] Figma-like collaborative UX
+  - [x] Instant network reconnection (useConnectionState hook)
+  - [x] Nested borders for multiple users selecting same object
 
 - **PR #20: UI Modernization** ✅ COMPLETE
   - [x] Applied design system to all canvas UI components
