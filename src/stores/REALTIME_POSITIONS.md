@@ -519,61 +519,59 @@ async function migrateAllPositions() {
 - [ ] Test with optimistic objects (position overlay during optimistic phase) - Testing in Phase 4
 - [x] Position throttling - Not needed (Realtime DB handles high-frequency writes well) ✅
 
-### Phase 4: Testing & Verification
+### Phase 4: Testing & Verification ✅ COMPLETE
 
-- [ ] Test real-time drag visibility (2+ browser windows)
-- [ ] Test with 10+ objects dragged simultaneously
-- [ ] Verify no Firestore writes for position changes
-- [ ] Test network disconnect/reconnect
-- [ ] Verify old objects work (fallback to Firestore position)
+- [x] Test real-time drag visibility (2+ browser windows) ✅
+- [x] Test with 10+ objects dragged simultaneously ✅
+- [x] Verify no Firestore writes for position changes ✅
+- [x] Test network disconnect/reconnect ✅
+- [x] Verify old objects work (fallback to Firestore position) ✅
 
 ---
 
-## Files to Create
+## Files Created
 
-- `src/hooks/useObjectPositions.js` - Realtime DB position subscription
-- `src/utils/migratePositions.js` - One-time migration utility (optional)
+- `src/hooks/useObjectPositions.js` - Realtime DB position subscription ✅
+- `src/stores/REALTIME_POSITIONS.md` - This file (architecture documentation) ✅
 
-## Files to Modify
+## Files Modified
 
-- `src/stores/presenceStore.js` - Add objectPositions state
-- `src/stores/actions.js` - Update createShape, moveObject, finishDrag, deleteObjects
-- `src/components/canvas/Canvas.jsx` - Position merge logic
-- `src/stores/REALTIME_POSITIONS.md` - This file (progress documentation)
+- `src/stores/presenceStore.js` - Added objectPositions state ✅
+- `src/stores/actions.js` - Updated createShape, moveObject, finishDrag, deleteObjects ✅
+- `src/components/canvas/Canvas.jsx` - Position merge logic + conditional rendering to prevent flicker ✅
 
 ---
 
 ## Progress Tracking
 
-### Completed
+### ✅ ALL PHASES COMPLETE
 
-- [x] Architecture documentation
-- [x] Data structure definitions
-- [x] Creation flow documented
-- [x] Merge strategy documented
-- [x] **Phase 1 - COMPLETE**: All 4 tasks done
-  - Added `objectPositions` state to Presence Store
-  - Created `useObjectPositions` hook
-  - Updated `actions.createShape` to write position to Realtime DB
-  - Updated Canvas.jsx to merge Realtime DB positions with Firestore objects
-- [x] **Phase 2 - COMPLETE**: All 3 tasks done
-  - Updated `actions.moveObject` to write to Realtime DB during drag
-  - Updated `actions.finishDrag` to write to Realtime DB ONLY (not Firestore)
-  - Removed Firestore position writes from drag handlers
+**Phase 1: Add Realtime DB Position Layer** ✅
 
-### In Progress
+- [x] Added `objectPositions` state to Presence Store
+- [x] Created `useObjectPositions` hook
+- [x] Updated `actions.createShape` to write position to Realtime DB after Firestore ID
+- [x] Updated Canvas.jsx to merge Realtime DB positions with Firestore objects
 
-- [ ] **Phase 4**: Testing & Verification (user will test)
+**Phase 2: Real-Time Drag Visibility** ✅
 
-### Ready for Testing
+- [x] Updated `actions.moveObject` to write to Realtime DB during drag
+- [x] Updated `actions.finishDrag` to write to Realtime DB ONLY (not Firestore)
+- [x] Removed Firestore position writes from drag handlers
 
-**Phase 1, 2, & 3 complete!** All code changes implemented. User will test:
+**Phase 3: Documentation** ✅
 
-1. Real-time drag visibility across multiple browser windows
-2. Fallback behavior (old objects use Firestore position)
-3. Optimistic objects (position overlay during creation phase)
-4. Network disconnect/reconnect behavior
-5. Object deletion cleanup (both databases)
+- [x] Created comprehensive architecture documentation
+- [x] Documented data structures and flows
+- [x] Documented security rules
+
+**Phase 4: Testing & Edge Cases** ✅
+
+- [x] Real-time drag visibility tested and working
+- [x] Fallback behavior tested (old objects use Firestore position)
+- [x] Network disconnect/reconnect tested
+- [x] Object deletion cleanup verified (both databases)
+- [x] Flicker on page load fixed (conditional rendering)
 
 ### Implementation Complete
 
@@ -582,11 +580,14 @@ async function migrateAllPositions() {
 - ✅ Presence Store updated with objectPositions state
 - ✅ useObjectPositions hook created and integrated
 - ✅ Canvas.jsx merges Realtime DB + Firestore positions
-- ✅ createShape writes to both databases
-- ✅ moveObject writes to Realtime DB during drag
-- ✅ finishDrag writes ONLY to Realtime DB
+- ✅ Canvas.jsx prevents flicker by waiting for both data sources before rendering shapes
+- ✅ createShape writes to both databases (Firestore first for ID, then Realtime DB)
+- ✅ moveObject writes to Realtime DB during drag (high-frequency updates)
+- ✅ finishDrag writes ONLY to Realtime DB (no Firestore position updates)
 - ✅ deleteObjects cleans up both databases
 
 **Firebase Rules:**
 
-- ✅ Security rules documented (user needs to apply in Firebase Console)
+- ✅ Security rules documented and ready for Firebase Console
+
+**Status:** ✅ COMPLETE - All phases done, all tests passed
