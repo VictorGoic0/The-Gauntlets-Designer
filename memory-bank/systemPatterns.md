@@ -136,12 +136,12 @@ Canvas.jsx
 
 1. Frontend sends POST request to `/api/agent/chat` with sessionId, message, and optional model override
 2. FastAPI backend validates model and prepares messages
-3. OpenAI API called via `call_openai_with_retry()` with retry logic and tool definitions ✅ **TOOLS READY (PR #3)**
+3. OpenAI API called via `call_openai_with_retry()` with retry logic, tool definitions, and prompts ✅ **TOOLS & PROMPTS READY (PR #3, #4)**
 4. Retry logic handles RateLimitError, APIError, APITimeoutError with exponential backoff
-5. Agent returns response with tool calls (tool definitions available, execution pending Firestore integration)
+5. Agent returns response with tool calls (tool definitions and prompts available, execution pending orchestrator)
 6. Response formatted with model used and token usage
 7. Frontend receives response with AI-generated text and metadata
-8. (Next: Tool calls executed, batch written to Firestore, actions array returned - PR #4)
+8. (Next: Orchestrator executes tool calls, batch writes to Firestore, actions array returned - PR #5)
 
 ### Tool Execution Pattern
 
@@ -152,11 +152,20 @@ Canvas.jsx
 
 ### Tool Definitions (PR #3) ✅ **COMPLETE**
 
-- **Cached Definitions**: Module-level `TOOL_DEFINITIONS` constant in `app/agent/tools.py` (~3,600 tokens)
+- **Cached Definitions**: Module-level `TOOL_DEFINITIONS` constant in `app/agent/tools.py` (~2,247 tokens)
 - **Available Tools**: create_rectangle, create_square, create_circle, create_text, create_line
 - **Validation**: Startup validation ensures all tool definitions are properly structured
 - **Enhanced Properties**: All tools support modern UI features (boxShadow, cornerRadius, stroke, metadata, align)
-- **Comprehensive Descriptions**: Each tool includes use cases, examples, and design guidance
+- **Streamlined Descriptions**: Concise, principle-based descriptions (refactored in PR #4)
+
+### System Prompt & Few-Shot Examples (PR #4) ✅ **COMPLETE**
+
+- **System Prompt**: Balanced "just right" approach in `app/agent/prompts.py` (~637 tokens)
+- **Design Principles**: Shadows, corners, colors, typography, sizing guidelines
+- **Common Patterns**: Login form (8 components), card, button, profile section patterns
+- **Few-Shot Examples**: Complete login form example with 8 tool calls (~759 tokens)
+- **Python Dicts**: Tool call arguments stored as native Python dicts (no json.dumps needed)
+- **Total Token Usage**: ~1,396 tokens per request (system prompt + few-shot examples, before user message)
 
 ## Performance Optimizations
 

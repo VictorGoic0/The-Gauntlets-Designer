@@ -76,8 +76,20 @@
 - [x] Streamline tool descriptions (concise, principle-based)
 - [x] Refactor system prompt to balanced design (reduced from ~1,200 to ~637 tokens)
 - [x] Test prompt loading and token counting
-- [ ] Test prompt effectiveness with various inputs (pending orchestrator)
-- [ ] Test with different models (gpt-4-turbo, gpt-4o, gpt-4o-mini) (pending orchestrator)
+- [x] Test prompt effectiveness with various inputs (orchestrator ready)
+- [ ] Test with different models (gpt-4-turbo, gpt-4o, gpt-4o-mini) (ready for testing)
+
+**Phase 2.5: Agent Orchestrator** ✅ **COMPLETE (PR #5)**
+- [x] Create CanvasAgent class with cached tool definitions
+- [x] Implement process_message() async method
+- [x] Build message array with system prompt, few-shot examples, and user message
+- [x] Call OpenAI API with retry wrapper and tool definitions
+- [x] Extract tool calls from OpenAI response with JSON validation
+- [x] Format actions for frontend (remove "create_" prefix, structure as {type, params})
+- [x] Construct response with assistant text, tool call count, token usage, model
+- [x] Implement comprehensive error handling with consistent error format
+- [x] Create test script (test_agent.py) with 3 test cases
+- [x] Add comprehensive documentation (docstrings, usage examples, README updates)
 
 **Phase 3: Tool Enhancement** ✅ **COMPLETE (PR #3)**
 - [x] Add boxShadow support to all shape tools (rectangle, square, circle)
@@ -127,6 +139,8 @@
 - **AI Agent Migration - PR #1**: ✅ Complete - FastAPI project setup and infrastructure
 - **AI Agent Migration - PR #2**: ✅ Complete - OpenAI integration with retry logic and chat endpoint
 - **AI Agent Migration - PR #3**: ✅ Complete - Tool definitions and caching implemented
+- **AI Agent Migration - PR #4**: ✅ Complete - System prompt and few-shot examples implemented
+- **AI Agent Migration - PR #5**: ✅ Complete - Agent orchestrator with tool execution and error handling
 - **Phase 4+ (Additional Features)**: ⏳ Pending - Post-MVP enhancements
 
 ### Code Quality

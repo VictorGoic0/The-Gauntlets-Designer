@@ -66,7 +66,7 @@ Returns server health status and OpenAI connection status.
 
 **POST** `/api/agent/chat`
 
-Chat endpoint for AI agent interactions.
+Process a natural language request and generate actions to create UI components on the canvas.
 
 **Request:**
 ```json
@@ -81,10 +81,45 @@ Chat endpoint for AI agent interactions.
 ```json
 {
   "response": "I've created a login form for you...",
-  "model": "gpt-4-turbo",
-  "tokensUsed": 1250
+  "actions": [
+    {
+      "type": "rectangle",
+      "params": {
+        "x": 100,
+        "y": 100,
+        "width": 300,
+        "height": 200,
+        "fill": "#FFFFFF",
+        "cornerRadius": 8
+      }
+    }
+  ],
+  "toolCalls": 8,
+  "tokensUsed": 1250,
+  "model": "gpt-4-turbo"
 }
 ```
+
+**Error Responses:**
+
+- **400 Bad Request**: Invalid request (missing sessionId, empty message, invalid model)
+- **500 Internal Server Error**: Agent processing error or unexpected server error
+
+**Example curl command:**
+```bash
+curl -X POST http://localhost:8000/api/agent/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "test-123",
+    "message": "Create a login form"
+  }'
+```
+
+**Interactive API Documentation:**
+
+FastAPI automatically generates interactive API documentation at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
 ## Configuration
 
@@ -150,11 +185,54 @@ This will test:
 - Basic completion
 - Error formatting
 
+### Test Agent Orchestrator
+
+Test the agent orchestrator with various prompts:
+
+```bash
+python test_agent.py
+```
+
+This will test:
+- Agent message processing
+- Tool call extraction
+- Action formatting
+- Response construction
+- Error handling
+
+Test cases include:
+- Login form creation (should produce 8-10 tool calls)
+- Simple button creation
+- Grid of circles creation
+
+### Test API Endpoint
+
+Test the API endpoint with various scenarios (requires server to be running):
+
+```bash
+# Start server in one terminal
+python run_local.py
+
+# In another terminal, run tests
+python test_api_endpoint.py
+```
+
+This will test:
+- Valid request with login form
+- Missing sessionId validation
+- Empty message validation
+- Invalid model validation
+- Valid model override
+
 ## Project Structure
 
 ```
 backend/
 ├── app/
+│   ├── agent/
+│   │   ├── orchestrator.py   # Agent orchestrator (PR #5)
+│   │   ├── prompts.py        # System prompt and few-shot examples
+│   │   └── tools.py          # Tool definitions for OpenAI
 │   ├── api/
 │   │   └── routes/
 │   │       ├── health.py      # Health check endpoint
@@ -170,7 +248,8 @@ backend/
 ├── logs/                      # Application logs
 ├── requirements.txt           # Python dependencies
 ├── run_local.py              # Local development script
-└── test_openai.py            # OpenAI integration tests
+├── test_openai.py            # OpenAI integration tests
+└── test_agent.py             # Agent orchestrator tests
 ```
 
 ## Development

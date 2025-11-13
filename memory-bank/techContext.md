@@ -59,7 +59,9 @@ MAX_RETRIES=3
 LOG_LEVEL=INFO
 ```
 
-**Note**: Tool definitions are cached in `app/agent/tools.py` (PR #3 complete). All 5 tools (rectangle, square, circle, text, line) are implemented with enhanced properties (boxShadow, cornerRadius, metadata, etc.).
+**Note**: 
+- Tool definitions are cached in `app/agent/tools.py` (PR #3 complete). All 5 tools (rectangle, square, circle, text, line) are implemented with enhanced properties (boxShadow, cornerRadius, metadata, etc.).
+- System prompt and few-shot examples are in `app/agent/prompts.py` (PR #4 complete). Uses balanced "just right" approach with ~637 token system prompt and ~759 token few-shot examples.
 
 ### Build Configuration
 
@@ -172,6 +174,7 @@ Note: FastAPI includes Pydantic internally for request/response validation, but 
 5. `python run_local.py` or `uvicorn app.main:app --reload` - Start FastAPI server
 6. Test health check: `curl http://localhost:8000/api/health`
 7. Test tool definitions: `python test_tools.py` (validates all 5 tools)
+8. Test prompts: `python test_prompts.py` (validates system prompt and few-shot examples)
 
 ### Deployment Process
 
