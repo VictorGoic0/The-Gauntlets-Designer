@@ -48,7 +48,7 @@ class ErrorResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "error": "Validation error",
-                "detail": "sessionId is required and cannot be empty"
+                "detail": "message is required and cannot be empty"
             }
         }
 

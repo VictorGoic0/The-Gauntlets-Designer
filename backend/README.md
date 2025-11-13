@@ -29,6 +29,20 @@ OPENAI_API_KEY=your_key_here
 FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
 ```
 
+4. **Get Firebase Service Account Key** (for Firestore writes):
+   
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Select your project
+   - Click the gear icon ⚙️ → **Project settings**
+   - Go to the **Service accounts** tab
+   - Click **Generate new private key**
+   - Click **Generate key** in the confirmation dialog
+   - A JSON file will download automatically
+   - Save this file as `serviceAccountKey.json` in the `backend/` directory
+   - **Important**: This file contains sensitive credentials - it's already in `.gitignore`
+   
+   The downloaded file will have all the fields you need (type, project_id, private_key_id, private_key, client_email, client_id).
+
 ## Running the Server
 
 ### Local Development
@@ -71,7 +85,6 @@ Process a natural language request and generate actions to create UI components 
 **Request:**
 ```json
 {
-  "sessionId": "canvas-session-123",
   "message": "Create a login form",
   "model": "gpt-4-turbo"  // Optional, defaults to configured default
 }
@@ -102,7 +115,7 @@ Process a natural language request and generate actions to create UI components 
 
 **Error Responses:**
 
-- **400 Bad Request**: Invalid request (missing sessionId, empty message, invalid model)
+- **400 Bad Request**: Invalid request (missing message, empty message, invalid model)
 - **500 Internal Server Error**: Agent processing error or unexpected server error
 
 **Example curl command:**
@@ -110,7 +123,6 @@ Process a natural language request and generate actions to create UI components 
 curl -X POST http://localhost:8000/api/agent/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "sessionId": "test-123",
     "message": "Create a login form"
   }'
 ```
@@ -219,7 +231,7 @@ python test_api_endpoint.py
 
 This will test:
 - Valid request with login form
-- Missing sessionId validation
+- Missing message validation
 - Empty message validation
 - Invalid model validation
 - Valid model override

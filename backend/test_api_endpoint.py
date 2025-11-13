@@ -21,7 +21,6 @@ def test_valid_request():
     """Test with valid login form request."""
     print("\n=== Test 1: Valid Login Form Request ===")
     payload = {
-        "sessionId": "test-session-123",
         "message": "Create a login form"
     }
     
@@ -46,12 +45,10 @@ def test_valid_request():
         return False
 
 
-def test_missing_session_id():
-    """Test with missing sessionId."""
-    print("\n=== Test 2: Missing sessionId ===")
-    payload = {
-        "message": "Create a login form"
-    }
+def test_missing_message():
+    """Test with missing message."""
+    print("\n=== Test 2: Missing Message ===")
+    payload = {}
     
     try:
         response = requests.post(BASE_URL, json=payload, timeout=10)
@@ -75,7 +72,6 @@ def test_empty_message():
     """Test with empty message."""
     print("\n=== Test 3: Empty Message ===")
     payload = {
-        "sessionId": "test-session-123",
         "message": ""
     }
     
@@ -99,7 +95,6 @@ def test_invalid_model():
     """Test with invalid model name."""
     print("\n=== Test 4: Invalid Model ===")
     payload = {
-        "sessionId": "test-session-123",
         "message": "Create a button",
         "model": "invalid-model-name"
     }
@@ -124,7 +119,6 @@ def test_valid_model_override():
     """Test with valid model override."""
     print("\n=== Test 5: Valid Model Override ===")
     payload = {
-        "sessionId": "test-session-456",
         "message": "Create a button",
         "model": "gpt-4o"
     }
@@ -173,7 +167,7 @@ def main():
     # Run tests
     results = []
     results.append(("Valid Request", test_valid_request()))
-    results.append(("Missing sessionId", test_missing_session_id()))
+    results.append(("Missing Message", test_missing_message()))
     results.append(("Empty Message", test_empty_message()))
     results.append(("Invalid Model", test_invalid_model()))
     results.append(("Valid Model Override", test_valid_model_override()))

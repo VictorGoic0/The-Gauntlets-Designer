@@ -14,7 +14,6 @@ Usage Example:
     agent = CanvasAgent()
     result = await agent.process_message(
         user_message="Create a login form",
-        session_id="session-123",
         model="gpt-4-turbo"  # optional
     )
     
@@ -39,6 +38,7 @@ from typing import Dict, List, Any, Optional
 from app.agent.tools import get_tool_definitions
 from app.agent.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
 from app.services.openai_service import call_openai_with_retry
+from app.services.firebase_service import write_canvas_actions_to_firestore, is_firebase_initialized
 from app.config import settings
 from app.utils.logger import logger
 
@@ -232,7 +232,6 @@ class CanvasAgent:
     async def process_message(
         self,
         user_message: str,
-        session_id: str,
         model: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -243,11 +242,11 @@ class CanvasAgent:
         2. Calls OpenAI API with retry logic
         3. Extracts tool calls from response
         4. Formats actions for frontend
-        5. Returns structured response
+        5. Writes actions to Firestore (if Firebase is initialized)
+        6. Returns structured response
         
         Args:
             user_message: The user's natural language request
-            session_id: Session identifier for tracking
             model: Optional model override (defaults to settings.DEFAULT_MODEL)
             
         Returns:
@@ -265,7 +264,7 @@ class CanvasAgent:
             # Use provided model or default
             model_key = model or settings.DEFAULT_MODEL
             
-            logger.info(f"Processing message for session {session_id} with model {model_key}")
+            logger.info(f"Processing message with model {model_key}")
             
             # Build messages
             messages = self._build_messages(user_message)
@@ -293,6 +292,20 @@ class CanvasAgent:
             # Format actions for frontend
             actions = self._format_actions(tool_calls)
             
+            # Write actions to Firestore (if Firebase is initialized)
+            # This is non-blocking - if it fails, we still return the actions
+            if actions and is_firebase_initialized():
+                try:
+                    firestore_result = await write_canvas_actions_to_firestore(actions)
+                    if firestore_result.get("success"):
+                        logger.info(f"Wrote {firestore_result.get('objectsCreated', 0)} objects to Firestore")
+                    else:
+                        logger.warning(f"Firestore write failed: {firestore_result.get('error', 'Unknown error')}")
+                except Exception as e:
+                    logger.warning(f"Error writing to Firestore (non-fatal): {e}")
+            elif actions and not is_firebase_initialized():
+                logger.debug("Firebase not initialized, skipping Firestore write")
+            
             # Extract token usage
             tokens_used = 0
             if response.usage:
@@ -311,14 +324,13 @@ class CanvasAgent:
             }
             
             logger.info(
-                f"Successfully processed message for session {session_id}. "
-                f"Tool calls: {len(tool_calls)}, Tokens: {tokens_used}"
+                f"Successfully processed message. Tool calls: {len(tool_calls)}, Tokens: {tokens_used}"
             )
             
             return result
             
         except Exception as e:
-            logger.error(f"Error processing message for session {session_id}: {e}", exc_info=True)
+            logger.error(f"Error processing message: {e}", exc_info=True)
             
             # Return error response in consistent format
             return {

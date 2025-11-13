@@ -36,12 +36,12 @@ async def chat(request: ChatRequest):
     Chat endpoint for AI agent interactions.
     
     This endpoint:
-    1. Validates the request (sessionId, message, model)
+    1. Validates the request (message, model)
     2. Processes the message through the CanvasAgent orchestrator
     3. Returns actions and metadata for frontend consumption
     
     Args:
-        request: Chat request with sessionId, message, and optional model
+        request: Chat request with message and optional model
         
     Returns:
         Chat response with actions, metadata, and assistant's text response
@@ -50,13 +50,6 @@ async def chat(request: ChatRequest):
         HTTPException: 400 for validation errors, 500 for processing errors
     """
     try:
-        # Validate sessionId
-        if not request.sessionId or not request.sessionId.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="sessionId is required and cannot be empty"
-            )
-        
         # Validate message
         if not request.message or not request.message.strip():
             raise HTTPException(
@@ -79,14 +72,12 @@ async def chat(request: ChatRequest):
         
         # Log request
         logger.info(
-            f"Processing chat request. Session: {request.sessionId}, "
-            f"Model: {model_key or 'default'}, Message length: {len(request.message)}"
+            f"Processing chat request. Model: {model_key or 'default'}, Message length: {len(request.message)}"
         )
         
         # Process message through agent
         result = await agent.process_message(
             user_message=request.message,
-            session_id=request.sessionId,
             model=model_key
         )
         
@@ -97,8 +88,7 @@ async def chat(request: ChatRequest):
             error_message = error_info.get("message", "An unknown error occurred")
             
             logger.error(
-                f"Agent processing error for session {request.sessionId}: "
-                f"{error_type}: {error_message}"
+                f"Agent processing error: {error_type}: {error_message}"
             )
             
             raise HTTPException(
@@ -125,7 +115,7 @@ async def chat(request: ChatRequest):
     except Exception as e:
         # Catch any unexpected errors
         logger.error(
-            f"Unexpected error in chat endpoint for session {request.sessionId}: {e}",
+            f"Unexpected error in chat endpoint: {e}",
             exc_info=True
         )
         

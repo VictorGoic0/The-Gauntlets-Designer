@@ -16,7 +16,7 @@ from app.agent.orchestrator import CanvasAgent
 from app.utils.logger import logger
 
 
-async def test_agent(test_name: str, user_message: str, session_id: str = "test-session"):
+async def test_agent(test_name: str, user_message: str):
     """Test the agent with a specific message."""
     print(f"\n{'='*60}")
     print(f"Test: {test_name}")
@@ -28,7 +28,6 @@ async def test_agent(test_name: str, user_message: str, session_id: str = "test-
     try:
         result = await agent.process_message(
             user_message=user_message,
-            session_id=session_id,
             model=None  # Use default
         )
         

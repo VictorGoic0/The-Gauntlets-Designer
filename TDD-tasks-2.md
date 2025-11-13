@@ -379,48 +379,48 @@ This PR adds Firestore integration for persisting canvas objects.
 
 ## Task 7.1: Firebase Admin SDK Setup
 
-- [ ] Add firebase-admin to requirements.txt (should already be there)
-- [ ] Download Firebase service account key JSON
-- [ ] Save as `serviceAccountKey.json` in project root (gitignored)
-- [ ] Add FIREBASE_CREDENTIALS_PATH to .env
-- [ ] Update .env.example with Firebase variable
+- [x] Add firebase-admin to requirements.txt (should already be there)
+- [x] Download Firebase service account key JSON
+- [x] Save as `serviceAccountKey.json` in project root (gitignored)
+- [x] Add FIREBASE_CREDENTIALS_PATH to .env
+- [x] Update .env.example with Firebase variable
 
 ---
 
 ## Task 7.2: Create Firebase Service Module
 
-- [ ] Create `app/services/firebase_service.py`
-- [ ] Import firebase_admin and firestore
-- [ ] Create `initialize_firebase()` function
-- [ ] Load credentials from path in config
-- [ ] Initialize Firebase app
-- [ ] Get Firestore client instance
-- [ ] Handle initialization errors gracefully
+- [x] Create `app/services/firebase_service.py`
+- [x] Import firebase_admin and firestore
+- [x] Create `initialize_firebase()` function
+- [x] Load credentials from path in config
+- [x] Initialize Firebase app
+- [x] Get Firestore client instance
+- [x] Handle initialization errors gracefully
 
 ---
 
 ## Task 7.3: Initialize Firebase on Startup
 
-- [ ] Import firebase_service in app/main.py
-- [ ] Call initialize_firebase() in startup event
-- [ ] Add try/except for initialization errors
-- [ ] Log successful initialization
-- [ ] Update health check to include Firebase status
+- [x] Import firebase_service in app/main.py
+- [x] Call initialize_firebase() in startup event
+- [x] Add try/except for initialization errors
+- [x] Log successful initialization
+- [x] Update health check to include Firebase status
 
 ---
 
 ## Task 7.4: Implement Firestore Write Function
 
-- [ ] Create `write_canvas_actions_to_firestore()` async function
-- [ ] Accept parameters: session_id, actions
-- [ ] Get reference to /canvasSessions/{sessionId}/objects collection
-- [ ] Use batch write for efficiency
-- [ ] For each action, create document with:
+- [x] Create `write_canvas_actions_to_firestore()` async function
+- [x] Accept parameters: actions (removed session_id - not needed)
+- [x] Get reference to /projects/shared-canvas/objects collection (matches frontend)
+- [x] Use batch write for efficiency
+- [x] For each action, create document with:
   - type: action type (without "create_" prefix)
   - params: action parameters
   - createdAt: SERVER_TIMESTAMP
-- [ ] Commit batch
-- [ ] Return success status with count
+- [x] Commit batch
+- [x] Return success status with count
 
 Refer to TDD Section 11 for Firestore structure and code example.
 
@@ -428,55 +428,64 @@ Refer to TDD Section 11 for Firestore structure and code example.
 
 ## Task 7.5: Integrate Firestore Writes into Agent
 
-- [ ] Import firebase_service in orchestrator.py
-- [ ] After actions generated, call write_canvas_actions_to_firestore()
-- [ ] Pass session_id and actions
-- [ ] Handle Firestore write errors (log but don't fail request)
-- [ ] Add Firestore write status to response (optional)
+- [x] Import firebase_service in orchestrator.py
+- [x] After actions generated, call write_canvas_actions_to_firestore()
+- [x] Pass actions (removed session_id - not needed)
+- [x] Handle Firestore write errors (log but don't fail request)
+- [x] Add Firestore write status to response (optional)
 
 ---
 
 ## Task 7.6: Error Handling
 
-- [ ] Handle missing service account key file
-- [ ] Handle invalid credentials
-- [ ] Handle Firestore permission errors
-- [ ] Handle network errors during write
-- [ ] Log all Firebase errors with context
-- [ ] Ensure agent still returns response even if Firebase write fails
+- [x] Handle missing service account key file
+- [x] Handle invalid credentials
+- [x] Handle Firestore permission errors
+- [x] Handle network errors during write
+- [x] Log all Firebase errors with context
+- [x] Ensure agent still returns response even if Firebase write fails
 
 ---
 
 ## Task 7.7: Testing Firestore Integration
 
-- [ ] Test agent with real sessionId
-- [ ] Verify objects written to Firestore
-- [ ] Check Firestore console to see created documents
-- [ ] Test with multiple actions (login form)
-- [ ] Verify batch write commits all objects
-- [ ] Test error cases (invalid sessionId format, etc.)
+- [x] Test agent with real requests (removed sessionId requirement)
+- [x] Verify objects written to Firestore
+- [x] Check Firestore console to see created documents
+- [x] Test with multiple actions (login form)
+- [x] Verify batch write commits all objects
+- [x] Test error cases (Firebase not initialized, etc.)
 
 ---
 
 ## Task 7.8: Documentation
 
-- [ ] Document Firestore setup process in README
-- [ ] Explain how to get service account key
-- [ ] Document Firestore data structure
-- [ ] Add troubleshooting for common Firebase errors
-- [ ] Document how to view data in Firestore console
+- [x] Document Firestore setup process in README
+- [x] Explain how to get service account key
+- [x] Document Firestore data structure
+- [x] Add troubleshooting for common Firebase errors
+- [x] Document how to view data in Firestore console
 
 ---
 
 **PR Acceptance Criteria:**
-- Firebase Admin SDK initialized successfully
-- Firestore client accessible
-- Canvas actions written to Firestore correctly
-- Batch writes commit atomically
-- Error handling prevents crashes
-- Health check includes Firebase status
-- Documentation covers setup and troubleshooting
-- Can verify data in Firestore console after test
+- [x] Firebase Admin SDK initialized successfully
+- [x] Firestore client accessible
+- [x] Canvas actions written to Firestore correctly
+- [x] Batch writes commit atomically
+- [x] Error handling prevents crashes
+- [x] Health check includes Firebase status
+- [x] Documentation covers setup and troubleshooting
+- [x] Can verify data in Firestore console after test
+
+**PR #7 Status: ✅ COMPLETE**
+
+**Key Changes:**
+- Removed sessionId requirement (not needed - no conversation persistence)
+- Firestore path matches frontend: `/projects/shared-canvas/objects`
+- Simplified service account key template (only 6 required fields)
+- Non-blocking Firebase initialization (graceful failure if not configured)
+- Agent returns actions even if Firestore write fails
 
 ---
 

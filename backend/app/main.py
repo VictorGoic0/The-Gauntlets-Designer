@@ -56,6 +56,18 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"OpenAI connection test failed (non-fatal): {e}")
     
+    # Initialize Firebase Admin SDK (non-blocking, log errors but don't crash)
+    try:
+        from app.services.firebase_service import initialize_firebase
+        # Run in thread pool since initialization is synchronous
+        await asyncio.to_thread(initialize_firebase)
+        logger.info("Firebase Admin SDK initialized successfully")
+    except Exception as e:
+        logger.warning(
+            f"Firebase initialization failed (non-fatal): {e}. "
+            f"Firestore writes will not work until Firebase is properly configured."
+        )
+    
     logger.info("Application startup complete")
 
 
