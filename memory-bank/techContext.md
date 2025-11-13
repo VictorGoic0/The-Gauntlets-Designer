@@ -135,6 +135,10 @@ openai>=1.54.0
 firebase-admin>=6.5.0
 python-dotenv>=1.0.0
 tenacity>=9.0.0
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-mock>=3.12.0
+httpx>=0.27.0
 ```
 
 Note: FastAPI includes Pydantic internally for request/response validation, but we use plain Python classes for configuration management.
@@ -177,7 +181,11 @@ Note: FastAPI includes Pydantic internally for request/response validation, but 
 8. Test prompts: `python test_prompts.py` (validates system prompt and few-shot examples)
 9. Test agent orchestrator: `python test_agent.py` (tests message processing and tool calls)
 10. Test API endpoint: `python test_api_endpoint.py` (requires server running, tests 5 scenarios)
-11. Interactive API docs: `http://localhost:8000/docs` (Swagger UI) or `http://localhost:8000/redoc` (ReDoc)
+11. Run test suite: `pytest` (comprehensive unit and integration tests)
+12. Integration tests: `python integration_test.py` (end-to-end flow testing)
+13. Model comparison: `python compare_models.py "Create a login form"` (compare all models)
+14. Error handling tests: `python test_error_handling.py` (edge case verification)
+15. Interactive API docs: `http://localhost:8000/docs` (Swagger UI) or `http://localhost:8000/redoc` (ReDoc)
 
 ### Deployment Process
 

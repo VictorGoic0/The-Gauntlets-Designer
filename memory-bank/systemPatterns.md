@@ -199,3 +199,28 @@ Canvas.jsx
 - Server timestamps for conflict resolution
 - onDisconnect() for automatic cleanup
 - Efficient security rules
+
+### Testing Patterns (PR #8) ✅ **COMPLETE**
+
+- **Unit Tests**: pytest-based test suite in `tests/` directory
+  - `test_tools.py`: Tool definition validation and structure tests
+  - `test_prompts.py`: System prompt and few-shot example validation
+  - `test_orchestrator.py`: Agent orchestrator with mocked OpenAI responses
+  - `test_api.py`: API endpoint tests with FastAPI TestClient
+- **Integration Tests**: `integration_test.py` for end-to-end flow testing
+  - Tests complete flow: API request → agent → Firestore
+  - Multiple UI patterns (login form, button, grid, card)
+  - Token usage and latency measurement
+- **Model Comparison**: `compare_models.py` for comparing all OpenAI models
+  - Response time, token usage, cost estimation
+  - Quality assessment and ranking
+- **Error Handling Tests**: `test_error_handling.py` for edge case verification
+  - Invalid API keys, missing Firebase, rate limits, network errors
+
+### Logging & Monitoring Patterns (PR #8) ✅ **COMPLETE**
+
+- **Request ID Tracking**: Context-based request IDs for tracing requests across system
+- **Performance Timing**: TimingContext manager for measuring operation duration
+- **Token Usage Logging**: Automatic logging of token consumption for cost monitoring
+- **Structured Logging**: Request IDs, timing, and metrics in all log entries
+- **Error Context**: All errors logged with request ID and full context
