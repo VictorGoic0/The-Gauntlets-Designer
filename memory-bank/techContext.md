@@ -175,6 +175,9 @@ Note: FastAPI includes Pydantic internally for request/response validation, but 
 6. Test health check: `curl http://localhost:8000/api/health`
 7. Test tool definitions: `python test_tools.py` (validates all 5 tools)
 8. Test prompts: `python test_prompts.py` (validates system prompt and few-shot examples)
+9. Test agent orchestrator: `python test_agent.py` (tests message processing and tool calls)
+10. Test API endpoint: `python test_api_endpoint.py` (requires server running, tests 5 scenarios)
+11. Interactive API docs: `http://localhost:8000/docs` (Swagger UI) or `http://localhost:8000/redoc` (ReDoc)
 
 ### Deployment Process
 

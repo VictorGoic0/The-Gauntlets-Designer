@@ -91,6 +91,16 @@
 - [x] Create test script (test_agent.py) with 3 test cases
 - [x] Add comprehensive documentation (docstrings, usage examples, README updates)
 
+**Phase 3: API Route Integration** ✅ **COMPLETE (PR #6)**
+- [x] Refactor `/api/agent/chat` endpoint to use CanvasAgent orchestrator
+- [x] Create request/response models (ChatRequest, ChatResponse, ErrorResponse)
+- [x] Add request validation (sessionId, message, model)
+- [x] Integrate agent.process_message() into endpoint
+- [x] Update error handling for agent responses (400, 500 status codes)
+- [x] Create comprehensive test script (test_api_endpoint.py) with 5 test scenarios
+- [x] Update README with complete API documentation
+- [x] Verify route registration and interactive docs at /docs
+
 **Phase 3: Tool Enhancement** ✅ **COMPLETE (PR #3)**
 - [x] Add boxShadow support to all shape tools (rectangle, square, circle)
 - [x] Add cornerRadius support to rectangles and squares
@@ -141,6 +151,7 @@
 - **AI Agent Migration - PR #3**: ✅ Complete - Tool definitions and caching implemented
 - **AI Agent Migration - PR #4**: ✅ Complete - System prompt and few-shot examples implemented
 - **AI Agent Migration - PR #5**: ✅ Complete - Agent orchestrator with tool execution and error handling
+- **AI Agent Migration - PR #6**: ✅ Complete - API route integration with request/response models and validation
 - **Phase 4+ (Additional Features)**: ⏳ Pending - Post-MVP enhancements
 
 ### Code Quality

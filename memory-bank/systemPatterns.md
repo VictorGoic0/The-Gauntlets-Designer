@@ -134,14 +134,15 @@ Canvas.jsx
 
 ### Agent Orchestration Flow
 
-1. Frontend sends POST request to `/api/agent/chat` with sessionId, message, and optional model override
-2. FastAPI backend validates model and prepares messages
-3. OpenAI API called via `call_openai_with_retry()` with retry logic, tool definitions, and prompts ✅ **TOOLS & PROMPTS READY (PR #3, #4)**
-4. Retry logic handles RateLimitError, APIError, APITimeoutError with exponential backoff
-5. Agent returns response with tool calls (tool definitions and prompts available, execution pending orchestrator)
-6. Response formatted with model used and token usage
-7. Frontend receives response with AI-generated text and metadata
-8. (Next: Orchestrator executes tool calls, batch writes to Firestore, actions array returned - PR #5)
+1. Frontend sends POST request to `/api/agent/chat` with sessionId, message, and optional model override ✅ **IMPLEMENTED (PR #6)**
+2. FastAPI backend validates request (sessionId, message, model) using Pydantic models ✅ **IMPLEMENTED (PR #6)**
+3. CanvasAgent orchestrator processes message via `process_message()` ✅ **IMPLEMENTED (PR #5)**
+4. OpenAI API called via `call_openai_with_retry()` with retry logic, tool definitions, and prompts ✅ **IMPLEMENTED (PR #2, #3, #4)**
+5. Retry logic handles RateLimitError, APIError, APITimeoutError with exponential backoff ✅ **IMPLEMENTED (PR #2)**
+6. Agent extracts tool calls, formats actions for frontend, and constructs response ✅ **IMPLEMENTED (PR #5)**
+7. Response returned with actions array, tool call count, token usage, and model ✅ **IMPLEMENTED (PR #6)**
+8. Frontend receives response with AI-generated text, actions array, and metadata ✅ **IMPLEMENTED (PR #6)**
+9. (Next: Batch write actions to Firestore for persistence - PR #7)
 
 ### Tool Execution Pattern
 
@@ -166,6 +167,16 @@ Canvas.jsx
 - **Few-Shot Examples**: Complete login form example with 8 tool calls (~759 tokens)
 - **Python Dicts**: Tool call arguments stored as native Python dicts (no json.dumps needed)
 - **Total Token Usage**: ~1,396 tokens per request (system prompt + few-shot examples, before user message)
+
+### API Route Pattern (PR #6) ✅ **COMPLETE**
+
+- **Request Models**: Pydantic models in `app/models/requests.py` (ChatRequest with sessionId, message, optional model)
+- **Response Models**: Pydantic models in `app/models/responses.py` (ChatResponse with actions, toolCalls, tokensUsed, model)
+- **Validation**: Request validation for sessionId (non-empty), message (non-empty), model (in AVAILABLE_MODELS)
+- **Error Handling**: Consistent error format with HTTP status codes (400 for validation, 500 for processing errors)
+- **Agent Integration**: Module-level CanvasAgent instance for performance (shared across requests)
+- **Testing**: Comprehensive test script (`test_api_endpoint.py`) with 5 test scenarios
+- **Documentation**: Complete API documentation in README with curl examples and interactive docs reference
 
 ## Performance Optimizations
 

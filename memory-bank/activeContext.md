@@ -14,6 +14,8 @@ The project is currently in **Phase 3** with MVP features largely complete. **Ne
 
 **PR #5 Status**: ✅ **COMPLETE** - Agent orchestrator implemented with message processing, tool call extraction, action formatting, error handling, and comprehensive testing.
 
+**PR #6 Status**: ✅ **COMPLETE** - API route integration complete with request/response models, validation, error handling, and comprehensive testing. Endpoint fully functional and tested.
+
 ## Recent Changes
 
 ### PR #1: FastAPI Backend Setup ✅ **COMPLETE**
@@ -115,6 +117,27 @@ The project is currently in **Phase 3** with MVP features largely complete. **Ne
 - All errors logged with context (session_id, error details) for debugging
 - Response structure: `{response, actions, toolCalls, tokensUsed, model, error?}`
 
+### PR #6: API Route & Request Handling ✅ **COMPLETE**
+
+**Completed (December 2024):**
+- ✅ Refactored `app/api/routes/agent.py` to use `CanvasAgent` orchestrator
+- ✅ Created `app/models/requests.py` with `ChatRequest` (sessionId, message, optional model)
+- ✅ Created `app/models/responses.py` with `ChatResponse` and `ErrorResponse`
+- ✅ Implemented comprehensive request validation (sessionId, message, model)
+- ✅ Integrated `agent.process_message()` into POST `/api/agent/chat` endpoint
+- ✅ Added proper error handling with HTTP status codes (400, 500)
+- ✅ Created comprehensive test script (`test_api_endpoint.py`) with 5 test scenarios
+- ✅ Updated README with complete API documentation, examples, and curl commands
+- ✅ Verified route registration in `main.py` with proper prefix and tags
+
+**Technical Decisions:**
+- Agent instance initialized at module level for performance (shared across requests)
+- Request validation uses Pydantic models with Field descriptions
+- Error responses follow consistent format with error type and detail
+- All errors logged with request context (sessionId, message excerpt)
+- Response includes actions array, tool call count, token usage, and model
+- FastAPI automatically generates interactive docs at `/docs` and `/redoc`
+
 ### Completed Features ✅
 
 - **Authentication**: Google Sign-In with proper user management
@@ -167,13 +190,15 @@ The project is currently in **Phase 3** with MVP features largely complete. **Ne
    - ✅ Create test script for local testing
    - ✅ Add comprehensive documentation
 
-4. **Phase 3: API Route Integration** ⏳ **NEXT (PR #6)**
-   - [ ] Update `/api/agent/chat` endpoint to use CanvasAgent orchestrator
-   - [ ] Create request/response models (ChatRequest, ChatResponse)
-   - [ ] Add request validation (sessionId, message, model)
-   - [ ] Integrate agent.process_message() into endpoint
-   - [ ] Update error handling for agent responses
-   - [ ] Test endpoint with curl and verify responses
+4. **Phase 3: API Route Integration** ✅ **COMPLETE (PR #6)**
+   - [x] Update `/api/agent/chat` endpoint to use CanvasAgent orchestrator
+   - [x] Create request/response models (ChatRequest, ChatResponse, ErrorResponse)
+   - [x] Add request validation (sessionId, message, model)
+   - [x] Integrate agent.process_message() into endpoint
+   - [x] Update error handling for agent responses
+   - [x] Test endpoint with curl and verify responses
+   - [x] Create comprehensive test script (test_api_endpoint.py)
+   - [x] Update README with API documentation
 
 5. **Phase 3.5: Tool Enhancement** ✅ **COMPLETE (PR #3)**
    - Add boxShadow support to tools
@@ -182,10 +207,11 @@ The project is currently in **Phase 3** with MVP features largely complete. **Ne
    - Add metadata support for semantic roles
    - Test visual enhancements
 
-4. **Phase 4: Firestore Integration**
+4. **Phase 4: Firestore Integration** ⏳ **NEXT (PR #7)**
    - Initialize Firebase Admin SDK
    - Connect to Firestore
    - Implement batch write for canvas objects
+   - Integrate Firestore writes into agent orchestrator
    - Test end-to-end with Canvas frontend
 
 5. **Phase 5: Testing & Refinement**
