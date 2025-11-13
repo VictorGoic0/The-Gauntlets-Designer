@@ -9,6 +9,7 @@ This provides:
 
 Refer to TDD Section 10 for caching rationale.
 """
+from typing import List, Dict, Any
 
 # Module-level constant for cached tool definitions
 TOOL_DEFINITIONS = [
@@ -251,17 +252,17 @@ TOOL_DEFINITIONS = [
 ]
 
 
-def get_tool_definitions():
+def get_tool_definitions() -> List[Dict[str, Any]]:
     """
     Return cached tool definitions.
     
     Returns:
-        list: List of tool definition dictionaries ready for OpenAI API
+        List of tool definition dictionaries ready for OpenAI API
     """
     return TOOL_DEFINITIONS
 
 
-def validate_tool_definitions():
+def validate_tool_definitions() -> bool:
     """
     Validate tool definitions on startup.
     
@@ -270,6 +271,9 @@ def validate_tool_definitions():
     - Parameter schemas are valid
     - Required parameters are specified
     
+    Returns:
+        True if validation passes
+        
     Raises:
         ValueError: If validation fails
     """

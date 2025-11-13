@@ -40,7 +40,7 @@ from app.agent.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
 from app.services.openai_service import call_openai_with_retry
 from app.services.firebase_service import write_canvas_actions_to_firestore, is_firebase_initialized
 from app.config import settings
-from app.utils.logger import logger
+from app.utils.logger import logger, TimingContext, get_request_id
 
 
 class CanvasAgent:
@@ -263,19 +263,24 @@ class CanvasAgent:
         try:
             # Use provided model or default
             model_key = model or settings.DEFAULT_MODEL
+            request_id = get_request_id() or "no-request-id"
             
-            logger.info(f"Processing message with model {model_key}")
+            logger.info(
+                f"Processing message with model {model_key}, Request ID: {request_id}"
+            )
             
             # Build messages
-            messages = self._build_messages(user_message)
+            with TimingContext("build_messages", logger):
+                messages = self._build_messages(user_message)
             
             # Call OpenAI API with retry logic
-            response = call_openai_with_retry(
-                messages=messages,
-                model=model_key,
-                tools=self.tool_definitions,
-                tool_choice="auto"
-            )
+            with TimingContext("openai_api_call", logger):
+                response = call_openai_with_retry(
+                    messages=messages,
+                    model=model_key,
+                    tools=self.tool_definitions,
+                    tool_choice="auto"
+                )
             
             # Extract assistant's text response
             assistant_message = ""
@@ -323,8 +328,10 @@ class CanvasAgent:
                 "model": model_used
             }
             
+            request_id = get_request_id() or "no-request-id"
             logger.info(
-                f"Successfully processed message. Tool calls: {len(tool_calls)}, Tokens: {tokens_used}"
+                f"Successfully processed message. Tool calls: {len(tool_calls)}, "
+                f"Tokens: {tokens_used}, Request ID: {request_id}"
             )
             
             return result

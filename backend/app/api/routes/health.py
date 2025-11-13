@@ -8,13 +8,35 @@ from app.services.firebase_service import is_firebase_initialized
 router = APIRouter(prefix="/api", tags=["health"])
 
 
-@router.get("/health")
+@router.get(
+    "/health",
+    summary="Health check endpoint",
+    description="""
+    Returns the health status of the API server along with connection status for external services.
+    
+    This endpoint checks:
+    - Server status (always "healthy" if endpoint is reachable)
+    - OpenAI API connection
+    - Firebase Admin SDK initialization status
+    
+    Use this endpoint for monitoring and load balancer health checks.
+    """,
+    response_description="Health status with service connection information"
+)
 async def health_check():
     """
     Health check endpoint with OpenAI and Firebase connection status.
 
     Returns:
         dict: Health status, version, OpenAI connection status, and Firebase status
+        
+    Example Response:
+        {
+            "status": "healthy",
+            "version": "1.0.0",
+            "openai": "connected",
+            "firebase": "initialized"
+        }
     """
     logger.info("Health check endpoint called")
     

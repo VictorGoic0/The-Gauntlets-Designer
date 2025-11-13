@@ -12,9 +12,19 @@ class ChatRequest(BaseModel):
     class Config:
         """Pydantic config."""
         json_schema_extra = {
-            "example": {
-                "message": "Create a login form",
-                "model": "gpt-4-turbo"
-            }
+            "examples": [
+                {
+                    "message": "Create a login form",
+                    "model": "gpt-4-turbo"
+                },
+                {
+                    "message": "Create a button with blue background",
+                    "model": "gpt-4o"
+                },
+                {
+                    "message": "Create a 3x3 grid of circles",
+                    # model is optional - will use default if not provided
+                }
+            ]
         }
 

@@ -15,25 +15,41 @@ class ChatResponse(BaseModel):
     class Config:
         """Pydantic config."""
         json_schema_extra = {
-            "example": {
-                "response": "I've created a login form with email and password fields.",
-                "actions": [
-                    {
-                        "type": "rectangle",
-                        "params": {
-                            "x": 100,
-                            "y": 100,
-                            "width": 300,
-                            "height": 200,
-                            "fill": "#FFFFFF",
-                            "cornerRadius": 8
-                        }
+            "examples": [
+                {
+                    "summary": "Login form response",
+                    "description": "Response for creating a login form",
+                    "value": {
+                        "response": "I've created a login form with email and password fields.",
+                        "actions": [
+                            {
+                                "type": "rectangle",
+                                "params": {
+                                    "x": 100,
+                                    "y": 100,
+                                    "width": 300,
+                                    "height": 200,
+                                    "fill": "#FFFFFF",
+                                    "cornerRadius": 8
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "params": {
+                                    "x": 150,
+                                    "y": 120,
+                                    "text": "Email",
+                                    "fontSize": 14,
+                                    "fill": "#333333"
+                                }
+                            }
+                        ],
+                        "toolCalls": 8,
+                        "tokensUsed": 1250,
+                        "model": "gpt-4-turbo"
                     }
-                ],
-                "toolCalls": 8,
-                "tokensUsed": 1250,
-                "model": "gpt-4-turbo"
-            }
+                }
+            ]
         }
 
 
@@ -46,9 +62,31 @@ class ErrorResponse(BaseModel):
     class Config:
         """Pydantic config."""
         json_schema_extra = {
-            "example": {
-                "error": "Validation error",
-                "detail": "message is required and cannot be empty"
-            }
+            "examples": [
+                {
+                    "summary": "Validation error",
+                    "description": "Error when message is missing or empty",
+                    "value": {
+                        "error": "Validation error",
+                        "detail": "message is required and cannot be empty"
+                    }
+                },
+                {
+                    "summary": "Invalid model error",
+                    "description": "Error when invalid model is specified",
+                    "value": {
+                        "error": "Validation error",
+                        "detail": "Model 'invalid-model' not found. Available models: ['gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'gpt-4']"
+                    }
+                },
+                {
+                    "summary": "Internal server error",
+                    "description": "Error when agent processing fails",
+                    "value": {
+                        "error": "InternalServerError",
+                        "detail": "An unexpected error occurred: OpenAI API error"
+                    }
+                }
+            ]
         }
 
