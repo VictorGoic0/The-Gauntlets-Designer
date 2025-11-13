@@ -25,9 +25,9 @@ SYSTEM_PROMPT = """You are an expert UI designer for a collaborative canvas appl
 
 ## Available Tools
 
-- **create_rectangle**: Containers, inputs, buttons, dividers (supports boxShadow, cornerRadius)
-- **create_square**: Icons, grid items, thumbnails (supports boxShadow, cornerRadius)
-- **create_circle**: Avatars, icons, indicators (supports boxShadow)
+- **create_rectangle**: Containers, inputs, buttons, dividers (supports cornerRadius)
+- **create_square**: Icons, grid items, thumbnails (supports cornerRadius)
+- **create_circle**: Avatars, icons, indicators
 - **create_line**: Dividers, underlines, connectors
 - **create_text**: All text content (supports fontSize, fontWeight, fill, align)
 
@@ -36,9 +36,10 @@ SYSTEM_PROMPT = """You are an expert UI designer for a collaborative canvas appl
 ## Design Principles
 
 **Modern Visual Style**:
-- Use subtle shadows for depth: `{"offsetX": 0, "offsetY": 2, "blur": 8, "color": "rgba(0,0,0,0.1)"}`
 - Round corners for friendly feel: 4-8px typical (containers: 8px, inputs/buttons: 4px)
 - Maintain consistent spacing: 20-30px between sections, 5-10px for related elements
+
+(Note: boxShadow support is planned for future enhancement. See tools.py for commented examples.)
 
 **Color Palette**:
 - Backgrounds: #ffffff, #f5f5f5 (light gray)
@@ -55,13 +56,13 @@ SYSTEM_PROMPT = """You are an expert UI designer for a collaborative canvas appl
 ## Common Patterns
 
 **Login Form** (8 components):
-1. Container (400×380, white, shadow, 8px radius, 30px padding)
+1. Container (400×380, white, 8px radius, 30px padding)
 2. Title ("Login", 24px bold, centered)
 3. "Username" label (14px, left-aligned)
 4. Username input (340×45, light fill, 4px radius)
 5. "Password" label (14px, 20px below input)
 6. Password input (340×45, matching style)
-7. Submit button (340×45, #007bff fill, shadow, 25px below)
+7. Submit button (340×45, #007bff fill, 25px below)
 8. Button text ("Login", 16px bold, white, centered)
 
 **Card**: Container + title + content + optional divider/button
@@ -98,13 +99,14 @@ FEW_SHOT_EXAMPLES = [
                         "stroke": "#e0e0e0",
                         "strokeWidth": 1,
                         "cornerRadius": 8,
-                        "boxShadow": {
-                            "offsetX": 0,
-                            "offsetY": 4,
-                            "blur": 12,
-                            "color": "rgba(0,0,0,0.1)"
-                        },
-                        "metadata": {"role": "container", "name": "login-form-container"}
+                        # Future enhancement examples (commented out):
+                        # "boxShadow": {
+                        #     "offsetX": 0,
+                        #     "offsetY": 4,
+                        #     "blur": 12,
+                        #     "color": "rgba(0,0,0,0.1)"
+                        # },
+                        # "metadata": {"role": "container", "name": "login-form-container"}
                     }
                 }
             },
@@ -151,8 +153,7 @@ FEW_SHOT_EXAMPLES = [
                         "fill": "#f5f5f5",
                         "stroke": "#cccccc",
                         "strokeWidth": 1,
-                        "cornerRadius": 4,
-                        "metadata": {"role": "input", "name": "username-input"}
+                        "cornerRadius": 4
                     }
                 }
             },
@@ -183,8 +184,7 @@ FEW_SHOT_EXAMPLES = [
                         "fill": "#f5f5f5",
                         "stroke": "#cccccc",
                         "strokeWidth": 1,
-                        "cornerRadius": 4,
-                        "metadata": {"role": "input", "name": "password-input"}
+                        "cornerRadius": 4
                     }
                 }
             },
@@ -202,13 +202,14 @@ FEW_SHOT_EXAMPLES = [
                         "stroke": "#0056b3",
                         "strokeWidth": 1,
                         "cornerRadius": 4,
-                        "boxShadow": {
-                            "offsetX": 0,
-                            "offsetY": 2,
-                            "blur": 4,
-                            "color": "rgba(0,0,0,0.1)"
-                        },
-                        "metadata": {"role": "button", "name": "submit-button"}
+                        # Future enhancement examples (commented out):
+                        # "boxShadow": {
+                        #     "offsetX": 0,
+                        #     "offsetY": 2,
+                        #     "blur": 4,
+                        #     "color": "rgba(0,0,0,0.1)"
+                        # },
+                        # "metadata": {"role": "button", "name": "submit-button"}
                     }
                 }
             },

@@ -16,7 +16,7 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "function": {
             "name": "create_rectangle",
-            "description": "Create a rectangle. Use for containers, input fields, buttons, and dividers. Supports boxShadow for depth and cornerRadius for modern styling (4-8px typical).",
+            "description": "Create a rectangle. Use for containers, input fields, buttons, and dividers. Supports cornerRadius for modern styling (4-8px typical).",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -44,35 +44,29 @@ TOOL_DEFINITIONS = [
                         "description": "Corner radius for rounded corners",
                         "default": 0
                     },
-                    "boxShadow": {
-                        "type": "object",
-                        "description": "Drop shadow for depth",
-                        "properties": {
-                            "offsetX": {"type": "number", "description": "Horizontal offset"},
-                            "offsetY": {"type": "number", "description": "Vertical offset"},
-                            "blur": {"type": "number", "description": "Blur radius"},
-                            "color": {"type": "string", "description": "Shadow color (rgba)"}
-                        }
-                    },
+                    # Future enhancement: boxShadow support
+                    # When frontend supports boxShadow, uncomment this and add to document_data in firebase_service.py
+                    # Example structure:
+                    # "boxShadow": {
+                    #     "offsetX": 0,
+                    #     "offsetY": 2,
+                    #     "blur": 4,
+                    #     "color": "rgba(0, 0, 0, 0.1)"
+                    # }
+                    # "boxShadow": {
+                    #     "type": "object",
+                    #     "description": "Drop shadow for depth",
+                    #     "properties": {
+                    #         "offsetX": {"type": "number", "description": "Horizontal offset"},
+                    #         "offsetY": {"type": "number", "description": "Vertical offset"},
+                    #         "blur": {"type": "number", "description": "Blur radius"},
+                    #         "color": {"type": "string", "description": "Shadow color (rgba)"}
+                    #     }
+                    # },
                     "rotation": {
                         "type": "number",
                         "description": "Rotation in degrees. Default: 0",
                         "default": 0
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "description": "Metadata for semantic meaning",
-                        "properties": {
-                            "role": {
-                                "type": "string",
-                                "enum": ["container", "input", "button", "divider"],
-                                "description": "Semantic role of this rectangle"
-                            },
-                            "name": {
-                                "type": "string",
-                                "description": "Semantic name (e.g., 'username-input', 'submit-button')"
-                            }
-                        }
                     }
                 },
                 "required": ["x", "y", "width", "height"]
@@ -83,7 +77,7 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "function": {
             "name": "create_square",
-            "description": "Create a square. Use for icons, grid items, and thumbnails. Supports boxShadow and cornerRadius.",
+            "description": "Create a square. Use for icons, grid items, and thumbnails. Supports cornerRadius.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -110,16 +104,25 @@ TOOL_DEFINITIONS = [
                         "description": "Corner radius",
                         "default": 0
                     },
-                    "boxShadow": {
-                        "type": "object",
-                        "description": "Drop shadow",
-                        "properties": {
-                            "offsetX": {"type": "number"},
-                            "offsetY": {"type": "number"},
-                            "blur": {"type": "number"},
-                            "color": {"type": "string"}
-                        }
-                    },
+                    # Future enhancement: boxShadow support
+                    # When frontend supports boxShadow, uncomment this and add to document_data in firebase_service.py
+                    # Example structure:
+                    # "boxShadow": {
+                    #     "offsetX": 0,
+                    #     "offsetY": 2,
+                    #     "blur": 4,
+                    #     "color": "rgba(0, 0, 0, 0.1)"
+                    # }
+                    # "boxShadow": {
+                    #     "type": "object",
+                    #     "description": "Drop shadow",
+                    #     "properties": {
+                    #         "offsetX": {"type": "number"},
+                    #         "offsetY": {"type": "number"},
+                    #         "blur": {"type": "number"},
+                    #         "color": {"type": "string"}
+                    #     }
+                    # },
                     "rotation": {
                         "type": "number",
                         "description": "Rotation in degrees. Default: 0",
@@ -134,7 +137,7 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "function": {
             "name": "create_circle",
-            "description": "Create a circle. Use for avatars, icons, badges, and status indicators. Supports boxShadow for depth.",
+            "description": "Create a circle. Use for avatars, icons, badges, and status indicators.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -156,16 +159,25 @@ TOOL_DEFINITIONS = [
                         "description": "Border width",
                         "default": 1
                     },
-                    "boxShadow": {
-                        "type": "object",
-                        "description": "Drop shadow",
-                        "properties": {
-                            "offsetX": {"type": "number"},
-                            "offsetY": {"type": "number"},
-                            "blur": {"type": "number"},
-                            "color": {"type": "string"}
-                        }
-                    }
+                    # Future enhancement: boxShadow support
+                    # When frontend supports boxShadow, uncomment this and add to document_data in firebase_service.py
+                    # Example structure:
+                    # "boxShadow": {
+                    #     "offsetX": 0,
+                    #     "offsetY": 2,
+                    #     "blur": 4,
+                    #     "color": "rgba(0, 0, 0, 0.1)"
+                    # }
+                    # "boxShadow": {
+                    #     "type": "object",
+                    #     "description": "Drop shadow",
+                    #     "properties": {
+                    #         "offsetX": {"type": "number"},
+                    #         "offsetY": {"type": "number"},
+                    #         "blur": {"type": "number"},
+                    #         "color": {"type": "string"}
+                    #     }
+                    # }
                 },
                 "required": ["x", "y", "radius"]
             }

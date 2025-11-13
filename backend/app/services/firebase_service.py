@@ -130,11 +130,17 @@ async def write_canvas_actions_to_firestore(
     This function:
     1. Gets reference to projects/shared-canvas/objects collection
     2. Creates a batch write for efficiency
-    3. For each action, creates a document with:
-       - type: Action type (without "create_" prefix)
-       - params: Action parameters
+    3. For each action, creates a document with flattened structure:
+       - type: Object type (without "create_" prefix)
+       - x, y, width, height, fill, rotation, etc. (all params flattened)
+       - zIndex: Default 0
        - createdAt: Server timestamp
     4. Commits the batch atomically
+    
+    Document structure matches frontend expectations:
+    - No 'params' wrapper - all properties are flat on the document
+    - No 'metadata' field - metadata properties are ignored
+    - Properties: type, x, y, width, height, fill, rotation, zIndex, createdAt
     
     Args:
         actions: List of action dictionaries with 'type' and 'params' keys
@@ -181,15 +187,38 @@ async def write_canvas_actions_to_firestore(
                 # Get action parameters
                 action_params = action.get('params', {})
                 
+                # Build document with flattened structure (no 'params' wrapper)
+                document_data = {
+                    'type': action_type,
+                    'createdAt': firestore.SERVER_TIMESTAMP,
+                    'rotation': 0,  # Default rotation
+                    'zIndex': 0,    # Default zIndex
+                }
+                
+                # Flatten all params directly onto the document
+                # Exclude 'metadata' and 'boxShadow' (not supported by frontend yet)
+                for key, value in action_params.items():
+                    if key == 'metadata':
+                        # Skip metadata - not part of frontend structure
+                        continue
+                    elif key == 'boxShadow':
+                        # Skip boxShadow - not supported by frontend yet
+                        # See commented example in tools.py for future enhancement
+                        continue
+                    elif value is not None:  # Only include non-None values
+                        document_data[key] = value
+                
+                # Ensure required fields have defaults
+                if 'x' not in document_data:
+                    document_data['x'] = 0
+                if 'y' not in document_data:
+                    document_data['y'] = 0
+                
                 # Create document reference (Firestore will generate ID)
                 object_ref = objects_ref.document()
                 
                 # Add to batch
-                batch.set(object_ref, {
-                    'type': action_type,
-                    'params': action_params,
-                    'createdAt': firestore.SERVER_TIMESTAMP
-                })
+                batch.set(object_ref, document_data)
                 
                 objects_created += 1
                 
