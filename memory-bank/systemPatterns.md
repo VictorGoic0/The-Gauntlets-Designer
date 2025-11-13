@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-CollabCanvas follows a client-side state management pattern with real-time synchronization via Firebase. The application uses React Context for state management, Konva.js for canvas rendering, and Firebase for backend services.
+CollabCanvas follows a client-side state management pattern with real-time synchronization via Firebase. The application uses React Context for state management, Konva.js for canvas rendering, and Firebase for backend services. A new FastAPI backend (Python) handles AI agent operations with OpenAI integration.
 
 ## Key Technical Decisions
 
@@ -108,6 +108,55 @@ Canvas.jsx
 - Try-catch blocks around Firebase operations
 - Graceful degradation for network issues
 - Console logging for debugging
+- Exponential backoff retry for OpenAI API (rate limits, 5xx errors, timeouts)
+- Graceful error responses to frontend with retry information
+
+### OpenAI Service Pattern
+
+- **Client Initialization**: Singleton pattern for OpenAI client (initialized once, reused)
+- **Retry Decorator**: Tenacity-based retry with exponential backoff (2s, 4s, 8s, max 3 attempts)
+- **Error Formatting**: Standardized error responses with error type, message, retry attempt, and willRetry flag
+- **Model Configuration**: Centralized model definitions with metadata (cost, recommended status, notes)
+- **Async Wrapper**: Synchronous OpenAI SDK calls wrapped in `asyncio.to_thread()` for FastAPI async endpoints
+- **Connection Testing**: Lightweight connection test on startup and health check (non-blocking)
+
+## AI Agent Architecture
+
+### Backend Pattern
+
+- **FastAPI**: Python web framework for API endpoints
+- **OpenAI SDK**: Native tool calling API integration (synchronous SDK wrapped in async context)
+- **Firebase Admin SDK**: Server-side Firestore writes for canvas objects (to be implemented)
+- **Cached Tools**: Tool definitions stored as constants in `app/agent/tools.py` (no re-parsing per request) ✅ **IMPLEMENTED (PR #3)**
+- **Retry Logic**: Tenacity library for exponential backoff on API errors (RateLimitError, APIError, APITimeoutError)
+- **Model Configuration**: Hardcoded model settings for easy testing (DEFAULT_MODEL, ENABLE_RETRY, MAX_RETRIES)
+- **Error Formatting**: Standardized error responses for frontend consumption
+
+### Agent Orchestration Flow
+
+1. Frontend sends POST request to `/api/agent/chat` with sessionId, message, and optional model override
+2. FastAPI backend validates model and prepares messages
+3. OpenAI API called via `call_openai_with_retry()` with retry logic and tool definitions ✅ **TOOLS READY (PR #3)**
+4. Retry logic handles RateLimitError, APIError, APITimeoutError with exponential backoff
+5. Agent returns response with tool calls (tool definitions available, execution pending Firestore integration)
+6. Response formatted with model used and token usage
+7. Frontend receives response with AI-generated text and metadata
+8. (Next: Tool calls executed, batch written to Firestore, actions array returned - PR #4)
+
+### Tool Execution Pattern
+
+- **Batch Processing**: All tool calls executed, then batch written to Firestore
+- **Action Format**: Each action has `type` (create_rectangle, create_text, etc.) and `params`
+- **Metadata Support**: Rectangles can have semantic roles (container, input, button, divider) ✅ **IMPLEMENTED**
+- **Visual Enhancements**: boxShadow, cornerRadius, strokeWidth for modern UI styling ✅ **IMPLEMENTED**
+
+### Tool Definitions (PR #3) ✅ **COMPLETE**
+
+- **Cached Definitions**: Module-level `TOOL_DEFINITIONS` constant in `app/agent/tools.py` (~3,600 tokens)
+- **Available Tools**: create_rectangle, create_square, create_circle, create_text, create_line
+- **Validation**: Startup validation ensures all tool definitions are properly structured
+- **Enhanced Properties**: All tools support modern UI features (boxShadow, cornerRadius, stroke, metadata, align)
+- **Comprehensive Descriptions**: Each tool includes use cases, examples, and design guidance
 
 ## Performance Optimizations
 

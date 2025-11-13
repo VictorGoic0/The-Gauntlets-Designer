@@ -17,6 +17,13 @@
   - **Firestore**: Real-time database for canvas objects
   - **Realtime Database**: Presence tracking with onDisconnect
   - **Authentication**: Google Sign-In provider
+  - **Firebase Admin SDK (Python)**: Server-side Firestore writes for AI agent
+- **FastAPI**: Python web framework for AI agent backend
+- **OpenAI Python SDK**: LLM integration with tool calling
+- **Python 3.11+**: Backend language for AI agent
+- **Uvicorn**: ASGI server for FastAPI development
+- **Tenacity**: Retry library for exponential backoff
+- **python-dotenv**: Environment variable management
 - **Netlify**: Static site hosting with continuous deployment
 
 ### Development Tools
@@ -30,8 +37,7 @@
 
 ### Environment Variables
 
-All Firebase configuration uses VITE\_ prefix for client-side access:
-
+**Frontend (VITE\_ prefix for client-side access):**
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -42,6 +48,18 @@ VITE_FIREBASE_APP_ID=your_app_id
 VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
 VITE_FIREBASE_DATABASE_URL=your_database_url
 ```
+
+**Backend (FastAPI - .env file):**
+```env
+OPENAI_API_KEY=sk-...
+FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+DEFAULT_MODEL=gpt-4-turbo
+ENABLE_RETRY=true
+MAX_RETRIES=3
+LOG_LEVEL=INFO
+```
+
+**Note**: Tool definitions are cached in `app/agent/tools.py` (PR #3 complete). All 5 tools (rectangle, square, circle, text, line) are implemented with enhanced properties (boxShadow, cornerRadius, metadata, etc.).
 
 ### Build Configuration
 
@@ -106,6 +124,19 @@ VITE_FIREBASE_DATABASE_URL=your_database_url
 }
 ```
 
+### Backend Dependencies (Python - FastAPI)
+
+```python
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+openai>=1.54.0
+firebase-admin>=6.5.0
+python-dotenv>=1.0.0
+tenacity>=9.0.0
+```
+
+Note: FastAPI includes Pydantic internally for request/response validation, but we use plain Python classes for configuration management.
+
 ## Deployment Configuration
 
 ### Netlify Configuration
@@ -126,11 +157,21 @@ VITE_FIREBASE_DATABASE_URL=your_database_url
 
 ### Local Development
 
+**Frontend:**
 1. `npm install` - Install dependencies
 2. Create `.env.local` with Firebase credentials
 3. `npm run dev` - Start development server
 4. `npm test` - Run tests
 5. `npm run build` - Test production build
+
+**Backend (FastAPI):**
+1. `python -m venv venv` - Create virtual environment
+2. `source venv/bin/activate` (or `venv\Scripts\activate` on Windows)
+3. `pip install -r requirements.txt` - Install Python dependencies
+4. Create `.env` with OpenAI API key and Firebase credentials path
+5. `python run_local.py` or `uvicorn app.main:app --reload` - Start FastAPI server
+6. Test health check: `curl http://localhost:8000/api/health`
+7. Test tool definitions: `python test_tools.py` (validates all 5 tools)
 
 ### Deployment Process
 

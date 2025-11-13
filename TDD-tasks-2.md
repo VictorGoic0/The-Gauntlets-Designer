@@ -1,0 +1,648 @@
+**PR #4: System Prompt & Few-Shot Examples**
+
+This PR implements the comprehensive system prompt and few-shot examples for the agent.
+
+---
+
+## Task 4.1: Create Prompts Module
+
+- [x] Create `app/agent/prompts.py`
+- [x] Add module-level constants for SYSTEM_PROMPT and FEW_SHOT_EXAMPLES
+- [x] Add comments explaining prompt engineering strategy
+
+---
+
+## Task 4.2: Write System Prompt - Header & Tools Section
+
+- [x] Write system prompt opening (role definition)
+- [x] Document all 5 available tools with brief descriptions
+- [x] Explain tool capabilities (boxShadow, cornerRadius, etc.)
+- [x] Keep tone instructional and clear
+- [x] Include critical rules for multiple objects (from existing Firebase Functions)
+
+Refer to TDD Section 6 for complete system prompt.
+
+---
+
+## Task 4.3: Write System Prompt - Design Principles
+
+- [x] Add "Visual Design Principles" section
+- [x] Document depth & shadows guidelines
+- [x] Document corner radius guidelines
+- [x] Document color palette with specific hex values
+- [x] Document spacing rules
+- [x] Document typography hierarchy
+- [x] Document alignment principles
+
+Refer to TDD Section 6 for all design principles.
+
+---
+
+## Task 4.4: Write System Prompt - Component Sizing
+
+- [x] Add "Standard Component Sizing" section
+- [x] Document input field dimensions
+- [x] Document button dimensions
+- [x] Document form container sizes
+- [x] Document icon and avatar sizes
+- [x] Document divider line sizes
+
+---
+
+## Task 4.5: Write System Prompt - Login Form Pattern
+
+- [x] Add "Login Form Pattern" section with detailed 8-step component breakdown
+- [x] Include exact sizing for each component
+- [x] Include positioning calculations
+- [x] Add spacing summary
+- [x] Add complete position calculation example with concrete numbers
+- [x] Include visual ASCII art layout (optional but helpful - skipped for initial refactor)
+
+This is the most important section - refer to TDD Section 6 for complete details.
+
+---
+
+## Task 4.6: Write System Prompt - Other Patterns & Instructions
+
+- [x] Add "Other Common Patterns" section (Button, Card, Profile Section)
+- [x] Add "Instructions" section with step-by-step process
+- [x] Emphasize metadata usage for semantic roles
+- [x] Add note about making reasonable design decisions for ambiguous requests
+- [x] Close with encouraging tone
+
+---
+
+## Task 4.7: Create Few-Shot Example - Login Form
+
+- [x] Create complete few-shot example conversation
+- [x] User message: "Create a login form"
+- [x] Assistant message with 8 tool calls (all create_ functions)
+- [x] Add tool response messages for all 8 calls
+- [x] Final assistant summary message
+- [x] Use Python dicts for all arguments (no json.dumps needed)
+- [x] Verify all positions, sizes, colors match system prompt example
+
+Refer to TDD Section 7 for complete few-shot example structure.
+
+---
+
+## Task 4.8: Testing & Refinement
+
+- [x] Print complete system prompt to verify formatting
+- [x] Count approximate token length of system prompt
+- [x] Count approximate token length of few-shot examples
+- [x] Verify structure of few-shot examples is valid
+- [x] Test loading prompts module without errors
+- [x] Document prompt token usage in comments
+
+---
+
+## Task 4.9: Documentation
+
+- [x] Add comments explaining prompt engineering decisions
+- [x] Document how to modify prompts for experimentation
+- [x] Note where examples can be added
+- [x] Add TODO comments for future pattern additions
+- [x] Update README with prompt customization guidance (skipped - will add when needed)
+
+---
+
+**PR Acceptance Criteria:**
+- [x] System prompt is comprehensive and well-structured
+- [x] All design principles documented clearly
+- [x] Login form pattern has complete step-by-step breakdown
+- [x] Few-shot example is valid and matches system prompt
+- [x] Prompts load without errors
+- [x] Token usage documented
+- [x] Clear instructions for future modifications
+
+**PR #4 Status: ✅ COMPLETE**
+
+---
+
+# tasks-5.md
+
+**PR #5: Agent Orchestrator & Tool Execution**
+
+This PR implements the core agent logic that processes user messages and executes tools.
+
+---
+
+## Task 5.1: Create Agent Orchestrator Module
+
+- [ ] Create `app/agent/orchestrator.py`
+- [ ] Import OpenAI client, tools, prompts
+- [ ] Create `CanvasAgent` class
+- [ ] Initialize with cached tool definitions in __init__
+- [ ] Add docstring explaining agent's role
+
+---
+
+## Task 5.2: Implement Message Processing Method
+
+- [ ] Create `process_message()` async method
+- [ ] Accept parameters: user_message, session_id, optional model override
+- [ ] Build message array: [system_prompt, few_shot_examples, user_message]
+- [ ] Call OpenAI API with retry wrapper (from openai_service)
+- [ ] Pass tools to OpenAI API call
+- [ ] Extract response and tool calls
+- [ ] Return structured response dict
+
+Example method signature:
+```python
+async def process_message(
+    self,
+    user_message: str,
+    session_id: str,
+    model: str = None
+) -> Dict:
+    """
+    Process user message and return actions
+    
+    Returns:
+        {
+            "response": str,
+            "actions": List[Dict],
+            "toolCalls": int,
+            "tokensUsed": int,
+            "model": str
+        }
+    """
+```
+
+---
+
+## Task 5.3: Tool Call Extraction
+
+- [ ] Extract tool_calls from OpenAI response
+- [ ] Handle case where no tool calls made
+- [ ] Parse each tool call: name, arguments
+- [ ] Validate arguments are valid JSON
+- [ ] Log each tool call for debugging
+- [ ] Handle malformed tool calls gracefully
+
+---
+
+## Task 5.4: Action Formatting
+
+- [ ] Convert tool calls to "actions" format for frontend
+- [ ] Each action: {"type": tool_name, "params": arguments_dict}
+- [ ] Store all actions in list
+- [ ] Handle tool execution errors (wrap in try/except)
+- [ ] Log action count
+
+Example action structure from TDD Section 4.
+
+---
+
+## Task 5.5: Response Construction
+
+- [ ] Extract assistant's text response (message.content)
+- [ ] Default to helpful message if content is None
+- [ ] Count total tool calls
+- [ ] Extract token usage from response
+- [ ] Include model used in response
+- [ ] Return complete response dict
+
+---
+
+## Task 5.6: Error Handling
+
+- [ ] Wrap entire process_message in try/except
+- [ ] Handle OpenAI API errors (already retried by this point)
+- [ ] Handle invalid tool arguments
+- [ ] Handle missing required parameters
+- [ ] Return error response in consistent format
+- [ ] Log all errors with context
+
+---
+
+## Task 5.7: Testing Orchestrator Locally
+
+- [ ] Create test script `test_agent.py` in project root
+- [ ] Import CanvasAgent
+- [ ] Test with: "Create a login form"
+- [ ] Test with: "Create a 3x3 grid of circles"
+- [ ] Test with: "Create a button"
+- [ ] Print actions for each test case
+- [ ] Verify tool calls are logical and complete
+- [ ] No Firebase integration needed yet
+
+---
+
+## Task 5.8: Documentation
+
+- [ ] Add docstrings to all methods
+- [ ] Document return value structure
+- [ ] Add usage examples in comments
+- [ ] Document error handling approach
+- [ ] Update README with agent testing instructions
+
+---
+
+**PR Acceptance Criteria:**
+- Agent processes messages and returns valid responses
+- Tool calls extracted correctly from OpenAI response
+- Actions formatted correctly for frontend
+- Error handling covers common failure cases
+- Local testing script works without Firebase
+- Token usage and model tracked in response
+- Login form test produces 8-10 tool calls with correct structure
+
+---
+
+# tasks-6.md
+
+**PR #6: API Route & Request Handling**
+
+This PR creates the single API endpoint and connects it to the agent.
+
+---
+
+## Task 6.1: Create Agent Route Module
+
+- [ ] Create `app/api/routes/agent.py`
+- [ ] Create APIRouter instance
+- [ ] Import CanvasAgent from orchestrator
+- [ ] Initialize agent instance (module level or per-request)
+- [ ] Add route docstrings
+
+---
+
+## Task 6.2: Define Request/Response Structures
+
+- [ ] Create `app/models/requests.py`
+- [ ] Define ChatRequest class/dict structure:
+  - sessionId: str (required)
+  - message: str (required)
+  - model: str (optional)
+- [ ] Create `app/models/responses.py`
+- [ ] Define ChatResponse structure (matches agent response)
+- [ ] Define ErrorResponse structure
+- [ ] Add type hints
+
+Example structures in TDD Section 4.
+
+---
+
+## Task 6.3: Implement POST /api/agent/chat Endpoint
+
+- [ ] Create POST endpoint handler
+- [ ] Accept ChatRequest body
+- [ ] Extract sessionId, message, optional model
+- [ ] Call agent.process_message()
+- [ ] Return agent response as JSON
+- [ ] Add appropriate HTTP status codes (200, 400, 500)
+
+---
+
+## Task 6.4: Request Validation
+
+- [ ] Validate sessionId is present and non-empty
+- [ ] Validate message is present and non-empty
+- [ ] Validate model (if provided) is in AVAILABLE_MODELS
+- [ ] Return 400 Bad Request for invalid input
+- [ ] Include helpful error messages
+
+---
+
+## Task 6.5: Error Handling
+
+- [ ] Wrap endpoint logic in try/except
+- [ ] Catch agent errors (OpenAI failures, etc.)
+- [ ] Return 500 Internal Server Error for unexpected errors
+- [ ] Return formatted error response
+- [ ] Log all errors with request context (sessionId, message excerpt)
+
+---
+
+## Task 6.6: Register Route in Main App
+
+- [ ] Import agent router in app/main.py
+- [ ] Register with prefix "/api/agent"
+- [ ] Add "agent" tag
+- [ ] Verify route shows up in auto-generated docs at /docs
+
+---
+
+## Task 6.7: Testing API Endpoint
+
+- [ ] Start FastAPI server locally
+- [ ] Test with curl: POST to /api/agent/chat
+- [ ] Test with valid login form request
+- [ ] Test with invalid request (missing sessionId)
+- [ ] Test with invalid model name
+- [ ] Verify responses match expected structure
+- [ ] Check logs for errors
+
+Example curl command:
+```bash
+curl -X POST http://localhost:8000/api/agent/chat \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId": "test-123", "message": "Create a login form"}'
+```
+
+---
+
+## Task 6.8: Documentation
+
+- [ ] Update README with API endpoint documentation
+- [ ] Document request/response formats
+- [ ] Add example curl commands
+- [ ] Document error responses
+- [ ] Add note about accessing interactive docs at /docs
+
+---
+
+**PR Acceptance Criteria:**
+- POST /api/agent/chat endpoint functional
+- Request validation working (rejects invalid input)
+- Agent responses returned correctly
+- Error handling covers common cases
+- Route registered and visible in /docs
+- curl tests pass successfully
+- Clear documentation of API usage
+
+---
+
+# tasks-7.md
+
+**PR #7: Firebase Integration**
+
+This PR adds Firestore integration for persisting canvas objects.
+
+---
+
+## Task 7.1: Firebase Admin SDK Setup
+
+- [ ] Add firebase-admin to requirements.txt (should already be there)
+- [ ] Download Firebase service account key JSON
+- [ ] Save as `serviceAccountKey.json` in project root (gitignored)
+- [ ] Add FIREBASE_CREDENTIALS_PATH to .env
+- [ ] Update .env.example with Firebase variable
+
+---
+
+## Task 7.2: Create Firebase Service Module
+
+- [ ] Create `app/services/firebase_service.py`
+- [ ] Import firebase_admin and firestore
+- [ ] Create `initialize_firebase()` function
+- [ ] Load credentials from path in config
+- [ ] Initialize Firebase app
+- [ ] Get Firestore client instance
+- [ ] Handle initialization errors gracefully
+
+---
+
+## Task 7.3: Initialize Firebase on Startup
+
+- [ ] Import firebase_service in app/main.py
+- [ ] Call initialize_firebase() in startup event
+- [ ] Add try/except for initialization errors
+- [ ] Log successful initialization
+- [ ] Update health check to include Firebase status
+
+---
+
+## Task 7.4: Implement Firestore Write Function
+
+- [ ] Create `write_canvas_actions_to_firestore()` async function
+- [ ] Accept parameters: session_id, actions
+- [ ] Get reference to /canvasSessions/{sessionId}/objects collection
+- [ ] Use batch write for efficiency
+- [ ] For each action, create document with:
+  - type: action type (without "create_" prefix)
+  - params: action parameters
+  - createdAt: SERVER_TIMESTAMP
+- [ ] Commit batch
+- [ ] Return success status with count
+
+Refer to TDD Section 11 for Firestore structure and code example.
+
+---
+
+## Task 7.5: Integrate Firestore Writes into Agent
+
+- [ ] Import firebase_service in orchestrator.py
+- [ ] After actions generated, call write_canvas_actions_to_firestore()
+- [ ] Pass session_id and actions
+- [ ] Handle Firestore write errors (log but don't fail request)
+- [ ] Add Firestore write status to response (optional)
+
+---
+
+## Task 7.6: Error Handling
+
+- [ ] Handle missing service account key file
+- [ ] Handle invalid credentials
+- [ ] Handle Firestore permission errors
+- [ ] Handle network errors during write
+- [ ] Log all Firebase errors with context
+- [ ] Ensure agent still returns response even if Firebase write fails
+
+---
+
+## Task 7.7: Testing Firestore Integration
+
+- [ ] Test agent with real sessionId
+- [ ] Verify objects written to Firestore
+- [ ] Check Firestore console to see created documents
+- [ ] Test with multiple actions (login form)
+- [ ] Verify batch write commits all objects
+- [ ] Test error cases (invalid sessionId format, etc.)
+
+---
+
+## Task 7.8: Documentation
+
+- [ ] Document Firestore setup process in README
+- [ ] Explain how to get service account key
+- [ ] Document Firestore data structure
+- [ ] Add troubleshooting for common Firebase errors
+- [ ] Document how to view data in Firestore console
+
+---
+
+**PR Acceptance Criteria:**
+- Firebase Admin SDK initialized successfully
+- Firestore client accessible
+- Canvas actions written to Firestore correctly
+- Batch writes commit atomically
+- Error handling prevents crashes
+- Health check includes Firebase status
+- Documentation covers setup and troubleshooting
+- Can verify data in Firestore console after test
+
+---
+
+# tasks-8.md
+
+**PR #8: Testing, Refinement & Documentation**
+
+This PR focuses on comprehensive testing, performance measurement, and final documentation.
+
+---
+
+## Task 8.1: Create Comprehensive Test Suite
+
+- [ ] Create `tests/` directory
+- [ ] Create test for each tool definition (valid JSON)
+- [ ] Create test for system prompt (loads without error)
+- [ ] Create test for agent orchestrator (mock OpenAI response)
+- [ ] Create test for API endpoint (mock agent)
+- [ ] Use pytest or unittest
+
+---
+
+## Task 8.2: Integration Testing Script
+
+- [ ] Create `integration_test.py` in project root
+- [ ] Test complete flow: API request → agent → Firestore
+- [ ] Test multiple UI patterns:
+  - Login form
+  - Button
+  - 3x3 grid of circles
+  - Card with title and text
+- [ ] Log results for each test
+- [ ] Measure and log token usage
+- [ ] Measure and log response latency
+
+---
+
+## Task 8.3: Model Comparison Testing
+
+- [ ] Create `compare_models.py` script
+- [ ] Test same prompt with all 4 models:
+  - gpt-4-turbo
+  - gpt-4o
+  - gpt-4o-mini
+  - gpt-4
+- [ ] Log for each model:
+  - Tool calls generated
+  - Token usage
+  - Response time
+  - Estimated cost
+  - Quality assessment (manual review)
+- [ ] Document findings in results file
+
+Refer to TDD Section 9 for model comparison approach.
+
+---
+
+## Task 8.4: Performance Optimization
+
+- [ ] Profile agent response time (identify bottlenecks)
+- [ ] Verify tool definitions are cached (not recreated each request)
+- [ ] Check for unnecessary async/await overhead
+- [ ] Optimize Firestore batch writes if needed
+- [ ] Measure baseline performance metrics
+
+---
+
+## Task 8.5: Error Handling Verification
+
+- [ ] Test with invalid OpenAI API key (expect retry then error)
+- [ ] Test with missing Firebase credentials (expect graceful failure)
+- [ ] Test with malformed request body (expect 400)
+- [ ] Test with OpenAI rate limit (expect retry then success or error)
+- [ ] Verify all errors logged appropriately
+- [ ] Verify error responses follow consistent format
+
+---
+
+## Task 8.6: Logging Enhancements
+
+- [ ] Add request ID to all logs for tracing
+- [ ] Log sessionId with all agent operations
+- [ ] Log token usage for monitoring costs
+- [ ] Add performance timing logs (start, end, duration)
+- [ ] Ensure no sensitive data logged (API keys, etc.)
+
+---
+
+## Task 8.7: API Documentation Polish
+
+- [ ] Verify OpenAPI docs at /docs are complete
+- [ ] Add descriptions to all endpoints
+- [ ] Add examples for request/response bodies
+- [ ] Document all error codes
+- [ ] Test interactive docs (try requests from /docs page)
+
+---
+
+## Task 8.8: README Completion
+
+- [ ] Complete all sections of README
+- [ ] Add architecture diagram (ASCII art or link to image)
+- [ ] Document all environment variables
+- [ ] Add setup instructions (step-by-step)
+- [ ] Add testing instructions
+- [ ] Add deployment notes (for future)
+- [ ] Add troubleshooting section
+- [ ] Add FAQ section
+
+---
+
+## Task 8.9: Code Quality
+
+- [ ] Add type hints to all functions
+- [ ] Add docstrings to all modules, classes, functions
+- [ ] Remove any commented-out code
+- [ ] Format code consistently (consider using black or ruff)
+- [ ] Check for unused imports
+- [ ] Verify all TODOs are documented or resolved
+
+---
+
+## Task 8.10: Final Testing
+
+- [ ] Run full test suite
+- [ ] Test with frontend Canvas app (if available)
+- [ ] Verify login form renders correctly
+- [ ] Test multiple concurrent requests
+- [ ] Test long-running session with many requests
+- [ ] Measure success rate (% of requests that work correctly)
+
+---
+
+## Task 8.11: Performance Metrics Documentation
+
+- [ ] Document baseline metrics:
+  - Average response time
+  - Average token usage per request type
+  - Tool call efficiency (calls per UI pattern)
+  - Success rate
+- [ ] Compare to old Firebase Functions implementation
+- [ ] Document in README or separate METRICS.md file
+
+---
+
+## Task 8.12: Handoff Documentation
+
+- [ ] Create DEPLOYMENT.md with deployment instructions (for future)
+- [ ] Create CONTRIBUTING.md if others will contribute
+- [ ] Document how to add new tools
+- [ ] Document how to modify prompts
+- [ ] Document how to add new UI patterns to few-shot examples
+- [ ] Add contact info or support channels
+
+---
+
+**PR Acceptance Criteria:**
+- All tests pass
+- Integration tests successful for all UI patterns
+- Model comparison results documented
+- Performance metrics measured and documented
+- Error handling verified for all edge cases
+- API documentation complete and accurate
+- README comprehensive with clear setup instructions
+- Code quality high (type hints, docstrings, formatted)
+- Frontend integration tested (if available)
+- Handoff documentation complete
+
+---
+
+**END OF TASK FILES**
+
+Each task file represents a complete PR that can be worked on independently (after dependencies are met). The tasks are granular with checkboxes for tracking progress.
