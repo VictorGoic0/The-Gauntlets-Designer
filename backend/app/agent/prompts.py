@@ -74,8 +74,16 @@ SYSTEM_PROMPT = """You are an expert UI designer for a collaborative canvas appl
 When users request UI components, understand their intent and create polished interfaces following modern design principles. Structure layouts logically (containers first, then content, then interactive elements). Use the patterns above as starting points but adapt to specific needs. Make thoughtful design choices for ambiguous requests based on best practices."""
 
 # Few-shot example: Login form creation
-# This demonstrates the complete pattern for creating a login form with all 8 components
+# This demonstrates the complete pattern for creating a login form with all components
 # Arguments are stored as Python dicts and will be converted to JSON strings when used
+#
+# IMPORTANT COLOR CONTRAST RULE: The container (outer rectangle) must have a different color
+# than all elements inside it. In this example:
+# - Container: white (#ffffff) - clearly different from all contents
+# - Title/subheading: light blue (#60A5FA) - different from white container
+# - Input fields: darker gray (#e8e8e8) - different from white container for better contrast
+# - Button: blue (#007bff) - different from white container
+# This ensures elements don't blend into their containers and remain visible.
 FEW_SHOT_EXAMPLES = [
     {
         "role": "user",
@@ -94,19 +102,12 @@ FEW_SHOT_EXAMPLES = [
                         "x": 400,
                         "y": 200,
                         "width": 400,
-                        "height": 380,
+                        "height": 450,
+                        # Container: white - must be different from all contents inside
                         "fill": "#ffffff",
                         "stroke": "#e0e0e0",
                         "strokeWidth": 1,
-                        "cornerRadius": 8,
-                        # Future enhancement examples (commented out):
-                        # "boxShadow": {
-                        #     "offsetX": 0,
-                        #     "offsetY": 4,
-                        #     "blur": 12,
-                        #     "color": "rgba(0,0,0,0.1)"
-                        # },
-                        # "metadata": {"role": "container", "name": "login-form-container"}
+                        "cornerRadius": 8
                     }
                 }
             },
@@ -114,15 +115,16 @@ FEW_SHOT_EXAMPLES = [
                 "id": "call_2",
                 "type": "function",
                 "function": {
-                    "name": "create_text",
+                    "name": "create_square",
                     "arguments": {
                         "x": 570,
                         "y": 230,
-                        "text": "Login",
-                        "fontSize": 24,
-                        "fontWeight": "bold",
-                        "fill": "#333333",
-                        "align": "center"
+                        "size": 40,
+                        # Blue icon square - different from white container
+                        "fill": "#007bff",
+                        "stroke": "#0056b3",
+                        "strokeWidth": 1,
+                        "cornerRadius": 4
                     }
                 }
             },
@@ -132,11 +134,14 @@ FEW_SHOT_EXAMPLES = [
                 "function": {
                     "name": "create_text",
                     "arguments": {
-                        "x": 430,
-                        "y": 280,
-                        "text": "Username",
-                        "fontSize": 14,
-                        "fill": "#666666"
+                        "x": 600,
+                        "y": 290,
+                        "text": "Welcome Back",
+                        "fontSize": 28,
+                        "fontWeight": "bold",
+                        # Light blue title - different from white container
+                        "fill": "#60A5FA",
+                        "align": "center"
                     }
                 }
             },
@@ -144,16 +149,15 @@ FEW_SHOT_EXAMPLES = [
                 "id": "call_4",
                 "type": "function",
                 "function": {
-                    "name": "create_rectangle",
+                    "name": "create_text",
                     "arguments": {
-                        "x": 430,
-                        "y": 290,
-                        "width": 340,
-                        "height": 45,
-                        "fill": "#f5f5f5",
-                        "stroke": "#cccccc",
-                        "strokeWidth": 1,
-                        "cornerRadius": 4
+                        "x": 600,
+                        "y": 320,
+                        "text": "Sign in to your account",
+                        "fontSize": 14,
+                        # Light blue subheading - different from white container
+                        "fill": "#60A5FA",
+                        "align": "center"
                     }
                 }
             },
@@ -164,8 +168,8 @@ FEW_SHOT_EXAMPLES = [
                     "name": "create_text",
                     "arguments": {
                         "x": 430,
-                        "y": 355,
-                        "text": "Password",
+                        "y": 370,
+                        "text": "Username",
                         "fontSize": 14,
                         "fill": "#666666"
                     }
@@ -178,10 +182,11 @@ FEW_SHOT_EXAMPLES = [
                     "name": "create_rectangle",
                     "arguments": {
                         "x": 430,
-                        "y": 365,
+                        "y": 390,
                         "width": 340,
                         "height": 45,
-                        "fill": "#f5f5f5",
+                        # Input field: darker gray - different from white container
+                        "fill": "#e8e8e8",
                         "stroke": "#cccccc",
                         "strokeWidth": 1,
                         "cornerRadius": 4
@@ -189,27 +194,32 @@ FEW_SHOT_EXAMPLES = [
                 }
             },
             {
+                "id": "call_6a",
+                "type": "function",
+                "function": {
+                    "name": "create_text",
+                    "arguments": {
+                        "x": 445,
+                        "y": 412,
+                        "text": "Enter your username",
+                        "fontSize": 14,
+                        # Placeholder text in light gray
+                        "fill": "#999999",
+                        "align": "left"
+                    }
+                }
+            },
+            {
                 "id": "call_7",
                 "type": "function",
                 "function": {
-                    "name": "create_rectangle",
+                    "name": "create_text",
                     "arguments": {
                         "x": 430,
-                        "y": 435,
-                        "width": 340,
-                        "height": 45,
-                        "fill": "#007bff",
-                        "stroke": "#0056b3",
-                        "strokeWidth": 1,
-                        "cornerRadius": 4,
-                        # Future enhancement examples (commented out):
-                        # "boxShadow": {
-                        #     "offsetX": 0,
-                        #     "offsetY": 2,
-                        #     "blur": 4,
-                        #     "color": "rgba(0,0,0,0.1)"
-                        # },
-                        # "metadata": {"role": "button", "name": "submit-button"}
+                        "y": 455,
+                        "text": "Password",
+                        "fontSize": 14,
+                        "fill": "#666666"
                     }
                 }
             },
@@ -217,14 +227,82 @@ FEW_SHOT_EXAMPLES = [
                 "id": "call_8",
                 "type": "function",
                 "function": {
+                    "name": "create_rectangle",
+                    "arguments": {
+                        "x": 430,
+                        "y": 475,
+                        "width": 340,
+                        "height": 45,
+                        # Input field: darker gray - different from white container
+                        "fill": "#e8e8e8",
+                        "stroke": "#cccccc",
+                        "strokeWidth": 1,
+                        "cornerRadius": 4
+                    }
+                }
+            },
+            {
+                "id": "call_8a",
+                "type": "function",
+                "function": {
                     "name": "create_text",
                     "arguments": {
-                        "x": 570,
-                        "y": 460,
-                        "text": "Login",
+                        "x": 445,
+                        "y": 497,
+                        "text": "Enter your password",
+                        "fontSize": 14,
+                        # Placeholder text in light gray
+                        "fill": "#999999",
+                        "align": "left"
+                    }
+                }
+            },
+            {
+                "id": "call_9",
+                "type": "function",
+                "function": {
+                    "name": "create_rectangle",
+                    "arguments": {
+                        "x": 430,
+                        "y": 545,
+                        "width": 340,
+                        "height": 45,
+                        # Button: blue - different from white container, full width matching inputs
+                        "fill": "#007bff",
+                        "stroke": "#0056b3",
+                        "strokeWidth": 1,
+                        "cornerRadius": 4
+                    }
+                }
+            },
+            {
+                "id": "call_10",
+                "type": "function",
+                "function": {
+                    "name": "create_text",
+                    "arguments": {
+                        "x": 600,
+                        "y": 570,
+                        "text": "Sign In",
                         "fontSize": 16,
                         "fontWeight": "bold",
                         "fill": "#ffffff",
+                        "align": "center"
+                    }
+                }
+            },
+            {
+                "id": "call_11",
+                "type": "function",
+                "function": {
+                    "name": "create_text",
+                    "arguments": {
+                        "x": 600,
+                        "y": 610,
+                        "text": "Don't have an account? Register",
+                        "fontSize": 14,
+                        # Register link text in blue - different from white container
+                        "fill": "#007bff",
                         "align": "center"
                     }
                 }
@@ -239,17 +317,17 @@ FEW_SHOT_EXAMPLES = [
     {
         "role": "tool",
         "tool_call_id": "call_2",
-        "content": {"success": True, "objectId": "text_001"}
+        "content": {"success": True, "objectId": "square_001"}
     },
     {
         "role": "tool",
         "tool_call_id": "call_3",
-        "content": {"success": True, "objectId": "text_002"}
+        "content": {"success": True, "objectId": "text_001"}
     },
     {
         "role": "tool",
         "tool_call_id": "call_4",
-        "content": {"success": True, "objectId": "rect_002"}
+        "content": {"success": True, "objectId": "text_002"}
     },
     {
         "role": "tool",
@@ -259,17 +337,42 @@ FEW_SHOT_EXAMPLES = [
     {
         "role": "tool",
         "tool_call_id": "call_6",
-        "content": {"success": True, "objectId": "rect_003"}
+        "content": {"success": True, "objectId": "rect_002"}
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_6a",
+        "content": {"success": True, "objectId": "text_003a"}
     },
     {
         "role": "tool",
         "tool_call_id": "call_7",
-        "content": {"success": True, "objectId": "rect_004"}
+        "content": {"success": True, "objectId": "text_004"}
     },
     {
         "role": "tool",
         "tool_call_id": "call_8",
-        "content": {"success": True, "objectId": "text_004"}
+        "content": {"success": True, "objectId": "rect_003"}
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_8a",
+        "content": {"success": True, "objectId": "text_004a"}
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_9",
+        "content": {"success": True, "objectId": "rect_004"}
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_10",
+        "content": {"success": True, "objectId": "text_005"}
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "call_11",
+        "content": {"success": True, "objectId": "text_006"}
     },
     {
         "role": "assistant",

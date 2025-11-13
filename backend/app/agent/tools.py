@@ -27,7 +27,7 @@ TOOL_DEFINITIONS = [
                     "fill": {
                         "type": "string",
                         "description": "Fill color (hex or rgba)",
-                        "default": "#ffffff"
+                        "default": "#007bff"
                     },
                     "stroke": {
                         "type": "string",
@@ -87,7 +87,7 @@ TOOL_DEFINITIONS = [
                     "fill": {
                         "type": "string",
                         "description": "Fill color",
-                        "default": "#ffffff"
+                        "default": "#007bff"
                     },
                     "stroke": {
                         "type": "string",
@@ -147,7 +147,7 @@ TOOL_DEFINITIONS = [
                     "fill": {
                         "type": "string",
                         "description": "Fill color",
-                        "default": "#ffffff"
+                        "default": "#ff0000"
                     },
                     "stroke": {
                         "type": "string",
