@@ -2,7 +2,13 @@ import { useAuth } from "../../hooks/useAuth";
 import { signOutUser } from "../../lib/firebase";
 import ConnectionStatus from "./ConnectionStatus";
 import Button from "../design-system/Button";
-import { colors, spacing, typography, shadows, borderRadius } from "../../styles/tokens";
+import {
+  colors,
+  spacing,
+  typography,
+  shadows,
+  borderRadius,
+} from "../../styles/tokens";
 
 // Static styles - defined outside component for performance
 const headerStyle = {
@@ -153,7 +159,7 @@ export default function Header({ onOpenAI }) {
 
           {/* Title */}
           <div style={titleContainerStyle}>
-            <h1 style={titleStyle}>Goico's Artist</h1>
+            <h1 style={titleStyle}>Black Canvas</h1>
             <span style={subtitleStyle}>Collaborative Canvas</span>
           </div>
         </div>
@@ -188,9 +194,9 @@ export default function Header({ onOpenAI }) {
           {/* Info Group: Connection + User */}
           <div style={infoGroupStyle}>
             <ConnectionStatus />
-            
+
             <div style={dividerStyle} />
-            
+
             <span style={userNameStyle}>
               {currentUser?.displayName || "User"}
             </span>
@@ -207,4 +213,3 @@ export default function Header({ onOpenAI }) {
     </header>
   );
 }
-
