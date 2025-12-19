@@ -1,6 +1,6 @@
 # The Gauntlet's Designer - Backend API
 
-FastAPI backend for the AI-powered design agent.
+FastAPI backend for the AI-powered design agent with LangChain integration.
 
 ## Setup
 
@@ -9,28 +9,32 @@ FastAPI backend for the AI-powered design agent.
 - Python 3.11+
 - OpenAI API key
 - Firebase credentials (optional for local development)
+- LangChain and LangChain-OpenAI packages
 
 ### Installation
 
 1. Create and activate virtual environment:
+
 ```bash
 python3.11 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 2. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. Create `.env` file in the `backend/` directory:
+
 ```bash
 OPENAI_API_KEY=your_key_here
 FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
 ```
 
 4. **Get Firebase Service Account Key** (for Firestore writes):
-   
+
    - Go to [Firebase Console](https://console.firebase.google.com/)
    - Select your project
    - Click the gear icon ⚙️ → **Project settings**
@@ -40,7 +44,7 @@ FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
    - A JSON file will download automatically
    - Save this file as `serviceAccountKey.json` in the `backend/` directory
    - **Important**: This file contains sensitive credentials - it's already in `.gitignore`
-   
+
    The downloaded file will have all the fields you need (type, project_id, private_key_id, private_key, client_email, client_id).
 
 ## Running the Server
@@ -48,11 +52,13 @@ FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
 ### Local Development
 
 Use the provided script:
+
 ```bash
 python run_local.py
 ```
 
 Or directly with uvicorn:
+
 ```bash
 uvicorn app.main:app --reload
 ```
@@ -68,6 +74,7 @@ The server will start at `http://localhost:8000`
 Returns server health status and OpenAI connection status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -80,35 +87,27 @@ Returns server health status and OpenAI connection status.
 
 **POST** `/api/agent/chat`
 
-Process a natural language request and generate actions to create UI components on the canvas.
+Process a natural language request and execute tools to create UI components on the canvas using LangChain.
+
+**Note**: Tools are executed automatically by LangChain and write directly to Firestore.
 
 **Request:**
+
 ```json
 {
   "message": "Create a login form",
-  "model": "gpt-4-turbo"  // Optional, defaults to configured default
+  "model": "gpt-4-turbo" // Optional, defaults to gpt-4-turbo
 }
 ```
 
 **Response:**
+
 ```json
 {
   "response": "I've created a login form for you...",
-  "actions": [
-    {
-      "type": "rectangle",
-      "params": {
-        "x": 100,
-        "y": 100,
-        "width": 300,
-        "height": 200,
-        "fill": "#FFFFFF",
-        "cornerRadius": 8
-      }
-    }
-  ],
+  "actions": [], // Empty - tools execute directly via LangChain
   "toolCalls": 8,
-  "tokensUsed": 1250,
+  "tokensUsed": 0, // Token usage not exposed by LangChain
   "model": "gpt-4-turbo"
 }
 ```
@@ -119,6 +118,7 @@ Process a natural language request and generate actions to create UI components 
 - **500 Internal Server Error**: Agent processing error or unexpected server error
 
 **Example curl command:**
+
 ```bash
 curl -X POST http://localhost:8000/api/agent/chat \
   -H "Content-Type: application/json" \
@@ -130,6 +130,7 @@ curl -X POST http://localhost:8000/api/agent/chat \
 **Interactive API Documentation:**
 
 FastAPI automatically generates interactive API documentation at:
+
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
@@ -149,24 +150,69 @@ The following settings are hardcoded in `app/config.py` for easy testing:
 - `MAX_RETRIES`: `3` - Maximum number of retry attempts
 - `LOG_LEVEL`: `"INFO"` - Logging level
 
-## OpenAI Integration
+## LangChain Integration
 
-### Available Models
+### Architecture
 
-The following models are configured and available:
+The backend uses LangChain for AI agent orchestration:
 
-- `gpt-4-turbo`: Best balance of cost and quality (recommended)
-- `gpt-4o`: Faster, cheaper, good quality (recommended)
-- `gpt-4o-mini`: Cheapest option for testing
-- `gpt-4`: Highest quality, most expensive
+- **Agent**: Created with `create_agent()` from LangChain
+- **Tools**: Defined using `@tool` decorator
+- **Model**: OpenAI GPT-4-Turbo (default)
+- **Middleware**: Error handling for tool execution
 
-### Retry Logic
+### Available Tools
 
-The OpenAI service includes automatic retry logic with exponential backoff:
+All tools write directly to Firestore and Realtime DB:
 
-- **Retry conditions**: RateLimitError, APIError, APITimeoutError
-- **Max attempts**: 3 (hardcoded)
-- **Backoff strategy**: 2s, 4s, 8s (exponential)
+1. **create_rectangle**: Create rectangle with position, size, fill, rotation
+2. **create_circle**: Create circle with position, radius, fill, rotation
+3. **create_text**: Create text with position, content, fontSize, fill
+4. **move_object**: Move existing object to new position
+5. **resize_object**: Resize existing object (width/height or radius)
+6. **change_color**: Change fill color of existing object
+7. **rotate_object**: Rotate existing object by degrees
+
+### Adding New Tools
+
+To add a new tool:
+
+1. Define the tool in `app/agent/langchain_tools.py` using `@tool` decorator
+2. Add comprehensive docstring (LangChain uses this for prompts)
+3. Implement Firebase writes (Firestore + Realtime DB)
+4. Add error handling
+5. Return structured result: `{"success": bool, "objectId": str, "message": str}`
+6. Add tool to `get_langchain_tools()` function
+7. Update system prompt in `app/agent/prompts.py` to document the new tool
+
+Example:
+
+```python
+from langchain.tools import tool
+
+@tool
+def create_triangle(x: float, y: float, size: float = 50) -> Dict[str, Any]:
+    """Create a triangle shape on the canvas.
+
+    Args:
+        x: X position (0-5000)
+        y: Y position (0-5000)
+        size: Size in pixels (default: 50)
+
+    Returns:
+        Dictionary with success status, objectId, and message
+    """
+    # Implementation here
+    pass
+```
+
+### Error Handling
+
+LangChain middleware handles tool execution errors:
+
+- Catches exceptions during tool execution
+- Returns `ToolMessage` with error details
+- Agent can retry or provide alternative solution
 
 ### Error Handling
 
@@ -192,6 +238,7 @@ python test_openai.py
 ```
 
 This will test:
+
 - Model configuration
 - OpenAI connection
 - Basic completion
@@ -206,6 +253,7 @@ python test_agent.py
 ```
 
 This will test:
+
 - Agent message processing
 - Tool call extraction
 - Action formatting
@@ -213,6 +261,7 @@ This will test:
 - Error handling
 
 Test cases include:
+
 - Login form creation (should produce 8-10 tool calls)
 - Simple button creation
 - Grid of circles creation
@@ -230,6 +279,7 @@ python test_api_endpoint.py
 ```
 
 This will test:
+
 - Valid request with login form
 - Missing message validation
 - Empty message validation
@@ -278,6 +328,7 @@ python compare_models.py "Create a login form"
 ```
 
 This will test all available models and provide:
+
 - Response time comparison
 - Token usage comparison
 - Cost estimation
@@ -292,6 +343,7 @@ python test_error_handling.py
 ```
 
 This tests:
+
 - Invalid OpenAI API key
 - Missing Firebase credentials
 - Malformed tool calls
@@ -301,29 +353,33 @@ This tests:
 ## Project Structure
 
 ```
-backend/
+api/
 ├── app/
 │   ├── agent/
-│   │   ├── orchestrator.py   # Agent orchestrator (PR #5)
-│   │   ├── prompts.py        # System prompt and few-shot examples
-│   │   └── tools.py          # Tool definitions for OpenAI
+│   │   ├── orchestrator.py      # LangChain agent orchestrator (PR #21)
+│   │   ├── prompts.py           # System prompt and few-shot examples
+│   │   ├── langchain_tools.py   # LangChain tool definitions (PR #21)
+│   │   └── tools.py             # Legacy OpenAI tool definitions
 │   ├── api/
 │   │   └── routes/
-│   │       ├── health.py      # Health check endpoint
-│   │       └── agent.py       # Agent chat endpoint
+│   │       ├── health.py         # Health check endpoint
+│   │       └── agent.py          # Agent chat endpoint
 │   ├── models/
-│   │   └── models.py          # Model configuration
+│   │   ├── models.py             # Model configuration
+│   │   ├── requests.py           # Request models
+│   │   └── responses.py          # Response models
 │   ├── services/
-│   │   └── openai_service.py  # OpenAI integration with retry logic
+│   │   ├── openai_service.py     # Legacy OpenAI service
+│   │   └── firebase_service.py   # Firebase/Firestore integration
 │   ├── utils/
-│   │   └── logger.py          # Logging configuration
-│   ├── config.py              # Application configuration
-│   └── main.py                # FastAPI app entry point
-├── logs/                      # Application logs
-├── requirements.txt           # Python dependencies
-├── run_local.py              # Local development script
-├── test_openai.py            # OpenAI integration tests
-└── test_agent.py             # Agent orchestrator tests
+│   │   └── logger.py             # Logging configuration
+│   ├── config.py                 # Application configuration
+│   └── main.py                   # FastAPI app entry point
+├── logs/                         # Application logs
+├── requirements.txt              # Python dependencies (includes LangChain)
+├── langchain-examples.md         # LangChain API examples
+└── scripts/
+    └── run_local.py              # Local development script
 ```
 
 ## Development
@@ -331,16 +387,19 @@ backend/
 ### Logging
 
 Logs are written to:
+
 - Console (INFO level and above)
 - `logs/app.log` file (all levels)
 
 Logs include:
+
 - Request IDs for tracing requests across the system
 - Timing information for performance monitoring
 - Token usage for cost tracking
 - Error details with stack traces
 
 Example log entry:
+
 ```
 2024-01-15 10:30:45 - app - INFO - [a1b2c3d4] - Processing chat request. Model: gpt-4-turbo, Message length: 20, Request ID: a1b2c3d4
 2024-01-15 10:30:46 - app - INFO - [a1b2c3d4] - Completed openai_api_call in 1.234s
@@ -363,6 +422,7 @@ The backend includes several performance optimizations:
 ### Code Quality
 
 The codebase follows these quality standards:
+
 - Type hints on all functions
 - Comprehensive docstrings
 - Consistent error handling
@@ -376,18 +436,21 @@ The codebase follows these quality standards:
 Typical performance metrics for common requests:
 
 **Login Form Creation:**
+
 - Response time: 2-4 seconds
 - Token usage: 1,200-1,500 tokens
 - Tool calls: 8-10
 - Estimated cost (gpt-4-turbo): $0.015-0.020
 
 **Simple Button:**
+
 - Response time: 1-2 seconds
 - Token usage: 500-800 tokens
 - Tool calls: 2-3
 - Estimated cost (gpt-4-turbo): $0.006-0.010
 
 **Grid of Circles (3x3):**
+
 - Response time: 2-3 seconds
 - Token usage: 800-1,200 tokens
 - Tool calls: 9
@@ -396,6 +459,7 @@ Typical performance metrics for common requests:
 ### Model Comparison
 
 See `compare_models.py` for detailed model comparison. Generally:
+
 - **gpt-4o**: Fastest, cheapest, good quality (recommended for production)
 - **gpt-4-turbo**: Best balance of cost and quality (current default)
 - **gpt-4o-mini**: Cheapest, good for testing
@@ -455,7 +519,7 @@ A: Yes, specify the model in the request body or change `DEFAULT_MODEL` in `app/
 A: No, Firebase is optional. The agent will return actions even if Firebase writes fail.
 
 **Q: How do I add a new tool?**
-A: Add the tool definition to `app/agent/tools.py` and update the system prompt in `app/agent/prompts.py`.
+A: Add the tool to `app/agent/langchain_tools.py` using the `@tool` decorator, then update the system prompt in `app/agent/prompts.py`. See "Adding New Tools" section above.
 
 **Q: How do I modify the system prompt?**
 A: Edit `SYSTEM_PROMPT` in `app/agent/prompts.py`. See comments in that file for guidance.
@@ -464,8 +528,13 @@ A: Edit `SYSTEM_PROMPT` in `app/agent/prompts.py`. See comments in that file for
 A: Add a few-shot example to `FEW_SHOT_EXAMPLES` in `app/agent/prompts.py`.
 
 **Q: What's the difference between tool calls and actions?**
-A: Tool calls are what OpenAI generates (with "create_" prefix). Actions are formatted for the frontend (without prefix).
+A: With LangChain, tools execute directly and write to Firestore. The `actions` field is empty in responses since tools handle execution automatically.
+
+**Q: Why is tokensUsed always 0?**
+A: LangChain doesn't expose token usage easily. This will be addressed in a future update.
+
+**Q: How do I test LangChain tools?**
+A: Tools write directly to Firestore, so you need Firebase credentials. Test by calling the `/api/agent/chat` endpoint and checking Firestore for created objects.
 
 **Q: How do I trace a specific request?**
 A: Look for the request ID in logs. Each request gets a unique 8-character ID that appears in all related log entries.
-

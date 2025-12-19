@@ -2,12 +2,12 @@
 Agent orchestrator for processing user messages and executing tools.
 
 This module contains the CanvasAgent class that:
-- Processes user messages through OpenAI API
-- Extracts tool calls from responses
-- Formats actions for frontend consumption
+- Processes user messages through LangChain agent
+- Executes tool calls automatically via LangChain
+- Formats responses for frontend consumption
 - Handles errors gracefully
 
-The agent uses cached tool definitions and prompts for performance.
+The agent uses LangChain's create_agent() with tool definitions and system prompt.
 
 Usage Example:
     ```python
@@ -35,199 +35,94 @@ Error Handling:
 import json
 from typing import Dict, List, Any, Optional
 
-from app.agent.tools import get_tool_definitions
-from app.agent.prompts import SYSTEM_PROMPT, FEW_SHOT_EXAMPLES
-from app.services.openai_service import call_openai_with_retry
-from app.services.firebase_service import write_canvas_actions_to_firestore, is_firebase_initialized
+from langchain.agents import create_agent
+from langchain.agents.middleware import wrap_tool_call
+from langchain.messages import ToolMessage
+
+from app.agent.langchain_tools import get_langchain_tools
+from app.agent.prompts import SYSTEM_PROMPT
 from app.config import settings
 from app.utils.logger import logger, TimingContext, get_request_id
 
 
 class CanvasAgent:
     """
-    AI agent for creating canvas UI components.
+    AI agent for creating canvas UI components using LangChain.
     
-    This agent processes natural language requests and generates tool calls
-    to create rectangles, squares, circles, lines, and text elements on a canvas.
+    This agent processes natural language requests and executes tool calls
+    to create rectangles, circles, and text elements on a canvas.
     
     The agent uses:
+    - LangChain's create_agent() for orchestration
     - System prompt with design principles and patterns
-    - Few-shot examples demonstrating correct tool usage
-    - Cached tool definitions for performance
-    - Retry logic for OpenAI API calls
+    - Tool definitions with @tool decorator
+    - Error handling middleware for tool execution
     """
     
     def __init__(self):
-        """Initialize the agent with cached tool definitions."""
-        self.tool_definitions = get_tool_definitions()
-        logger.info(f"CanvasAgent initialized with {len(self.tool_definitions)} tools")
+        """Initialize the LangChain agent with tools and middleware."""
+        self.tools = get_langchain_tools()
+        
+        # Create error handling middleware
+        @wrap_tool_call
+        def handle_tool_errors(request, handler):
+            """Handle tool execution errors with custom messages."""
+            try:
+                return handler(request)
+            except Exception as e:
+                return ToolMessage(
+                    content=f"Tool error: Please check your input and try again. ({str(e)})",
+                    tool_call_id=request.tool_call["id"]
+                )
+        
+        # Create LangChain agent with tools and middleware
+        self.agent = create_agent(
+            model="gpt-4-turbo",
+            tools=self.tools,
+            system_prompt=SYSTEM_PROMPT,
+            middleware=[handle_tool_errors]
+        )
+        
+        logger.info(f"CanvasAgent initialized with {len(self.tools)} LangChain tools")
     
-    def _build_messages(
+    def _extract_tool_calls_from_messages(
         self,
-        user_message: str
+        messages: List[Any]
     ) -> List[Dict[str, Any]]:
         """
-        Build message array for OpenAI API.
+        Extract tool calls from LangChain agent messages.
         
-        Structure:
-        1. System message with prompt
-        2. Few-shot examples (user, assistant with tool calls, tool responses, final assistant)
-        3. Current user message
+        LangChain agent returns a list of messages including tool calls and tool responses.
+        We need to extract the tool calls to count them and format for frontend.
         
         Args:
-            user_message: The user's request
-            
-        Returns:
-            List of message dictionaries formatted for OpenAI API
-        """
-        messages = []
-        
-        # Add system prompt
-        messages.append({
-            "role": "system",
-            "content": SYSTEM_PROMPT
-        })
-        
-        # Add few-shot examples
-        # Convert tool call arguments from Python dicts to JSON strings
-        for example in FEW_SHOT_EXAMPLES:
-            example_copy = example.copy()
-            
-            # If this is an assistant message with tool_calls, convert arguments to JSON strings
-            if example_copy.get("role") == "assistant" and "tool_calls" in example_copy:
-                tool_calls = []
-                for tool_call in example_copy["tool_calls"]:
-                    tool_call_copy = tool_call.copy()
-                    if "function" in tool_call_copy:
-                        func_copy = tool_call_copy["function"].copy()
-                        if "arguments" in func_copy:
-                            # Convert Python dict to JSON string
-                            func_copy["arguments"] = json.dumps(func_copy["arguments"])
-                        tool_call_copy["function"] = func_copy
-                    tool_calls.append(tool_call_copy)
-                example_copy["tool_calls"] = tool_calls
-            
-            # If this is a tool response, convert content to JSON string
-            if example_copy.get("role") == "tool" and "content" in example_copy:
-                if isinstance(example_copy["content"], dict):
-                    example_copy["content"] = json.dumps(example_copy["content"])
-            
-            messages.append(example_copy)
-        
-        # Add current user message
-        messages.append({
-            "role": "user",
-            "content": user_message
-        })
-        
-        return messages
-    
-    def _extract_tool_calls(
-        self,
-        response: Any
-    ) -> List[Dict[str, Any]]:
-        """
-        Extract tool calls from OpenAI response.
-        
-        Args:
-            response: OpenAI ChatCompletion response object
+            messages: List of LangChain message objects
             
         Returns:
             List of tool call dictionaries with 'name' and 'arguments' keys
         """
         tool_calls = []
         
-        if not response.choices or len(response.choices) == 0:
-            logger.warning("OpenAI response has no choices")
-            return tool_calls
+        for msg in messages:
+            # Check if this is an AI message with tool calls
+            if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                for tool_call in msg.tool_calls:
+                    try:
+                        tool_name = tool_call.get("name", "")
+                        tool_args = tool_call.get("args", {})
+                        
+                        if tool_name:
+                            tool_calls.append({
+                                "name": tool_name,
+                                "arguments": tool_args
+                            })
+                            logger.debug(f"Extracted tool call: {tool_name}")
+                    except Exception as e:
+                        logger.error(f"Error extracting tool call: {e}")
+                        continue
         
-        message = response.choices[0].message
-        
-        if not hasattr(message, 'tool_calls') or not message.tool_calls:
-            logger.info("No tool calls in response")
-            return tool_calls
-        
-        for tool_call in message.tool_calls:
-            try:
-                if not hasattr(tool_call, 'function'):
-                    logger.warning(f"Tool call missing 'function' attribute: {tool_call}")
-                    continue
-                
-                func = tool_call.function
-                tool_name = func.name if hasattr(func, 'name') else None
-                tool_args_str = func.arguments if hasattr(func, 'arguments') else "{}"
-                
-                if not tool_name:
-                    logger.warning(f"Tool call missing name: {tool_call}")
-                    continue
-                
-                # Parse JSON arguments
-                try:
-                    tool_args = json.loads(tool_args_str)
-                except json.JSONDecodeError as e:
-                    logger.error(f"Invalid JSON in tool arguments for {tool_name}: {tool_args_str}. Error: {e}")
-                    continue
-                
-                tool_calls.append({
-                    "name": tool_name,
-                    "arguments": tool_args
-                })
-                
-                logger.debug(f"Extracted tool call: {tool_name} with {len(tool_args)} arguments")
-                
-            except Exception as e:
-                logger.error(f"Error extracting tool call: {e}. Tool call: {tool_call}")
-                continue
-        
-        logger.info(f"Extracted {len(tool_calls)} tool calls from response")
+        logger.info(f"Extracted {len(tool_calls)} tool calls from agent messages")
         return tool_calls
-    
-    def _format_actions(
-        self,
-        tool_calls: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """
-        Convert tool calls to actions format for frontend.
-        
-        Each action has:
-        - type: tool name (without "create_" prefix if present)
-        - params: tool arguments dictionary
-        
-        Args:
-            tool_calls: List of tool call dictionaries
-            
-        Returns:
-            List of action dictionaries formatted for frontend
-        """
-        actions = []
-        
-        for tool_call in tool_calls:
-            try:
-                tool_name = tool_call.get("name", "")
-                tool_args = tool_call.get("arguments", {})
-                
-                if not tool_name:
-                    logger.warning("Tool call missing name, skipping")
-                    continue
-                
-                # Remove "create_" prefix if present for frontend
-                action_type = tool_name
-                if tool_name.startswith("create_"):
-                    action_type = tool_name[7:]  # Remove "create_" prefix
-                
-                action = {
-                    "type": action_type,
-                    "params": tool_args
-                }
-                
-                actions.append(action)
-                
-            except Exception as e:
-                logger.error(f"Error formatting action from tool call {tool_call}: {e}")
-                continue
-        
-        logger.info(f"Formatted {len(actions)} actions for frontend")
-        return actions
     
     async def process_message(
         self,
@@ -235,109 +130,83 @@ class CanvasAgent:
         model: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Process user message and return actions.
+        Process user message using LangChain agent.
         
         This method:
-        1. Builds message array with system prompt, few-shot examples, and user message
-        2. Calls OpenAI API with retry logic
-        3. Extracts tool calls from response
-        4. Formats actions for frontend
-        5. Writes actions to Firestore (if Firebase is initialized)
-        6. Returns structured response
+        1. Invokes LangChain agent with user message
+        2. Agent automatically executes tools via LangChain
+        3. Extracts tool calls from agent messages
+        4. Returns structured response for frontend
+        
+        Note: LangChain tools write directly to Firestore, so no separate write needed.
         
         Args:
             user_message: The user's natural language request
-            model: Optional model override (defaults to settings.DEFAULT_MODEL)
+            model: Optional model override (defaults to gpt-4-turbo)
             
         Returns:
             Dictionary with:
             - response: Assistant's text response
-            - actions: List of action dictionaries
+            - actions: List of action dictionaries (empty for now, tools execute directly)
             - toolCalls: Number of tool calls made
-            - tokensUsed: Total tokens used
+            - tokensUsed: Estimated tokens used (not available from LangChain)
             - model: Model used for the request
             
         Raises:
             Exception: If processing fails (wrapped in error response)
         """
         try:
-            # Use provided model or default
-            model_key = model or settings.DEFAULT_MODEL
+            model_key = model or "gpt-4-turbo"
             request_id = get_request_id() or "no-request-id"
             
             logger.info(
-                f"Processing message with model {model_key}, Request ID: {request_id}"
+                f"Processing message with LangChain agent, model: {model_key}, Request ID: {request_id}"
             )
             
-            # Build messages
-            with TimingContext("build_messages", logger):
-                messages = self._build_messages(user_message)
-            
-            # Call OpenAI API with retry logic
-            with TimingContext("openai_api_call", logger):
-                response = call_openai_with_retry(
-                    messages=messages,
-                    model=model_key,
-                    tools=self.tool_definitions,
-                    tool_choice="auto"
+            # Invoke LangChain agent
+            with TimingContext("langchain_agent_invoke", logger):
+                result = self.agent.invoke(
+                    {"messages": [{"role": "user", "content": user_message}]}
                 )
             
-            # Extract assistant's text response
+            # Extract messages from result
+            messages = result.get("messages", [])
+            
+            # Extract assistant's final response
             assistant_message = ""
-            if response.choices and len(response.choices) > 0:
-                message = response.choices[0].message
-                if hasattr(message, 'content') and message.content:
-                    assistant_message = message.content
-                else:
-                    assistant_message = "I've processed your request and created the components."
+            for msg in reversed(messages):
+                if hasattr(msg, 'content') and msg.content and hasattr(msg, 'type') and msg.type == "ai":
+                    assistant_message = msg.content
+                    break
             
-            # Extract tool calls
-            tool_calls = self._extract_tool_calls(response)
+            if not assistant_message:
+                assistant_message = "I've processed your request and created the components."
             
-            # Format actions for frontend
-            actions = self._format_actions(tool_calls)
+            # Extract tool calls from messages
+            tool_calls = self._extract_tool_calls_from_messages(messages)
             
-            # Write actions to Firestore (if Firebase is initialized)
-            # This is non-blocking - if it fails, we still return the actions
-            if actions and is_firebase_initialized():
-                try:
-                    firestore_result = await write_canvas_actions_to_firestore(actions)
-                    if firestore_result.get("success"):
-                        logger.info(f"Wrote {firestore_result.get('objectsCreated', 0)} objects to Firestore")
-                    else:
-                        logger.warning(f"Firestore write failed: {firestore_result.get('error', 'Unknown error')}")
-                except Exception as e:
-                    logger.warning(f"Error writing to Firestore (non-fatal): {e}")
-            elif actions and not is_firebase_initialized():
-                logger.debug("Firebase not initialized, skipping Firestore write")
-            
-            # Extract token usage
-            tokens_used = 0
-            if response.usage:
-                tokens_used = response.usage.total_tokens
-            
-            # Get model name used
-            model_used = model_key
+            # For now, return empty actions since tools execute directly
+            # In the future, we could extract tool results from ToolMessage objects
+            actions = []
             
             # Build response
-            result = {
+            response_dict = {
                 "response": assistant_message,
                 "actions": actions,
                 "toolCalls": len(tool_calls),
-                "tokensUsed": tokens_used,
-                "model": model_used
+                "tokensUsed": 0,  # LangChain doesn't expose token usage easily
+                "model": model_key
             }
             
-            request_id = get_request_id() or "no-request-id"
             logger.info(
-                f"Successfully processed message. Tool calls: {len(tool_calls)}, "
-                f"Tokens: {tokens_used}, Request ID: {request_id}"
+                f"Successfully processed message with LangChain. Tool calls: {len(tool_calls)}, "
+                f"Request ID: {request_id}"
             )
             
-            return result
+            return response_dict
             
         except Exception as e:
-            logger.error(f"Error processing message: {e}", exc_info=True)
+            logger.error(f"Error processing message with LangChain: {e}", exc_info=True)
             
             # Return error response in consistent format
             return {
@@ -345,10 +214,33 @@ class CanvasAgent:
                 "actions": [],
                 "toolCalls": 0,
                 "tokensUsed": 0,
-                "model": model or settings.DEFAULT_MODEL,
+                "model": model or "gpt-4-turbo",
                 "error": {
                     "type": type(e).__name__,
                     "message": str(e)
                 }
             }
+    
+    async def stream_message(
+        self,
+        user_message: str,
+        model: Optional[str] = None
+    ):
+        """
+        Stream message processing with real-time tool execution updates.
+        
+        This is a stub for PR #22 (SSE Streaming implementation).
+        Will be implemented to yield events for each tool execution.
+        
+        Args:
+            user_message: The user's natural language request
+            model: Optional model override
+            
+        Yields:
+            Event dictionaries for streaming to frontend
+        """
+        # TODO: Implement streaming in PR #22
+        # Will use LangChain's streaming capabilities to emit events
+        # for each tool execution (tool_start, tool_end, complete, error)
+        raise NotImplementedError("Streaming will be implemented in PR #22")
 

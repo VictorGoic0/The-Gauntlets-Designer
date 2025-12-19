@@ -1,4 +1,4 @@
-"""Agent chat endpoint."""
+"""Agent chat endpoint with LangChain integration."""
 from fastapi import APIRouter, HTTPException, status
 from app.agent.orchestrator import CanvasAgent
 from app.models.requests import ChatRequest
@@ -20,31 +20,34 @@ agent = CanvasAgent()
     description="""
     Process a natural language request and generate actions to create UI components on the canvas.
     
-    The agent uses OpenAI's function calling to generate tool calls that create rectangles,
-    circles, lines, and text elements according to design principles and patterns.
+    The agent uses LangChain with OpenAI to execute tool calls that create rectangles,
+    circles, and text elements according to design principles and patterns.
+    
+    Tools are executed automatically by LangChain and write directly to Firestore.
     
     Returns:
     - response: Assistant's text response
-    - actions: List of actions to execute on the canvas
+    - actions: List of actions (currently empty as tools execute directly)
     - toolCalls: Number of tool calls made
-    - tokensUsed: Total tokens consumed
+    - tokensUsed: Total tokens consumed (estimated)
     - model: Model used for the request
     """
 )
 async def chat(request: ChatRequest):
     """
-    Chat endpoint for AI agent interactions.
+    Chat endpoint for AI agent interactions using LangChain.
     
     This endpoint:
     1. Validates the request (message, model)
-    2. Processes the message through the CanvasAgent orchestrator
-    3. Returns actions and metadata for frontend consumption
+    2. Processes the message through the LangChain-powered CanvasAgent
+    3. Tools are executed automatically and write to Firestore
+    4. Returns response and metadata for frontend consumption
     
     Args:
         request: Chat request with message and optional model
         
     Returns:
-        Chat response with actions, metadata, and assistant's text response
+        Chat response with metadata and assistant's text response
         
     Raises:
         HTTPException: 400 for validation errors, 500 for processing errors
