@@ -58,14 +58,10 @@ export function executeAICommandStream(command, callbacks = {}) {
   }
 
   const {
-    onToolStart = () => {},
-    onToolEnd = () => {},
     onMessage = () => {},
     onComplete = () => {},
     onError = () => {},
   } = callbacks;
-
-  let eventSource = null;
 
   try {
     // Create EventSource for SSE
@@ -107,7 +103,7 @@ export function executeAICommandStream(command, callbacks = {}) {
 
           for (const line of lines) {
             if (line.startsWith("event:")) {
-              const eventType = line.substring(6).trim();
+              // Skip event type line (we use event field in data JSON instead)
               continue;
             }
 
