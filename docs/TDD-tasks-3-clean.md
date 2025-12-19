@@ -261,13 +261,13 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Set up Server-Sent Events infrastructure in FastAPI
 
-- [ ] Install SSE library: `pip install sse-starlette`
-- [ ] Add to `api/requirements.txt`
-- [ ] Import in route: `from sse_starlette.sse import EventSourceResponse`
-- [ ] Research FastAPI SSE best practices
-- [ ] Create test endpoint `/api/agent/stream-test`
-- [ ] Test with curl: `curl -N http://localhost:8000/api/agent/stream-test`
-- [ ] Verify events stream correctly
+- [x] Install SSE library: `pip install sse-starlette`
+- [x] Add to `api/requirements.txt`
+- [x] Import in route: `from sse_starlette.sse import EventSourceResponse`
+- [x] Research FastAPI SSE best practices
+- [x] Create test endpoint `/api/agent/stream-test`
+- [x] Test with curl: `curl -N http://localhost:8000/api/agent/stream-test`
+- [x] Verify events stream correctly
 
 **Files Modified:**
 
@@ -289,13 +289,13 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Implementation:**
 
-- [ ] Update `CanvasAgent.stream_message()` method
-- [ ] Use LangChain streaming capabilities
-- [ ] Filter for tool execution events
-- [ ] Emit SSE event for each tool start/end
-- [ ] Include tool name, arguments, and result in each event
-- [ ] Handle errors during streaming
-- [ ] Emit final completion event
+- [x] Update `CanvasAgent.stream_message()` method
+- [x] Use LangChain streaming capabilities
+- [x] Filter for tool execution events
+- [x] Emit SSE event for each tool start/end
+- [x] Include tool name, arguments, and result in each event
+- [x] Handle errors during streaming
+- [x] Emit final completion event
 
 **Files Modified:**
 
@@ -315,13 +315,13 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Add new API endpoint for streaming agent responses
 
-- [ ] Create new route: `POST /api/agent/chat-stream`
-- [ ] Accept same request format as `/api/agent/chat`
-- [ ] Call `agent.stream_message()` instead of `process_message()`
-- [ ] Wrap in `EventSourceResponse`
-- [ ] Format events as SSE (event: type, data: JSON)
-- [ ] Add error handling for streaming failures
-- [ ] Test with curl
+- [x] Create new route: `POST /api/agent/chat-stream`
+- [x] Accept same request format as `/api/agent/chat`
+- [x] Call `agent.stream_message()` instead of `process_message()`
+- [x] Wrap in `EventSourceResponse`
+- [x] Format events as SSE (event: type, data: JSON)
+- [x] Add error handling for streaming failures
+- [x] Test with curl
 
 **Files Modified:**
 
@@ -346,12 +346,12 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Implementation:**
 
-- [ ] Create new function: `executeAICommandStream(command, onToolStart, onToolEnd, onComplete, onError)`
-- [ ] Use `fetch` API with streaming
-- [ ] Handle different event types: `tool_start`, `tool_end`, `complete`, `error`
-- [ ] Call callbacks for each event
-- [ ] Close stream on completion or error
-- [ ] Return cleanup function
+- [x] Create new function: `executeAICommandStream(command, onToolStart, onToolEnd, onComplete, onError)`
+- [x] Use `fetch` API with streaming
+- [x] Handle different event types: `tool_start`, `tool_end`, `complete`, `error`
+- [x] Call callbacks for each event
+- [x] Close stream on completion or error
+- [x] Return cleanup function
 
 **Files Modified:**
 
@@ -378,13 +378,13 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Implementation:**
 
-- [ ] Add state for tracking tool execution progress
-- [ ] Display list of tools being executed
-- [ ] Show status for each tool: pending → executing → complete/error
-- [ ] Add visual indicators (icons, colors, animations)
-- [ ] Show tool names in user-friendly format
-- [ ] Display final summary when complete
-- [ ] Handle errors for individual tools (partial success)
+- [x] Add state for tracking tool execution progress
+- [x] Display list of tools being executed
+- [x] Show status for each tool: pending → executing → complete/error
+- [x] Add visual indicators (icons, colors, animations)
+- [x] Show tool names in user-friendly format
+- [x] Display final summary when complete
+- [x] Handle errors for individual tools (partial success)
 
 **Files Modified:**
 
@@ -404,13 +404,13 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Mark Firebase Functions as deprecated and document migration
 
-- [ ] Add deprecation notice to `functions/index.js`
-- [ ] Update `functions/README.md` with migration notes
-- [ ] Document differences between Firebase Functions and FastAPI versions
-- [ ] Keep Firebase Functions code for reference (don't delete yet)
-- [ ] Add comment: "Deprecated: Use FastAPI backend at /api/agent/chat-stream"
-- [ ] Update frontend to use FastAPI by default
-- [ ] Add environment variable to toggle between backends (for testing)
+- [x] Add deprecation notice to `functions/index.js`
+- [x] Update `functions/README.md` with migration notes
+- [x] Document differences between Firebase Functions and FastAPI versions
+- [x] Keep Firebase Functions code for reference (don't delete yet)
+- [x] Add comment: "Deprecated: Use FastAPI backend at /api/agent/chat-stream"
+- [x] Update frontend to use FastAPI by default
+- [x] Add environment variable to toggle between backends (for testing)
 
 **Files Modified:**
 
@@ -432,13 +432,13 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Document streaming implementation and clean up
 
-- [ ] Update `api/README.md` with streaming endpoint docs
-- [ ] Add SSE event format documentation
-- [ ] Document frontend streaming usage
-- [ ] Add examples for both streaming and non-streaming endpoints
-- [ ] Update API docs at `/docs` (FastAPI auto-docs)
-- [ ] Add troubleshooting section for streaming issues
-- [ ] Document browser compatibility (EventSource support)
+- [x] Update `api/README.md` with streaming endpoint docs
+- [x] Add SSE event format documentation
+- [x] Document frontend streaming usage
+- [x] Add examples for both streaming and non-streaming endpoints
+- [x] Update API docs at `/docs` (FastAPI auto-docs)
+- [x] Add troubleshooting section for streaming issues
+- [x] Document browser compatibility (EventSource support)
 
 **Files Modified:**
 

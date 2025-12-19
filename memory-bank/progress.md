@@ -50,9 +50,43 @@
 
 ## What's Left to Build
 
-### AI Agent Migration (In Progress)
+### AI Agent Migration (In Progress - PR #22)
+
+**PR #21: LangChain Migration** ✅ **COMPLETE**
+
+- [x] Install LangChain dependencies (langchain>=0.3.0, langchain-openai>=0.2.0)
+- [x] Create 7 LangChain tools with @tool decorator (create_rectangle, create_circle, create_text, move_object, resize_object, change_color, rotate_object)
+- [x] Migrate system prompt to match Firebase Functions exactly
+- [x] Update few-shot examples (3 blue circles instead of login form)
+- [x] Create LangChain agent with create_agent() and error handling middleware
+- [x] Update orchestrator to use LangChain invoke() instead of direct OpenAI calls
+- [x] Add stream_message() stub for PR #22
+- [x] Update API routes and documentation
+- [x] Tools use Python snake_case naming convention
+
+**PR #22: SSE Streaming** ✅ **COMPLETE**
+
+- [x] Add SSE support to FastAPI (sse-starlette)
+- [x] Implement streaming in LangChain agent with astream_events()
+- [x] Create SSE streaming endpoint (/api/agent/chat-stream)
+- [x] Update frontend to consume SSE stream with fetch API
+- [x] Update AIPanel UI for real-time progress (shows each tool executing)
+- [x] Deprecate Firebase Functions (marked as deprecated with migration docs)
+- [x] Documentation and cleanup (README updated with streaming examples)
+
+**PR #23: Frontend Backend Integration** ✅ **COMPLETE**
+
+- [x] Remove Firebase Functions folder completely (no backwards compatibility)
+- [x] Remove all Firebase Functions references from frontend
+- [x] Update environment variables (VITE_API_BASE_URL configured)
+- [x] Remove fallback to localhost in aiService
+- [x] Clean up unused imports and dependencies
+- [x] Documentation updates
+
+### AI Agent Migration (Previously Completed)
 
 **Phase 1: Core Backend Setup** ✅ **COMPLETE (PR #1)**
+
 - [x] Initialize FastAPI project structure
 - [x] Create directory structure (`app/`, `app/api/routes/`, `app/utils/`)
 - [x] Set up environment configuration (`.env.example`, `app/config.py`)
@@ -63,6 +97,7 @@
 - [x] Configure `.gitignore` for Python project
 
 **Phase 1.5: OpenAI Integration** ✅ **COMPLETE (PR #2)**
+
 - [x] Set up OpenAI SDK integration with retry logic
 - [x] Create model configuration with AVAILABLE_MODELS dictionary
 - [x] Implement retry decorator with exponential backoff (2s, 4s, 8s, max 3 attempts)
@@ -74,12 +109,14 @@
 - [x] Document OpenAI service usage in README
 
 **Phase 1.6: Tool Definitions** ✅ **COMPLETE (PR #3)**
+
 - [x] Create cached tool definitions (rectangle, square, circle, text, line) (PR #3)
 - [x] Implement tool validation on startup
 - [x] Create test script to verify tool definitions
 - [ ] Local testing with mock responses (no Firebase)
 
 **Phase 2: Prompt Engineering** ✅ **COMPLETE (PR #4)**
+
 - [x] Write comprehensive system prompt with design principles (balanced "just right" approach)
 - [x] Add few-shot example for login form (8 tool calls with Python dicts)
 - [x] Streamline tool descriptions (concise, principle-based)
@@ -89,18 +126,20 @@
 - [ ] Test with different models (gpt-4-turbo, gpt-4o, gpt-4o-mini) (ready for testing)
 
 **Phase 2.5: Agent Orchestrator** ✅ **COMPLETE (PR #5)**
+
 - [x] Create CanvasAgent class with cached tool definitions
 - [x] Implement process_message() async method
 - [x] Build message array with system prompt, few-shot examples, and user message
 - [x] Call OpenAI API with retry wrapper and tool definitions
 - [x] Extract tool calls from OpenAI response with JSON validation
-- [x] Format actions for frontend (remove "create_" prefix, structure as {type, params})
+- [x] Format actions for frontend (remove "create\_" prefix, structure as {type, params})
 - [x] Construct response with assistant text, tool call count, token usage, model
 - [x] Implement comprehensive error handling with consistent error format
 - [x] Create test script (test_agent.py) with 3 test cases
 - [x] Add comprehensive documentation (docstrings, usage examples, README updates)
 
 **Phase 3: API Route Integration** ✅ **COMPLETE (PR #6)**
+
 - [x] Refactor `/api/agent/chat` endpoint to use CanvasAgent orchestrator
 - [x] Create request/response models (ChatRequest, ChatResponse, ErrorResponse)
 - [x] Add request validation (sessionId, message, model)
@@ -111,6 +150,7 @@
 - [x] Verify route registration and interactive docs at /docs
 
 **Phase 3: Tool Enhancement** ✅ **COMPLETE (PR #3)**
+
 - [x] Add boxShadow support to all shape tools (rectangle, square, circle)
 - [x] Add cornerRadius support to rectangles and squares
 - [x] Implement create_line tool
@@ -120,6 +160,7 @@
 - [ ] Test visual enhancements (frontend rendering pending)
 
 **Phase 4: Firestore Integration** ✅ **COMPLETE (PR #7)**
+
 - [x] Initialize Firebase Admin SDK
 - [x] Connect to Firestore
 - [x] Implement batch write for canvas objects
@@ -129,6 +170,7 @@
 - [ ] Test end-to-end with Canvas frontend (ready for testing)
 
 **Phase 5: Testing & Refinement** ✅ **COMPLETE (PR #8)**
+
 - [x] Comprehensive test suite with pytest (test_tools, test_prompts, test_orchestrator, test_api)
 - [x] Integration testing for complete flow (integration_test.py)
 - [x] Model comparison tools (compare_models.py)
@@ -169,7 +211,7 @@
 - **AI Agent Migration - PR #7**: ✅ Complete - Firebase integration with Firestore writes and error handling
 - **AI Agent Migration - PR #8**: ✅ Complete - Comprehensive testing, refinement, and documentation
 - **AI Agent Migration - PR #21**: ✅ Complete - LangChain integration with tool definitions, system prompt migration, and agent orchestrator
-- **AI Agent Migration - PR #22**: 🔄 In Progress - Server-Sent Events (SSE) streaming implementation
+- **AI Agent Migration - PR #22**: ✅ Complete - Server-Sent Events (SSE) streaming with real-time tool execution updates
 - **Phase 4+ (Additional Features)**: ⏳ Pending - Post-MVP enhancements
 
 ### Code Quality
@@ -252,9 +294,9 @@
 
 ### Short-term (Next week)
 
-1. **AI Agent Completion**: ✅ All 8 PRs complete - migration fully implemented
+1. **AI Agent Completion**: ✅ All PRs complete (PR #1-8, #21-22) - migration fully implemented with streaming
 2. **Model Testing**: ✅ Model comparison tools ready for use
-3. **Frontend Integration**: Test AI agent with Canvas frontend
+3. **Frontend Integration**: Test AI agent with Canvas frontend (streaming enabled)
 4. **Additional Shapes**: Implement Circle and Text components
 5. **Transformations**: Add resize and rotation handles
 6. **Layer Management**: Implement z-index ordering

@@ -229,18 +229,87 @@ class CanvasAgent:
         """
         Stream message processing with real-time tool execution updates.
         
-        This is a stub for PR #22 (SSE Streaming implementation).
-        Will be implemented to yield events for each tool execution.
+        Uses LangChain's streaming to emit events for each tool execution.
         
         Args:
             user_message: The user's natural language request
             model: Optional model override
             
         Yields:
-            Event dictionaries for streaming to frontend
+            Event dictionaries for streaming to frontend:
+            - tool_start: {"event": "tool_start", "tool": str, "args": dict}
+            - tool_end: {"event": "tool_end", "tool": str, "result": dict}
+            - message: {"event": "message", "content": str}
+            - complete: {"event": "complete", "toolCalls": int}
+            - error: {"event": "error", "message": str}
         """
-        # TODO: Implement streaming in PR #22
-        # Will use LangChain's streaming capabilities to emit events
-        # for each tool execution (tool_start, tool_end, complete, error)
-        raise NotImplementedError("Streaming will be implemented in PR #22")
+        try:
+            model_key = model or "gpt-4-turbo"
+            request_id = get_request_id() or "no-request-id"
+            
+            logger.info(
+                f"Streaming message with LangChain agent, model: {model_key}, Request ID: {request_id}"
+            )
+            
+            tool_call_count = 0
+            
+            # Stream from LangChain agent
+            async for event in self.agent.astream_events(
+                {"messages": [{"role": "user", "content": user_message}]},
+                version="v2"
+            ):
+                event_type = event.get("event")
+                
+                # Tool execution start
+                if event_type == "on_tool_start":
+                    tool_name = event.get("name", "unknown")
+                    tool_input = event.get("data", {}).get("input", {})
+                    
+                    logger.debug(f"Tool starting: {tool_name}")
+                    
+                    yield {
+                        "event": "tool_start",
+                        "tool": tool_name,
+                        "args": tool_input
+                    }
+                    
+                    tool_call_count += 1
+                
+                # Tool execution end
+                elif event_type == "on_tool_end":
+                    tool_name = event.get("name", "unknown")
+                    tool_output = event.get("data", {}).get("output", {})
+                    
+                    logger.debug(f"Tool completed: {tool_name}")
+                    
+                    yield {
+                        "event": "tool_end",
+                        "tool": tool_name,
+                        "result": tool_output
+                    }
+                
+                # AI message chunks
+                elif event_type == "on_chat_model_stream":
+                    chunk = event.get("data", {}).get("chunk", {})
+                    if hasattr(chunk, 'content') and chunk.content:
+                        yield {
+                            "event": "message",
+                            "content": chunk.content
+                        }
+            
+            # Send completion event
+            logger.info(f"Streaming completed. Tool calls: {tool_call_count}, Request ID: {request_id}")
+            
+            yield {
+                "event": "complete",
+                "toolCalls": tool_call_count
+            }
+            
+        except Exception as e:
+            logger.error(f"Error during streaming: {e}", exc_info=True)
+            
+            yield {
+                "event": "error",
+                "message": str(e)
+            }
 

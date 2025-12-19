@@ -83,13 +83,13 @@ Returns server health status and OpenAI connection status.
 }
 ```
 
-### Agent Chat
+### Agent Chat (Non-Streaming)
 
 **POST** `/api/agent/chat`
 
 Process a natural language request and execute tools to create UI components on the canvas using LangChain.
 
-**Note**: Tools are executed automatically by LangChain and write directly to Firestore.
+**Note**: Tools are executed automatically by LangChain and write directly to Firestore. For real-time updates, use `/api/agent/chat-stream` instead.
 
 **Request:**
 
@@ -112,18 +112,100 @@ Process a natural language request and execute tools to create UI components on 
 }
 ```
 
+### Agent Chat (Streaming) - RECOMMENDED
+
+**POST** `/api/agent/chat-stream`
+
+Stream AI agent responses with real-time tool execution updates using Server-Sent Events (SSE).
+
+**Request:**
+
+```json
+{
+  "message": "Create 3 blue circles",
+  "model": "gpt-4-turbo" // Optional
+}
+```
+
+**Response**: Server-Sent Events stream
+
+**Event Types:**
+
+1. **tool_start**: Tool execution begins
+
+```json
+{
+  "event": "tool_start",
+  "tool": "create_circle",
+  "args": { "x": 200, "y": 200, "fill": "#0000FF" }
+}
+```
+
+2. **tool_end**: Tool execution completes
+
+```json
+{
+  "event": "tool_end",
+  "tool": "create_circle",
+  "result": {
+    "success": true,
+    "objectId": "abc123",
+    "message": "Created circle at (200, 200)"
+  }
+}
+```
+
+3. **message**: AI assistant message chunk
+
+```json
+{
+  "event": "message",
+  "content": "I've created..."
+}
+```
+
+4. **complete**: All processing complete
+
+```json
+{
+  "event": "complete",
+  "toolCalls": 3
+}
+```
+
+5. **error**: An error occurred
+
+```json
+{
+  "event": "error",
+  "message": "Error description"
+}
+```
+
 **Error Responses:**
 
 - **400 Bad Request**: Invalid request (missing message, empty message, invalid model)
 - **500 Internal Server Error**: Agent processing error or unexpected server error
 
-**Example curl command:**
+**Example curl commands:**
+
+Non-streaming:
 
 ```bash
 curl -X POST http://localhost:8000/api/agent/chat \
   -H "Content-Type: application/json" \
   -d '{
     "message": "Create a login form"
+  }'
+```
+
+Streaming (SSE):
+
+```bash
+curl -N -X POST http://localhost:8000/api/agent/chat-stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Create 3 blue circles"
   }'
 ```
 
