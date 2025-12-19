@@ -1,6 +1,6 @@
 [build]
   # Base directory for the build (where package.json is located)
-  base = "frontend"
+  base = "webapp"
   # Build command
   command = "npm run build"
   # Publish directory (Vite output)
