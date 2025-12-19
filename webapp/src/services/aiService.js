@@ -63,12 +63,10 @@ export function executeAICommandStream(command, callbacks = {}) {
     onError = () => {},
   } = callbacks;
 
-  try {
-    // Create EventSource for SSE
-    const url = `${API_BASE_URL}/api/agent/chat-stream`;
+  const controller = new AbortController();
 
-    // EventSource doesn't support POST, so we'll use fetch with streaming
-    const controller = new AbortController();
+  try {
+    const url = `${API_BASE_URL}/api/agent/chat-stream`;
 
     fetch(url, {
       method: "POST",
