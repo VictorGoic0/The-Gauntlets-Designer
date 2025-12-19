@@ -2,21 +2,37 @@
  * AIPanel Component - Compact floating card for AI assistant interaction
  */
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Card from "../design-system/Card";
 import AIInput from "./AIInput";
-import { executeAICommand } from "../../services/aiService";
+import { executeAICommandStream } from "../../services/aiService";
 import toast from "react-hot-toast";
 import { colors, typography, spacing } from "../../styles/tokens";
 
 export default function AIPanel({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const cleanupRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isLoading]);
+
+  // Auto-scroll to bottom when panel opens
+  useEffect(() => {
+    if (isOpen && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (command) => {
     // Add user message to chat
     const userMessage = {
-      id: Date.now(),
+      id: `user-${Date.now()}`,
       type: "user",
       content: command,
       timestamp: new Date(),
@@ -24,33 +40,68 @@ export default function AIPanel({ isOpen, onClose }) {
     setMessages((prev) => [...prev, userMessage]);
 
     setIsLoading(true);
+    
+    // Counter for unique IDs
+    let progressCounter = 0;
 
     try {
-      // Execute AI command
-      const result = await executeAICommand(command);
+      // Use streaming API
+      const cleanup = executeAICommandStream(command, {
+        onMessage: (content) => {
+          // Add each progress message as a separate message in the chat
+          progressCounter++;
+          const progressMessage = {
+            id: `progress-${Date.now()}-${progressCounter}`,
+            type: "progress",
+            content: content,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, progressMessage]);
+        },
+        onComplete: (toolCalls, finalMessage) => {
+          // Add final AI response to chat
+          if (finalMessage) {
+            const aiMessage = {
+              id: `ai-${Date.now()}`,
+              type: "ai",
+              content: finalMessage,
+              toolCalls,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, aiMessage]);
+          }
 
-      // Add AI response to chat
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: "ai",
-        content: result.message || "Command executed successfully",
-        results: result.results,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
+          // Show success toast
+          toast.success(`✨ Created ${toolCalls} object(s)`);
 
-      // Show success toast
-      if (result.results && result.results.length > 0) {
-        toast.success(`✨ Created ${result.results.length} object(s)`);
-      } else {
-        toast.success("✨ Command executed");
-      }
+          setIsLoading(false);
+        },
+        onError: (error) => {
+          console.error("AI command failed:", error);
+
+          // Add error message to chat
+          const errorMessage = {
+            id: `error-${Date.now()}`,
+            type: "error",
+            content: error.message || "Failed to execute command",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+
+          toast.error(`❌ ${error.message}`);
+
+          setIsLoading(false);
+        },
+      });
+
+      // Store cleanup function
+      cleanupRef.current = cleanup;
     } catch (error) {
       console.error("AI command failed:", error);
 
       // Add error message to chat
       const errorMessage = {
-        id: Date.now() + 1,
+        id: `error-${Date.now()}`,
         type: "error",
         content: error.message || "Failed to execute command",
         timestamp: new Date(),
@@ -58,7 +109,7 @@ export default function AIPanel({ isOpen, onClose }) {
       setMessages((prev) => [...prev, errorMessage]);
 
       toast.error(`❌ ${error.message}`);
-    } finally {
+
       setIsLoading(false);
     }
   };
@@ -307,23 +358,11 @@ export default function AIPanel({ isOpen, onClose }) {
                         style={{
                           fontSize: typography.fontSize.sm,
                           whiteSpace: "pre-wrap",
+                          margin: 0,
                         }}
                       >
                         {message.content}
                       </p>
-                      {message.results && message.results.length > 0 && (
-                        <div
-                          style={{
-                            marginTop: spacing[2],
-                            fontSize: typography.fontSize.xs,
-                            opacity: 0.75,
-                          }}
-                        >
-                          {message.results.map((result, idx) => (
-                            <div key={idx}>• {result.message}</div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                     <div
                       style={{
@@ -395,6 +434,9 @@ export default function AIPanel({ isOpen, onClose }) {
                     </div>
                   </div>
                 )}
+                
+                {/* Invisible element to scroll to */}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>

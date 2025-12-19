@@ -23,14 +23,19 @@ A real-time collaborative canvas application built with React, Konva, and Fireba
 
 - **Frontend**: React + Vite
 - **Canvas**: Konva.js + React-Konva
-- **Backend**: Firebase (Authentication + Firestore)
+- **Backend**:
+  - FastAPI (Python) with LangChain for AI agent
+  - Firebase (Authentication + Firestore + Realtime Database)
+- **AI Integration**: LangChain + OpenAI with Server-Sent Events streaming
 - **Styling**: Tailwind CSS
 
 ## Prerequisites
 
 - Node.js (v16 or higher)
+- Python 3.11+ (for AI backend)
 - npm or yarn
 - Firebase account
+- OpenAI API key (for AI features)
 
 ## Setup Instructions
 
@@ -55,9 +60,9 @@ A real-time collaborative canvas application built with React, Konva, and Fireba
    - Enable Firebase Authentication (Google Sign-In provider)
    - Copy your Firebase configuration
 
-4. **Configure environment variables**
+4. **Configure frontend environment variables**
 
-   Create a `.env.local` file in the project root with your Firebase credentials:
+   Create a `.env.local` file in the `webapp/` directory:
 
    ```env
    VITE_FIREBASE_API_KEY=your_api_key
@@ -68,17 +73,51 @@ A real-time collaborative canvas application built with React, Konva, and Fireba
    VITE_FIREBASE_APP_ID=your_app_id
    VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
    VITE_FIREBASE_DATABASE_URL=your_database_url
+   VITE_API_BASE_URL=http://localhost:8000
    ```
 
-5. **Run the development server**
+5. **Set up AI backend**
 
    ```bash
+   cd api
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+   Create `.env` file in `api/` directory:
+
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+   ```
+
+   Download Firebase service account key and save as `serviceAccountKey.json` in `api/` directory.
+
+6. **Run the development servers**
+
+   Terminal 1 - Backend:
+
+   ```bash
+   cd api
+   source venv/bin/activate
+   python scripts/run_local.py
+   ```
+
+   Terminal 2 - Frontend:
+
+   ```bash
+   cd webapp
    npm run dev
    ```
 
-   The app will be available at `http://localhost:5173`
+   - Frontend: `http://localhost:5173`
+   - Backend API: `http://localhost:8000`
+   - API Docs: `http://localhost:8000/docs`
 
 ## Available Scripts
+
+### Frontend (webapp/)
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
@@ -87,6 +126,12 @@ A real-time collaborative canvas application built with React, Konva, and Fireba
 - `npm test` - Run tests with Vitest
 - `npm run test:ui` - Run tests with UI
 - `npm run test:coverage` - Run tests with coverage report
+
+### Backend (api/)
+
+- `python scripts/run_local.py` - Start FastAPI development server
+- `pytest` - Run backend tests
+- `pytest --cov` - Run tests with coverage
 
 ## Deployment to Netlify
 

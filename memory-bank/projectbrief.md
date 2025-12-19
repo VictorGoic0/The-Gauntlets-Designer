@@ -12,6 +12,7 @@ CollabCanvas is a real-time collaborative design tool inspired by Figma, enablin
 - **Shape manipulation**: Create, move, resize, and delete shapes (rectangles, circles, text)
 - **State persistence**: Canvas state persists across page reloads and disconnects
 - **Authentication**: Google Sign-In only for MVP
+- **AI Agent**: FastAPI backend with OpenAI integration for generating UI components from natural language
 
 ## Success Criteria
 
@@ -51,3 +52,22 @@ The project is currently in **Phase 3** with MVP features largely complete. All 
 - ✅ State persistence across sessions
 - ✅ Netlify deployment configuration
 - ✅ Optimistic updates with conflict resolution
+
+## AI Agent Migration ✅ **COMPLETE**
+
+**Objective**: Migrate Canvas AI agent from Firebase Functions (JavaScript) to FastAPI backend (Python) for faster iteration and better LLM code generation.
+
+**Status**: ✅ **All 8 PRs Complete** - Migration fully implemented with comprehensive testing, documentation, and performance monitoring.
+
+**Completed State**:
+- ✅ FastAPI backend with OpenAI agent (PR #1, #2)
+- ✅ Local development/testing environment (PR #1)
+- ✅ Enhanced tool set with visual styling options (boxShadow, cornerRadius, metadata) (PR #3)
+- ✅ Comprehensive system prompt with few-shot examples (PR #4)
+- ✅ Firestore integration for Canvas state persistence (PR #7)
+- ✅ Support for multiple OpenAI models (gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-4) (PR #2)
+- ✅ Comprehensive test suite with pytest (PR #8)
+- ✅ Integration testing scripts (PR #8)
+- ✅ Model comparison tools (PR #8)
+- ✅ Performance monitoring and logging enhancements (PR #8)
+- ✅ Complete documentation (PR #8)

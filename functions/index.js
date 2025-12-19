@@ -4,6 +4,12 @@ const OpenAI = require("openai");
 
 /**
  * AI Agent Function - Main entry point for AI-powered canvas commands
+ *
+ * ⚠️ DEPRECATED: This Firebase Function is deprecated as of PR #22.
+ * Please use the FastAPI backend at /api/agent/chat-stream for streaming support.
+ *
+ * This function is kept for reference and backwards compatibility.
+ * New implementations should use the FastAPI backend with LangChain integration.
  */
 exports.aiAgent = onCall(
   {
