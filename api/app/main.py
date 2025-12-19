@@ -22,6 +22,7 @@ app.add_middleware(
         "http://localhost:5174",  # Vite alternative port
         "http://127.0.0.1:5173",  # Alternative localhost
         "http://127.0.0.1:5174",  # Alternative localhost
+        "https://gauntlets-designer.netlify.app",  # Production frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
