@@ -36,8 +36,6 @@ import json
 from typing import Dict, List, Any, Optional
 
 from langchain.agents import create_agent
-from langchain.agents.middleware import wrap_tool_call
-from langchain.messages import ToolMessage
 
 from app.agent.langchain_tools import get_langchain_tools
 from app.agent.prompts import SYSTEM_PROMPT
@@ -60,27 +58,14 @@ class CanvasAgent:
     """
     
     def __init__(self):
-        """Initialize the LangChain agent with tools and middleware."""
+        """Initialize the LangChain agent with tools (no middleware for async compatibility)."""
         self.tools = get_langchain_tools()
         
-        # Create error handling middleware
-        @wrap_tool_call
-        def handle_tool_errors(request, handler):
-            """Handle tool execution errors with custom messages."""
-            try:
-                return handler(request)
-            except Exception as e:
-                return ToolMessage(
-                    content=f"Tool error: Please check your input and try again. ({str(e)})",
-                    tool_call_id=request.tool_call["id"]
-                )
-        
-        # Create LangChain agent with tools and middleware
+        # Create LangChain agent with tools (no middleware to avoid async issues)
         self.agent = create_agent(
             model="gpt-4-turbo",
             tools=self.tools,
-            system_prompt=SYSTEM_PROMPT,
-            middleware=[handle_tool_errors]
+            system_prompt=SYSTEM_PROMPT
         )
         
         logger.info(f"CanvasAgent initialized with {len(self.tools)} LangChain tools")
@@ -229,7 +214,7 @@ class CanvasAgent:
         """
         Stream message processing with real-time tool execution updates.
         
-        Uses LangChain's streaming to emit events for each tool execution.
+        Uses LangChain's astream with stream_mode="updates" to emit events for each agent step.
         
         Args:
             user_message: The user's natural language request
@@ -237,11 +222,9 @@ class CanvasAgent:
             
         Yields:
             Event dictionaries for streaming to frontend:
-            - tool_start: {"event": "tool_start", "tool": str, "args": dict}
-            - tool_end: {"event": "tool_end", "tool": str, "result": dict}
-            - message: {"event": "message", "content": str}
-            - complete: {"event": "complete", "toolCalls": int}
-            - error: {"event": "error", "message": str}
+            - progress: {"event": "progress", "message": str} - Tool execution progress
+            - complete: {"event": "complete", "message": str, "toolCalls": int} - Final message
+            - error: {"event": "error", "message": str} - Error occurred
         """
         try:
             model_key = model or "gpt-4-turbo"
@@ -252,56 +235,64 @@ class CanvasAgent:
             )
             
             tool_call_count = 0
+            final_message = ""
             
-            # Stream from LangChain agent
-            async for event in self.agent.astream_events(
+            # Stream from LangChain agent using stream_mode="updates"
+            async for chunk in self.agent.astream(
                 {"messages": [{"role": "user", "content": user_message}]},
-                version="v2"
+                stream_mode="updates"
             ):
-                event_type = event.get("event")
-                
-                # Tool execution start
-                if event_type == "on_tool_start":
-                    tool_name = event.get("name", "unknown")
-                    tool_input = event.get("data", {}).get("input", {})
+                # chunk is a dict with step name as key and data as value
+                for step, data in chunk.items():
+                    logger.debug(f"Stream step: {step}, data keys: {data.keys()}")
                     
-                    logger.debug(f"Tool starting: {tool_name}")
-                    
-                    yield {
-                        "event": "tool_start",
-                        "tool": tool_name,
-                        "args": tool_input
-                    }
-                    
-                    tool_call_count += 1
-                
-                # Tool execution end
-                elif event_type == "on_tool_end":
-                    tool_name = event.get("name", "unknown")
-                    tool_output = event.get("data", {}).get("output", {})
-                    
-                    logger.debug(f"Tool completed: {tool_name}")
-                    
-                    yield {
-                        "event": "tool_end",
-                        "tool": tool_name,
-                        "result": tool_output
-                    }
-                
-                # AI message chunks
-                elif event_type == "on_chat_model_stream":
-                    chunk = event.get("data", {}).get("chunk", {})
-                    if hasattr(chunk, 'content') and chunk.content:
-                        yield {
-                            "event": "message",
-                            "content": chunk.content
-                        }
+                    # Check if this step has messages
+                    if "messages" in data and data["messages"]:
+                        last_message = data["messages"][-1]
+                        
+                        # Check if this is a tool message (result of tool execution)
+                        if hasattr(last_message, 'type') and last_message.type == "tool":
+                            tool_call_count += 1
+                            
+                            # Parse the tool result
+                            try:
+                                if hasattr(last_message, 'content'):
+                                    content = last_message.content
+                                    # If content is a string, try to parse as JSON
+                                    if isinstance(content, str):
+                                        import json
+                                        result = json.loads(content)
+                                    else:
+                                        result = content
+                                    
+                                    # Extract message from result
+                                    if isinstance(result, dict) and "message" in result:
+                                        progress_msg = result["message"]
+                                    else:
+                                        progress_msg = f"Successfully executed tool"
+                                    
+                                    yield {
+                                        "event": "progress",
+                                        "message": progress_msg
+                                    }
+                            except Exception as e:
+                                logger.debug(f"Could not parse tool result: {e}")
+                                yield {
+                                    "event": "progress",
+                                    "message": "Successfully executed tool"
+                                }
+                        
+                        # Check if this is an AI message (final response)
+                        elif hasattr(last_message, 'type') and last_message.type == "ai":
+                            if hasattr(last_message, 'content') and last_message.content:
+                                final_message = last_message.content
             
-            # Send completion event
+            # Send completion event with final message
             logger.info(f"Streaming completed. Tool calls: {tool_call_count}, Request ID: {request_id}")
             
             yield {
                 "event": "complete",
+                "message": final_message or "I've completed your request.",
                 "toolCalls": tool_call_count
             }
             

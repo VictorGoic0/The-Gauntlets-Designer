@@ -2,20 +2,14 @@
  * AI Service - Handles communication with the AI Agent (FastAPI backend with SSE streaming)
  */
 
-import { getFunctions, httpsCallable } from "firebase/functions";
-import app from "../lib/firebase";
-
-// Initialize Firebase Functions with explicit region (legacy)
-const functions = getFunctions(app, "us-central1");
-
-// FastAPI backend URL (use environment variable or default to localhost)
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// FastAPI backend URL from environment variable
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
- * Execute an AI command on the canvas
+ * Execute an AI command on the canvas (non-streaming)
  * @param {string} command - Natural language command from the user
  * @returns {Promise<Object>} Response from the AI agent
+ * @deprecated Use executeAICommandStream for better UX with real-time updates
  */
 export async function executeAICommand(command) {
   if (!command || command.trim().length === 0) {
@@ -23,24 +17,27 @@ export async function executeAICommand(command) {
   }
 
   try {
-    // Call the aiAgent Firebase Function
-    const aiAgent = httpsCallable(functions, "aiAgent");
-    const result = await aiAgent({ command: command.trim() });
+    const response = await fetch(`${API_BASE_URL}/api/agent/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: command.trim(),
+      }),
+    });
 
-    return result.data;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
   } catch (error) {
     console.error("AI Service error:", error);
-
-    // Provide user-friendly error messages
-    if (error.code === "unauthenticated") {
-      throw new Error("You must be signed in to use the AI assistant");
-    } else if (error.code === "permission-denied") {
-      throw new Error("You don't have permission to use the AI assistant");
-    } else if (error.message) {
-      throw new Error(error.message);
-    } else {
-      throw new Error("Failed to execute AI command. Please try again.");
-    }
+    throw new Error(
+      error.message || "Failed to execute AI command. Please try again."
+    );
   }
 }
 
@@ -122,16 +119,15 @@ export function executeAICommandStream(command, callbacks = {}) {
                   const event = JSON.parse(data);
 
                   switch (event.event) {
-                    case "tool_start":
-                      onToolStart(event.tool, event.args);
-                      break;
-                    case "tool_end":
-                      onToolEnd(event.tool, event.result);
-                      break;
-                    case "message":
-                      onMessage(event.content);
+                    case "progress":
+                      // Tool execution progress
+                      onMessage(event.message);
                       break;
                     case "complete":
+                      // Final completion with message
+                      if (event.message) {
+                        onMessage(event.message);
+                      }
                       onComplete(event.toolCalls);
                       break;
                     case "error":

@@ -481,10 +481,10 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Add backend API URL to frontend environment
 
-- [ ] Add to `webapp/.env.example`: `VITE_API_BASE_URL=http://localhost:8000`
-- [ ] Add to `webapp/.env.local`: `VITE_API_BASE_URL=http://localhost:8000`
-- [ ] Update for production (Netlify environment variables)
-- [ ] Document environment variables in `webapp/README.md`
+- [x] Add to `webapp/.env.example`: `VITE_API_BASE_URL=http://localhost:8000`
+- [x] Add to `webapp/.env.local`: `VITE_API_BASE_URL=http://localhost:8000`
+- [x] Update for production (Netlify environment variables)
+- [x] Document environment variables in `webapp/README.md`
 
 **Files Modified:**
 
@@ -505,13 +505,13 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Clean up Firebase Functions references in frontend
 
-- [ ] Update `webapp/src/services/aiService.js`:
+- [x] Update `webapp/src/services/aiService.js`:
   - Remove Firebase Functions imports
   - Remove `httpsCallable()` usage
   - Keep only HTTP fetch-based functions
-- [ ] Remove Firebase Functions from `webapp/package.json` (if present)
-- [ ] Update imports in `AIPanel.jsx` (if needed)
-- [ ] Test that AI panel works with backend
+- [x] Remove Firebase Functions from `webapp/package.json` (if present)
+- [x] Update imports in `AIPanel.jsx` (if needed)
+- [x] Test that AI panel works with backend
 
 **Files Modified:**
 
@@ -532,18 +532,18 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Update all documentation for new backend integration
 
-- [ ] Update `README.md` (root):
+- [x] Update `README.md` (root):
   - Document new architecture (FastAPI backend)
   - Update setup instructions
   - Add backend startup instructions
-- [ ] Update `webapp/README.md`:
+- [x] Update `webapp/README.md`:
   - Document environment variables
   - Update AI service usage
   - Add troubleshooting section
-- [ ] Update `api/README.md`:
+- [x] Update `api/README.md`:
   - Document streaming endpoints
   - Update deployment instructions
-- [ ] Update `PRD.md` (if needed):
+- [x] Update `PRD.md` (if needed):
   - Note architecture change
   - Update tech stack section
 
@@ -567,11 +567,11 @@ This document outlines the PRs and tasks for migrating the AI agent from Firebas
 
 **Description**: Remove dead code and optimize
 
-- [ ] Remove unused Firebase Functions code (or move to `/archive`)
-- [ ] Remove unused imports in frontend
-- [ ] Optimize bundle size (check for unused dependencies)
-- [ ] Run linter and fix warnings
-- [ ] Check for console warnings/errors
+- [x] Remove unused Firebase Functions code (or move to `/archive`)
+- [x] Remove unused imports in frontend
+- [x] Optimize bundle size (check for unused dependencies)
+- [x] Run linter and fix warnings
+- [x] Check for console warnings/errors
 
 **Files Modified:**
 

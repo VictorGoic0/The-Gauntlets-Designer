@@ -12,13 +12,12 @@ import { colors, typography, spacing } from "../../styles/tokens";
 export default function AIPanel({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [streamingTools, setStreamingTools] = useState([]);
   const cleanupRef = useRef(null);
 
   const handleSubmit = async (command) => {
     // Add user message to chat
     const userMessage = {
-      id: Date.now(),
+      id: `user-${Date.now()}`,
       type: "user",
       content: command,
       timestamp: new Date(),
@@ -26,58 +25,48 @@ export default function AIPanel({ isOpen, onClose }) {
     setMessages((prev) => [...prev, userMessage]);
 
     setIsLoading(true);
-    setStreamingTools([]);
+    
+    // Counter for unique IDs
+    let progressCounter = 0;
 
     try {
       // Use streaming API
       const cleanup = executeAICommandStream(command, {
-        onToolStart: (tool, args) => {
-          setStreamingTools((prev) => [
-            ...prev,
-            {
-              id: `${tool}-${Date.now()}`,
-              name: tool,
-              status: "executing",
-              args,
-            },
-          ]);
-        },
-        onToolEnd: (tool, result) => {
-          setStreamingTools((prev) =>
-            prev.map((t) =>
-              t.name === tool && t.status === "executing"
-                ? { ...t, status: "complete", result }
-                : t
-            )
-          );
-        },
         onMessage: (content) => {
-          // Accumulate message content (could be streamed in chunks)
-          console.log("Message chunk:", content);
-        },
-        onComplete: (toolCalls) => {
-          // Add AI response to chat
-          const aiMessage = {
-            id: Date.now() + 1,
-            type: "ai",
-            content: `Executed ${toolCalls} tool(s) successfully`,
-            toolCalls,
+          // Add each progress message as a separate message in the chat
+          progressCounter++;
+          const progressMessage = {
+            id: `progress-${Date.now()}-${progressCounter}`,
+            type: "progress",
+            content: content,
             timestamp: new Date(),
           };
-          setMessages((prev) => [...prev, aiMessage]);
+          setMessages((prev) => [...prev, progressMessage]);
+        },
+        onComplete: (toolCalls, finalMessage) => {
+          // Add final AI response to chat
+          if (finalMessage) {
+            const aiMessage = {
+              id: `ai-${Date.now()}`,
+              type: "ai",
+              content: finalMessage,
+              toolCalls,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, aiMessage]);
+          }
 
           // Show success toast
           toast.success(`✨ Created ${toolCalls} object(s)`);
 
           setIsLoading(false);
-          setStreamingTools([]);
         },
         onError: (error) => {
           console.error("AI command failed:", error);
 
           // Add error message to chat
           const errorMessage = {
-            id: Date.now() + 1,
+            id: `error-${Date.now()}`,
             type: "error",
             content: error.message || "Failed to execute command",
             timestamp: new Date(),
@@ -87,7 +76,6 @@ export default function AIPanel({ isOpen, onClose }) {
           toast.error(`❌ ${error.message}`);
 
           setIsLoading(false);
-          setStreamingTools([]);
         },
       });
 
@@ -98,7 +86,7 @@ export default function AIPanel({ isOpen, onClose }) {
 
       // Add error message to chat
       const errorMessage = {
-        id: Date.now() + 1,
+        id: `error-${Date.now()}`,
         type: "error",
         content: error.message || "Failed to execute command",
         timestamp: new Date(),
@@ -108,7 +96,6 @@ export default function AIPanel({ isOpen, onClose }) {
       toast.error(`❌ ${error.message}`);
 
       setIsLoading(false);
-      setStreamingTools([]);
     }
   };
 
@@ -356,23 +343,11 @@ export default function AIPanel({ isOpen, onClose }) {
                         style={{
                           fontSize: typography.fontSize.sm,
                           whiteSpace: "pre-wrap",
+                          margin: 0,
                         }}
                       >
                         {message.content}
                       </p>
-                      {message.results && message.results.length > 0 && (
-                        <div
-                          style={{
-                            marginTop: spacing[2],
-                            fontSize: typography.fontSize.xs,
-                            opacity: 0.75,
-                          }}
-                        >
-                          {message.results.map((result, idx) => (
-                            <div key={idx}>• {result.message}</div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                     <div
                       style={{
@@ -390,88 +365,58 @@ export default function AIPanel({ isOpen, onClose }) {
                 ))}
 
                 {isLoading && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: spacing[2] }}>
-                    {streamingTools.length === 0 ? (
-                      <div style={{ display: "flex", alignItems: "flex-start" }}>
-                        <div
-                          style={{
-                            backgroundColor: colors.background.default,
-                            color: colors.text.primary,
-                            borderRadius: "8px",
-                            padding: `${spacing[2]} ${spacing[4]}`,
-                          }}
-                        >
-                          <div
+                  <div style={{ display: "flex", alignItems: "flex-start" }}>
+                    <div
+                      style={{
+                        backgroundColor: colors.background.default,
+                        color: colors.text.primary,
+                        borderRadius: "8px",
+                        padding: `${spacing[2]} ${spacing[4]}`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: spacing[2],
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <span
                             style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: spacing[2],
+                              width: "8px",
+                              height: "8px",
+                              backgroundColor: colors.text.secondary,
+                              borderRadius: "50%",
+                              animation: "bounce 1s infinite",
                             }}
-                          >
-                            <div style={{ display: "flex", gap: "4px" }}>
-                              <span
-                                style={{
-                                  width: "8px",
-                                  height: "8px",
-                                  backgroundColor: colors.text.secondary,
-                                  borderRadius: "50%",
-                                  animation: "bounce 1s infinite",
-                                }}
-                              />
-                              <span
-                                style={{
-                                  width: "8px",
-                                  height: "8px",
-                                  backgroundColor: colors.text.secondary,
-                                  borderRadius: "50%",
-                                  animation: "bounce 1s infinite",
-                                  animationDelay: "0.1s",
-                                }}
-                              />
-                              <span
-                                style={{
-                                  width: "8px",
-                                  height: "8px",
-                                  backgroundColor: colors.text.secondary,
-                                  borderRadius: "50%",
-                                  animation: "bounce 1s infinite",
-                                  animationDelay: "0.2s",
-                                }}
-                              />
-                            </div>
-                            <span style={{ fontSize: typography.fontSize.sm }}>
-                              AI is thinking...
-                            </span>
-                          </div>
+                          />
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              backgroundColor: colors.text.secondary,
+                              borderRadius: "50%",
+                              animation: "bounce 1s infinite",
+                              animationDelay: "0.1s",
+                            }}
+                          />
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              backgroundColor: colors.text.secondary,
+                              borderRadius: "50%",
+                              animation: "bounce 1s infinite",
+                              animationDelay: "0.2s",
+                            }}
+                          />
                         </div>
+                        <span style={{ fontSize: typography.fontSize.sm }}>
+                          AI is thinking...
+                        </span>
                       </div>
-                    ) : (
-                      streamingTools.map((tool) => (
-                        <div key={tool.id} style={{ display: "flex", alignItems: "flex-start" }}>
-                          <div
-                            style={{
-                              backgroundColor: colors.background.default,
-                              color: colors.text.primary,
-                              borderRadius: "8px",
-                              padding: `${spacing[2]} ${spacing[4]}`,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: spacing[2],
-                            }}
-                          >
-                            {tool.status === "executing" ? (
-                              <span style={{ fontSize: "1rem" }}>⚙️</span>
-                            ) : (
-                              <span style={{ fontSize: "1rem" }}>✅</span>
-                            )}
-                            <span style={{ fontSize: typography.fontSize.sm }}>
-                              {tool.name.replace(/_/g, " ")}
-                              {tool.status === "executing" ? "..." : " complete"}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
