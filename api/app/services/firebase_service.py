@@ -14,6 +14,7 @@ Each object document contains:
     - params: Action parameters dictionary
     - createdAt: Server timestamp
 """
+import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 from typing import Dict, List, Any, Optional
@@ -30,13 +31,12 @@ def initialize_firebase() -> None:
     """
     Initialize Firebase Admin SDK with service account credentials.
     
-    This function:
-    1. Loads credentials from the configured path
-    2. Initializes Firebase Admin app (if not already initialized)
-    3. Gets Firestore client instance
+    Supports two modes:
+    1. Environment variable (Railway): FIREBASE_CREDENTIALS_JSON with JSON string
+    2. File path (local dev): serviceAccountKey.json file
     
     Raises:
-        FileNotFoundError: If credentials file doesn't exist
+        FileNotFoundError: If credentials file doesn't exist and env var not set
         ValueError: If credentials are invalid
         Exception: For other Firebase initialization errors
     """
@@ -53,7 +53,27 @@ def initialize_firebase() -> None:
             # Not initialized yet, proceed with initialization
             pass
         
-        # Get credentials path
+        # Try environment variable first (Railway deployment)
+        creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+        if creds_json:
+            import json
+            
+            logger.info("Initializing Firebase Admin SDK with credentials from FIREBASE_CREDENTIALS_JSON env var")
+            
+            # Parse JSON from environment variable
+            creds_dict = json.loads(creds_json)
+            
+            # Initialize Firebase Admin with credential dict
+            cred = credentials.Certificate(creds_dict)
+            firebase_admin.initialize_app(cred)
+            
+            # Get Firestore client
+            _db = firestore.client()
+            
+            logger.info("Firebase Admin SDK initialized successfully from env var")
+            return
+        
+        # Fall back to file path (local development)
         creds_path = settings.get_firebase_credentials_path()
         creds_file = Path(creds_path)
         
@@ -61,11 +81,11 @@ def initialize_firebase() -> None:
             raise FileNotFoundError(
                 f"Firebase credentials file not found at: {creds_path}. "
                 f"Please download your service account key from Firebase Console and save it as "
-                f"serviceAccountKey.json in the backend/ directory, or set FIREBASE_CREDENTIALS_PATH "
-                f"to point to your credentials file."
+                f"serviceAccountKey.json in the api/ directory, or set FIREBASE_CREDENTIALS_JSON "
+                f"environment variable with the JSON content."
             )
         
-        logger.info(f"Initializing Firebase Admin SDK with credentials from: {creds_path}")
+        logger.info(f"Initializing Firebase Admin SDK with credentials from file: {creds_path}")
         
         # Initialize Firebase Admin with service account credentials
         cred = credentials.Certificate(str(creds_file))
@@ -74,10 +94,10 @@ def initialize_firebase() -> None:
         # Get Firestore client
         _db = firestore.client()
         
-        logger.info("Firebase Admin SDK initialized successfully")
+        logger.info("Firebase Admin SDK initialized successfully from file")
         
     except FileNotFoundError as e:
-        logger.error(f"Firebase initialization failed - credentials file not found: {e}")
+        logger.error(f"Firebase initialization failed - credentials not found: {e}")
         raise
     except ValueError as e:
         logger.error(f"Firebase initialization failed - invalid credentials: {e}")
