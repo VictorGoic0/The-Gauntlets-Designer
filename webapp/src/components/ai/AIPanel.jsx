@@ -2,10 +2,10 @@
  * AIPanel Component - Compact floating card for AI assistant interaction
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Card from "../design-system/Card";
 import AIInput from "./AIInput";
-import { executeAICommand, executeAICommandStream } from "../../services/aiService";
+import { executeAICommandStream } from "../../services/aiService";
 import toast from "react-hot-toast";
 import { colors, typography, spacing } from "../../styles/tokens";
 
@@ -13,6 +13,21 @@ export default function AIPanel({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const cleanupRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isLoading]);
+
+  // Auto-scroll to bottom when panel opens
+  useEffect(() => {
+    if (isOpen && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (command) => {
     // Add user message to chat
@@ -419,6 +434,9 @@ export default function AIPanel({ isOpen, onClose }) {
                     </div>
                   </div>
                 )}
+                
+                {/* Invisible element to scroll to */}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>
