@@ -3189,7 +3189,7 @@ transitions.fast; // 150ms ease
   - Custom glow effect (blue shadow)
   - Artist palette icon
   - 40px square with rounded corners
-- ✅ Added gradient text effect on title ("Goico's Artist")
+- ✅ Added gradient text effect on title ("Black Canvas")
 - ✅ Added subtitle: "Collaborative Canvas"
 - ✅ Improved visual grouping:
   - Info card for Connection Status + Username (card background, border, divider)
