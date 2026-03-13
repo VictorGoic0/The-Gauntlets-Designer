@@ -5,7 +5,6 @@ from sse_starlette.sse import EventSourceResponse
 from app.agent.orchestrator import CanvasAgent
 from app.models.requests import ChatRequest
 from app.models.responses import ChatResponse
-from app.models.models import validate_model, AVAILABLE_MODELS
 from app.utils.logger import logger, set_request_id, TimingContext
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
@@ -66,29 +65,15 @@ async def chat(request: ChatRequest):
                     detail="message is required and cannot be empty"
                 )
             
-            # Determine model to use (default from config or override from request)
-            model_key = request.model if request.model else None
-            
-            # Validate model if provided
-            if model_key:
-                try:
-                    validate_model(model_key)
-                except ValueError as e:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=str(e)
-                    )
-            
             # Log request with request ID
             logger.info(
-                f"Processing chat request. Model: {model_key or 'default'}, "
-                f"Message length: {len(request.message)}, Request ID: {request_id}"
+                f"Processing chat request. Message length: {len(request.message)}, "
+                f"Request ID: {request_id}"
             )
-            
-            # Process message through agent
+
+            # Model selection is handled automatically by model_router
             result = await agent.process_message(
                 user_message=request.message,
-                model=model_key
             )
         
             # Check if agent returned an error
@@ -195,32 +180,18 @@ async def chat_stream(request: ChatRequest):
                 detail="message is required and cannot be empty"
             )
         
-        # Determine model to use
-        model_key = request.model if request.model else None
-        
-        # Validate model if provided
-        if model_key:
-            try:
-                validate_model(model_key)
-            except ValueError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=str(e)
-                )
-        
         # Log request with request ID
         logger.info(
-            f"Processing streaming chat request. Model: {model_key or 'default'}, "
-            f"Message length: {len(request.message)}, Request ID: {request_id}"
+            f"Processing streaming chat request. Message length: {len(request.message)}, "
+            f"Request ID: {request_id}"
         )
-        
+
         # Create event generator
         async def event_generator():
             """Generate SSE events from agent stream."""
             try:
                 async for event in agent.stream_message(
                     user_message=request.message,
-                    model=model_key
                 ):
                     # Format as SSE event
                     event_type = event.get("event", "message")

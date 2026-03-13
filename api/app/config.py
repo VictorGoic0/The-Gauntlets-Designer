@@ -16,12 +16,18 @@ class Settings:
         """Initialize settings from environment variables."""
         # Required environment variables (with defaults for development)
         self.OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+        self.GROK_API_KEY: str = os.getenv("GROK_API_KEY", "")
         self.FIREBASE_CREDENTIALS_PATH: str = os.getenv(
             "FIREBASE_CREDENTIALS_PATH", "./serviceAccountKey.json"
         )
 
+        # Model configuration
+        self.REASONING_MODEL: str = "gpt-5-mini-2025-08-07"
+        self.FAST_MODEL: str = "grok-4-1-fast-non-reasoning"
+        self.DEFAULT_MODEL: str = self.FAST_MODEL
+        self.GROK_BASE_URL: str = "https://api.x.ai/v1"
+
         # Hardcoded for testing (as per requirements)
-        self.DEFAULT_MODEL: str = "gpt-4-turbo"
         self.ENABLE_RETRY: bool = True
         self.MAX_RETRIES: int = 3
         self.LOG_LEVEL: str = "INFO"
@@ -52,6 +58,12 @@ settings = Settings()
 if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY == "your_key_here":
     warnings.warn(
         "OPENAI_API_KEY must be set in environment variables or .env file",
+        UserWarning
+    )
+
+if not settings.GROK_API_KEY or settings.GROK_API_KEY == "your_key_here":
+    warnings.warn(
+        "GROK_API_KEY must be set in environment variables or .env file",
         UserWarning
     )
 
