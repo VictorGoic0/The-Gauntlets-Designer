@@ -1,9 +1,11 @@
 """Agent chat endpoint with LangChain integration and SSE streaming."""
 import json
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sse_starlette.sse import EventSourceResponse
 from app.agent.orchestrator import CanvasAgent
+from app.middleware.auth import get_current_user_uid
 from app.models.requests import ChatRequest
+from app.services.rate_limit import check_rate_limits
 from app.models.responses import ChatResponse
 from app.utils.logger import logger, set_request_id, TimingContext
 
@@ -32,46 +34,36 @@ agent = CanvasAgent()
     - toolCalls: Number of tool calls made
     - tokensUsed: Total tokens consumed (estimated)
     - model: Model used for the request
+
+    **Authentication**: Requires `Authorization: Bearer <firebase_id_token>`.
     """
 )
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    uid: str = Depends(get_current_user_uid),
+):
     """
     Chat endpoint for AI agent interactions using LangChain.
-    
-    This endpoint:
-    1. Validates the request (message, model)
-    2. Processes the message through the LangChain-powered CanvasAgent
-    3. Tools are executed automatically and write to Firestore
-    4. Returns response and metadata for frontend consumption
-    
-    Args:
-        request: Chat request with message and optional model
-        
-    Returns:
-        Chat response with metadata and assistant's text response
-        
-    Raises:
-        HTTPException: 400 for validation errors, 500 for processing errors
+
+    Requires a valid Firebase ID token in the Authorization header.
     """
-    # Generate and set request ID for tracing
     request_id = set_request_id()
-    
+
     try:
         with TimingContext("chat_request", logger):
-            # Validate message
+            await check_rate_limits(uid)
+
             if not request.message or not request.message.strip():
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="message is required and cannot be empty"
                 )
-            
-            # Log request with request ID
+
             logger.info(
-                f"Processing chat request. Message length: {len(request.message)}, "
-                f"Request ID: {request_id}"
+                f"Processing chat request. uid={uid}, message_length={len(request.message)}, "
+                f"request_id={request_id}"
             )
 
-            # Model selection is handled automatically by model_router
             result = await agent.process_message(
                 user_message=request.message,
             )
@@ -148,42 +140,33 @@ async def chat(request: ChatRequest):
     
     Returns:
     Server-Sent Events stream with real-time updates
+
+    **Authentication**: Requires `Authorization: Bearer <firebase_id_token>`.
     """
 )
-async def chat_stream(request: ChatRequest):
+async def chat_stream(
+    request: ChatRequest,
+    uid: str = Depends(get_current_user_uid),
+):
     """
     Chat streaming endpoint for real-time AI agent interactions.
-    
-    This endpoint:
-    1. Validates the request (message, model)
-    2. Streams the message processing through the LangChain-powered CanvasAgent
-    3. Tools are executed automatically and events are emitted in real-time
-    4. Returns SSE stream with tool_start, tool_end, message, complete, and error events
-    
-    Args:
-        request: Chat request with message and optional model
-        
-    Returns:
-        EventSourceResponse with SSE stream of events
-        
-    Raises:
-        HTTPException: 400 for validation errors
+
+    Requires a valid Firebase ID token in the Authorization header.
     """
-    # Generate and set request ID for tracing
     request_id = set_request_id()
-    
+
     try:
-        # Validate message
+        await check_rate_limits(uid)
+
         if not request.message or not request.message.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="message is required and cannot be empty"
             )
-        
-        # Log request with request ID
+
         logger.info(
-            f"Processing streaming chat request. Message length: {len(request.message)}, "
-            f"Request ID: {request_id}"
+            f"Processing streaming chat request. uid={uid}, message_length={len(request.message)}, "
+            f"request_id={request_id}"
         )
 
         # Create event generator

@@ -20,7 +20,32 @@ The project is currently in **Phase 3** with MVP features largely complete. **Ne
 
 **PR #8 Status**: ✅ **COMPLETE** - Comprehensive testing, refinement, and documentation complete. Test suite, integration tests, model comparison tools, logging enhancements, API documentation polish, README completion, code quality improvements, performance metrics documentation, and handoff documentation all implemented.
 
+**Agent Auth & Rate Limiting (March 2026)** ✅ **COMPLETE**
+- Dual-model routing (Grok fast / OpenAI reasoning), Firebase token verification on agent endpoints, frontend Bearer token, Upstash Redis rate limits (10/user/day, 100 global/day). See `docs/TDD-agent-auth-ratelimit.md`.
+
 ## Recent Changes
+
+### Agent Auth, Rate Limiting & Dual-Model Routing (March 2026) ✅ **COMPLETE**
+
+**Dual-model routing (Part 1):**
+- `api/app/config.py`: Added `GROK_API_KEY`, `REASONING_MODEL` (gpt-5-mini-2025-08-07), `FAST_MODEL` (grok-4-1-fast-non-reasoning), `GROK_BASE_URL`, `DEFAULT_MODEL=FAST_MODEL`.
+- `api/app/agent/model_router.py`: `classify_complexity(message)` (keyword + primitive-shape heuristic, default fast), `get_model_client(tier)`, `route(message)`. Default tier = fast (cost-first).
+- `api/app/agent/orchestrator.py`: Per-tier LangChain agent cache, `process_message`/`stream_message` use `route()` and return `tier`; no request-level model override.
+- Agent routes no longer accept or validate `model`; routing is internal.
+
+**Firebase auth (Part 2):**
+- `api/app/middleware/auth.py`: `get_current_user_uid(Authorization: Header)` — verifies Firebase ID token via `firebase_admin.auth.verify_id_token()`, returns `uid`; 401 on missing/invalid/expired token, 503 if Firebase not initialized.
+- `api/app/api/routes/agent.py`: Both `POST /api/agent/chat` and `POST /api/agent/chat-stream` use `uid: str = Depends(get_current_user_uid)`; logs include `uid`.
+- Frontend: `webapp/src/services/aiService.js` — `getIdToken()` from `auth.currentUser`, `Authorization: Bearer ${token}` on both agent requests; `executeAICommandStream` is async and awaited in AIPanel.
+
+**Rate limiting (Part 3):**
+- `api/requirements.txt`: Added `upstash-redis`, `upstash-ratelimit`.
+- `api/app/services/rate_limit.py`: `Redis.from_env()` (UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN); `user_limiter` (10/86400s, prefix `rate:user:black-canvas`), `global_limiter` (100/86400s, prefix `rate:global:black-canvas`); `check_rate_limits(uid)` checks global then per-user, raises 429 with `{ error, detail, retryAfter }` if exceeded.
+- Both agent routes call `await check_rate_limits(uid)` immediately after auth, before message validation.
+
+**Request order:** 1) Verify Firebase token → uid. 2) Check global rate limit. 3) Check per-user rate limit. 4) Validate message → process agent. Optional: X-RateLimit-Remaining / X-RateLimit-Reset headers on success not implemented (TDD “nice to have”).
+
+## Recent Changes (Legacy)
 
 ### PR #1: FastAPI Backend Setup ✅ **COMPLETE**
 

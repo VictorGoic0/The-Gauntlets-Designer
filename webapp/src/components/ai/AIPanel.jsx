@@ -45,8 +45,8 @@ export default function AIPanel({ isOpen, onClose }) {
     let progressCounter = 0;
 
     try {
-      // Use streaming API
-      const cleanup = executeAICommandStream(command, {
+      // Use streaming API (requires auth token)
+      const cleanup = await executeAICommandStream(command, {
         onMessage: (content) => {
           // Add each progress message as a separate message in the chat
           progressCounter++;

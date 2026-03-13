@@ -1,9 +1,25 @@
 /**
  * AI Service - Handles communication with the AI Agent (FastAPI backend with SSE streaming)
+ *
+ * All agent requests require a valid Firebase ID token (Authorization: Bearer <token>).
  */
 
-// FastAPI backend URL from environment variable
+import { auth } from "../lib/firebase";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+/**
+ * Get current user's Firebase ID token for agent API auth.
+ * @returns {Promise<string>} ID token
+ * @throws {Error} If user is not signed in
+ */
+async function getIdToken() {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("You must be signed in to use the AI assistant");
+  }
+  return user.getIdToken();
+}
 
 /**
  * Execute an AI command on the canvas (non-streaming)
@@ -16,11 +32,14 @@ export async function executeAICommand(command) {
     throw new Error("Command cannot be empty");
   }
 
+  const token = await getIdToken();
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/agent/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         message: command.trim(),
@@ -28,6 +47,8 @@ export async function executeAICommand(command) {
     });
 
     if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      if (body.detail?.detail) throw new Error(body.detail.detail);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -36,7 +57,7 @@ export async function executeAICommand(command) {
   } catch (error) {
     console.error("AI Service error:", error);
     throw new Error(
-      error.message || "Failed to execute AI command. Please try again."
+      error.message || "Failed to execute AI command. Please try again.",
     );
   }
 }
@@ -50,12 +71,14 @@ export async function executeAICommand(command) {
  * @param {Function} callbacks.onMessage - Called when a message chunk is received
  * @param {Function} callbacks.onComplete - Called when processing is complete
  * @param {Function} callbacks.onError - Called when an error occurs
- * @returns {Function} Cleanup function to close the stream
+ * @returns {Promise<Function>} Cleanup function to close the stream
  */
-export function executeAICommandStream(command, callbacks = {}) {
+export async function executeAICommandStream(command, callbacks = {}) {
   if (!command || command.trim().length === 0) {
     throw new Error("Command cannot be empty");
   }
+
+  const token = await getIdToken();
 
   const {
     onMessage = () => {},
@@ -72,6 +95,7 @@ export function executeAICommandStream(command, callbacks = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         message: command.trim(),
@@ -80,6 +104,8 @@ export function executeAICommandStream(command, callbacks = {}) {
     })
       .then(async (response) => {
         if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          if (body.detail?.detail) throw new Error(body.detail.detail);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 

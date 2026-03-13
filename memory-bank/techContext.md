@@ -51,13 +51,16 @@ VITE_FIREBASE_DATABASE_URL=your_database_url
 
 **Backend (FastAPI - .env file):**
 ```env
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=sk-...           # OpenAI (reasoning model: gpt-5-mini-2025-08-07)
+GROK_API_KEY=xai-...            # xAI Grok (fast model: grok-4-1-fast-non-reasoning)
 FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
-DEFAULT_MODEL=gpt-4-turbo
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
 ENABLE_RETRY=true
 MAX_RETRIES=3
 LOG_LEVEL=INFO
 ```
+Agent endpoints require `Authorization: Bearer <firebase_id_token>`. Rate limits: 10 requests/user/day, 100 global/day (Upstash Redis, FixedWindow).
 
 **Note**: 
 - Tool definitions are cached in `app/agent/tools.py` (PR #3 complete). All 5 tools (rectangle, square, circle, text, line) are implemented with enhanced properties (boxShadow, cornerRadius, metadata, etc.).
@@ -135,10 +138,15 @@ openai>=1.54.0
 firebase-admin>=6.5.0
 python-dotenv>=1.0.0
 tenacity>=9.0.0
+upstash-redis>=1.0.0
+upstash-ratelimit>=1.0.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 pytest-mock>=3.12.0
 httpx>=0.27.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+sse-starlette>=2.0.0
 ```
 
 Note: FastAPI includes Pydantic internally for request/response validation, but we use plain Python classes for configuration management.
