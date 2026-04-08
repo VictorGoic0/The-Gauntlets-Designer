@@ -125,8 +125,8 @@ Prevent abuse. Rate limits apply at the **endpoint level** — one agent call co
 ### Limits
 | Scope | Limit | Window | Redis key pattern |
 |-------|-------|--------|-------------------|
-| Per user | 10 requests | 24 hours | `rate:user:black-canvas:{uid}` |
-| Global | 100 requests | 24 hours | `rate:global:black-canvas` |
+| Per user | 30 requests | 24 hours | `rate:user:black-canvas:{uid}` |
+| Global | 1000 requests | 24 hours | `rate:global:black-canvas` |
 
 ### Dependencies to Install
 ```bash
@@ -153,13 +153,13 @@ redis = Redis.from_env()
 
 user_limiter = Ratelimit(
     redis=redis,
-    limiter=FixedWindow(max_requests=10, window=86400),
+    limiter=FixedWindow(max_requests=30, window=86400),
     prefix="rate:user:black-canvas",
 )
 
 global_limiter = Ratelimit(
     redis=redis,
-    limiter=FixedWindow(max_requests=100, window=86400),
+    limiter=FixedWindow(max_requests=1000, window=86400),
     prefix="rate:global:black-canvas",
 )
 
@@ -177,7 +177,7 @@ async def check_rate_limits(uid: str) -> None:
   ```json
   {
     "error": "RateLimitExceeded",
-    "detail": "You have reached your daily request limit (10/day).",
+    "detail": "You have reached your daily request limit (30/day).",
     "retryAfter": <seconds until window resets>
   }
   ```
@@ -213,4 +213,4 @@ Global is checked first so a single bad actor doesn't starve the global pool bef
 
 - **Token refresh**: Frontend should proactively refresh tokens before they expire. Does the existing frontend auth flow handle `getIdToken(/* forceRefresh */ true)` on 401s?
 - **Rate limit headers**: Do we want `X-RateLimit-Remaining` / `X-RateLimit-Reset` headers in responses for frontend UX (e.g. showing a "X requests remaining today" counter)?
-- **Limit values**: 10/user/day and 100/global/day are starting points for local dev. These should be revisited before production.
+- **Limit values**: 30/user/day and 1000/global/day (as of March 2026). Revisit before production.

@@ -60,7 +60,7 @@ ENABLE_RETRY=true
 MAX_RETRIES=3
 LOG_LEVEL=INFO
 ```
-Agent endpoints require `Authorization: Bearer <firebase_id_token>`. Rate limits: 10 requests/user/day, 100 global/day (Upstash Redis, FixedWindow).
+Agent endpoints require `Authorization: Bearer <firebase_id_token>`. Rate limits: 30 requests/user/day, 1000 global/day (Upstash Redis, FixedWindow).
 
 **Note**: 
 - Tool definitions are cached in `app/agent/tools.py` (PR #3 complete). All 5 tools (rectangle, square, circle, text, line) are implemented with enhanced properties (boxShadow, cornerRadius, metadata, etc.).

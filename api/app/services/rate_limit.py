@@ -1,8 +1,8 @@
 """
 Rate limiting for agent endpoints via Upstash Redis.
 
-Per-user: 10 requests / 24h (identifier = uid).
-Global: 100 requests / 24h (identifier = "app").
+Per-user: 30 requests / 24h (identifier = uid).
+Global: 1000 requests / 24h (identifier = "app").
 """
 import time
 
@@ -14,13 +14,13 @@ redis = Redis.from_env()
 
 user_limiter = Ratelimit(
     redis=redis,
-    limiter=FixedWindow(max_requests=10, window=86400),
+    limiter=FixedWindow(max_requests=30, window=86400),
     prefix="rate:user:black-canvas",
 )
 
 global_limiter = Ratelimit(
     redis=redis,
-    limiter=FixedWindow(max_requests=100, window=86400),
+    limiter=FixedWindow(max_requests=1000, window=86400),
     prefix="rate:global:black-canvas",
 )
 
@@ -38,7 +38,7 @@ async def check_rate_limits(uid: str) -> None:
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
                 "error": "RateLimitExceeded",
-                "detail": "App daily request limit reached (100/day).",
+                "detail": "App global daily request limit reached (1000/day).",
                 "retryAfter": max(0, int(global_res.reset - time.time())),
             },
         )
@@ -50,7 +50,7 @@ async def check_rate_limits(uid: str) -> None:
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
                 "error": "RateLimitExceeded",
-                "detail": "You have reached your daily request limit (10/day).",
+                "detail": "You have reached your daily request limit (30/day).",
                 "retryAfter": max(0, int(user_res.reset - time.time())),
             },
         )

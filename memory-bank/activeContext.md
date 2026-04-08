@@ -21,7 +21,7 @@ The project is currently in **Phase 3** with MVP features largely complete. **Ne
 **PR #8 Status**: ✅ **COMPLETE** - Comprehensive testing, refinement, and documentation complete. Test suite, integration tests, model comparison tools, logging enhancements, API documentation polish, README completion, code quality improvements, performance metrics documentation, and handoff documentation all implemented.
 
 **Agent Auth & Rate Limiting (March 2026)** ✅ **COMPLETE**
-- Dual-model routing (Grok fast / OpenAI reasoning), Firebase token verification on agent endpoints, frontend Bearer token, Upstash Redis rate limits (10/user/day, 100 global/day). See `docs/TDD-agent-auth-ratelimit.md`.
+- Dual-model routing (Grok fast / OpenAI reasoning), Firebase token verification on agent endpoints, frontend Bearer token, Upstash Redis rate limits (30/user/day, 1000 global/day). See `docs/TDD-agent-auth-ratelimit.md`.
 
 ## Recent Changes
 
@@ -40,7 +40,7 @@ The project is currently in **Phase 3** with MVP features largely complete. **Ne
 
 **Rate limiting (Part 3):**
 - `api/requirements.txt`: Added `upstash-redis`, `upstash-ratelimit`.
-- `api/app/services/rate_limit.py`: `Redis.from_env()` (UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN); `user_limiter` (10/86400s, prefix `rate:user:black-canvas`), `global_limiter` (100/86400s, prefix `rate:global:black-canvas`); `check_rate_limits(uid)` checks global then per-user, raises 429 with `{ error, detail, retryAfter }` if exceeded.
+- `api/app/services/rate_limit.py`: `Redis.from_env()` (UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN); `user_limiter` (30/86400s, prefix `rate:user:black-canvas`), `global_limiter` (1000/86400s, prefix `rate:global:black-canvas`); `check_rate_limits(uid)` checks global then per-user, raises 429 with `{ error, detail, retryAfter }` if exceeded.
 - Both agent routes call `await check_rate_limits(uid)` immediately after auth, before message validation.
 
 **Request order:** 1) Verify Firebase token → uid. 2) Check global rate limit. 3) Check per-user rate limit. 4) Validate message → process agent. Optional: X-RateLimit-Remaining / X-RateLimit-Reset headers on success not implemented (TDD “nice to have”).

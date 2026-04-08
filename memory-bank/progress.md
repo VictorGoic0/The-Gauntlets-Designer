@@ -55,7 +55,7 @@
 - [x] Dual-model routing: Grok (fast) vs OpenAI (reasoning) via `model_router.py`; default fast for cost.
 - [x] Firebase auth: `get_current_user_uid` in `app/middleware/auth.py`; both agent routes require Bearer token.
 - [x] Frontend: `aiService.js` sends `Authorization: Bearer ${token}` (getIdToken); AIPanel awaits streaming call.
-- [x] Rate limiting: `app/services/rate_limit.py` with Upstash Redis; 10/user/day, 100 global/day (FixedWindow, prefix black-canvas).
+- [x] Rate limiting: `app/services/rate_limit.py` with Upstash Redis; 30/user/day, 1000 global/day (FixedWindow, prefix black-canvas).
 - [x] Agent routes: after auth, call `check_rate_limits(uid)`; 429 with `error`, `detail`, `retryAfter` when exceeded.
 - TDD doc: `docs/TDD-agent-auth-ratelimit.md`. Optional: X-RateLimit-Remaining/Reset headers not implemented.
 
