@@ -14,6 +14,16 @@
 **Has Docker already:** No dedicated `infra/` compose in-repo yet (Phase 3 optional)  
 **Client-facing repo:** Portfolio-style app (treat AI keys / rate limits per runbook portfolio notes if applicable)
 
+### Refactor progress (checkpoint)
+
+| Phase | Status |
+|-------|--------|
+| 1 — Linting | **Done** |
+| 2 — Cursor rules + React webapp alignment | **Done** |
+| 3 — Structured logging | **Done** _(structlog; no Loki/Grafana)_ |
+| 4 — Environment config module | **Next** |
+| 5 — Portfolio: AI keys + rate limiter | Optional |
+
 ---
 
 ## Definition of Done
@@ -22,8 +32,8 @@ This project is considered refactored when:
 
 - [x] Linter passes with zero errors on both `/api` and `/webapp` (if present)
 - [x] All Cursor rules are in place _(Phase 2 complete: `react-readability.mdc` verbatim from runbook; `react-patterns.mdc` leaves `[IMMUTABLE — DO NOT MODIFY]` unchanged and only `[PROJECT — CUSTOMIZE]` edited). **Manual check:** agent responses end with a Darth Vader quote (`darth-vadar-quote-signoff.mdc`) once Cursor has indexed `.cursor/rules/`_
-- [ ] Structured logging is in place (`pino` + `pino-http`); every request produces a Pino log entry
-- [ ] Local logs are visible in a chosen setup: **either** readable terminal output (Pino Pretty) **or** Grafana + Loki via Docker (see Phase 3 — you do not need both)
+- [x] Structured logging is in place per Phase 3 (Node: `pino` + `pino-http`; **this repo:** FastAPI + **`structlog`** — console in dev, JSON when `LOG_JSON=1` or `APP_ENV=production`); every HTTP request produces a structured log entry (`http_request` via middleware)
+- [x] Local logs are visible: **readable terminal output** (structlog `ConsoleRenderer` in dev). **Not used:** Grafana/Loki (explicit project choice)
 - [ ] No `process.env` (Node) or `os.environ` (Python) accessed outside the config module
 - [ ] All top-level folders match the standard structure below
 - [ ] README reflects current state of the project
@@ -214,6 +224,15 @@ Send the agent a trivial task (e.g. "add a comment to `README.md`"). Confirm the
 - [x] **`react-readability.mdc`** is byte-identical to `runbook-docs/project-rules/react-readability.mdc` (when frontend exists)
 - [x] **`react-patterns.mdc`**: `[IMMUTABLE — DO NOT MODIFY]` sections still match the runbook source; only `[PROJECT — CUSTOMIZE]` sections were edited (when frontend exists)
 
+### 2g. Codebase alignment (React frontend)
+
+After rules are installed, apply them across the webapp (without editing the rule files):
+
+- [x] **`react-patterns.mdc`**: Full webapp pass (handlers, effects, keyboard shortcuts, etc.). Config files under `webapp/` excluded from mechanical edits.
+- [x] **`react-readability.mdc`**: Full webapp pass (named handlers in JSX, `previous*` in `setState` updaters, `props` destructuring, etc.). Config files and `webapp/src/components/icons/` (SVGs) excluded.
+
+**Verify:** `cd webapp && npm run lint` exits with 0 errors.
+
 ---
 
 ## Phase 3 — Structured logging (Pino)
@@ -396,13 +415,19 @@ In the reference compose file, Grafana is exposed at **`http://localhost:3001`**
 
 **Always:**
 
-- [ ] A test request to any route produces a structured log entry (and `req` / `res` via `pino-http` where applicable)
+- [x] A test request to any route produces a structured log entry _(CollabCanvas: `http_request` with `http_method`, `http_path`, `status_code`, `duration_ms`, `request_id`; Express uses `pino-http` per-request fields)_
 
-**If you chose Pino Pretty:**
+**CollabCanvas (FastAPI + structlog) — done:**
+
+- [x] `structlog` in `api/app/utils/logger.py`; `RequestLoggingMiddleware` in `api/app/middleware/request_logging.py`
+- [x] Dev: colored console (`ConsoleRenderer`). Production-style: `LOG_JSON=1` or `APP_ENV=production` → JSON lines on stdout
+- [x] **Skipped:** Grafana + Loki (not used)
+
+**If you chose Pino Pretty (Node):**
 
 - [ ] `npm run dev` shows formatted, readable logs in the terminal
 
-**If you chose Grafana + Loki:**
+**If you chose Grafana + Loki (Node):**
 
 - [ ] `docker compose -f infra/docker-compose.loki.yaml up -d` starts without errors
 - [ ] Grafana at `http://localhost:3001` shows logs from the running app (after Promtail ingests the log file)
@@ -659,5 +684,5 @@ Rules:
 5. End every response with a Darth Vader quote.
 6. React rules (Phase 2): never edit `.cursor/rules/react-readability.mdc`. Never edit `[IMMUTABLE — DO NOT MODIFY]` in `react-patterns.mdc` (including all useEffect rules). Edit only `[PROJECT — CUSTOMIZE]` in `react-patterns.mdc` for this repo’s paths and globs.
 
-Current phase: [FILL IN BEFORE EACH SESSION]
+Current phase: Phase 4 — Environment config module (centralise env access in `api/app/config.py`; align with Phase 4 verification)
 ```

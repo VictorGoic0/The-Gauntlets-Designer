@@ -1,144 +1,158 @@
-"""Logging configuration for the application."""
+"""
+Structured logging via structlog.
+
+- Development (default): human-readable console output.
+- Production-style: set LOG_JSON=1 or APP_ENV=production for one JSON object per line on stdout.
+
+CURSOR AGENT INSTRUCTION:
+Import `logger` from this module only; do not call structlog.configure elsewhere.
+Bind per-request fields in middleware; use logger.info("event_name", key=value) for domain logs.
+"""
+
+from __future__ import annotations
+
 import logging
 import sys
 import time
 import uuid
 from contextvars import ContextVar
-from pathlib import Path
+
+import structlog
 
 from app.config import settings
 
-# Create logs directory if it doesn't exist
-logs_dir = Path(__file__).parent.parent.parent / "logs"
-logs_dir.mkdir(exist_ok=True)
+SERVICE_NAME = "collabcanvas-api"
 
-# Configure logging format with request ID support
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(message)s"
-DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
 
-# Context variable for request ID (thread-safe)
-request_id_var: ContextVar[str | None] = ContextVar('request_id', default=None)
-
-# Get log level from settings
-log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+_logging_configured = False
 
 
-class RequestIDFilter(logging.Filter):
-    """Filter to add request ID to log records."""
-    
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Add request ID to log record."""
-        request_id = request_id_var.get()
-        record.request_id = request_id if request_id else "no-request-id"
-        return True
+def configure_logging() -> None:
+    """Configure structlog and the stdlib root logger. Safe to call once at startup."""
+    global _logging_configured
+    if _logging_configured:
+        return
+
+    log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+    json_logs = settings.LOG_JSON
+
+    shared_processors: list = [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.add_logger_name,
+        structlog.processors.TimeStamper(fmt="iso", utc=True),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+    ]
+
+    structlog.configure(
+        processors=shared_processors
+        + [
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+    renderer = (
+        structlog.processors.JSONRenderer()
+        if json_logs
+        else structlog.dev.ConsoleRenderer()
+    )
+
+    formatter = structlog.stdlib.ProcessorFormatter(
+        processor=renderer,
+        foreign_pre_chain=shared_processors,
+    )
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(handler)
+    root.setLevel(log_level)
+
+    for name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"):
+        lg = logging.getLogger(name)
+        lg.handlers.clear()
+        lg.propagate = True
+        lg.setLevel(log_level)
+
+    _logging_configured = True
 
 
-def setup_logger(name: str = "app") -> logging.Logger:
-    """
-    Set up and configure a logger instance.
+configure_logging()
 
-    Args:
-        name: Logger name (default: "app")
-
-    Returns:
-        Configured logger instance
-    """
-    logger = logging.getLogger(name)
-    logger.setLevel(log_level)
-
-    # Avoid adding handlers multiple times
-    if logger.handlers:
-        return logger
-
-    # Add request ID filter
-    request_id_filter = RequestIDFilter()
-    
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(log_level)
-    console_handler.addFilter(request_id_filter)
-    console_formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
-
-    # File handler
-    log_file = logs_dir / "app.log"
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(log_level)
-    file_handler.addFilter(request_id_filter)
-    file_formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
-
-    return logger
+logger = structlog.get_logger(SERVICE_NAME)
 
 
 def generate_request_id() -> str:
-    """Generate a unique request ID."""
+    """Generate a short request id (8 hex chars)."""
     return str(uuid.uuid4())[:8]
 
 
 def set_request_id(request_id: str | None = None) -> str:
-    """
-    Set request ID for current context.
-    
-    Args:
-        request_id: Optional request ID (generates one if not provided)
-        
-    Returns:
-        The request ID (newly generated or provided)
-    """
+    """Set request id for this async context and structlog contextvars."""
     if request_id is None:
         request_id = generate_request_id()
     request_id_var.set(request_id)
+    structlog.contextvars.bind_contextvars(request_id=request_id)
     return request_id
 
 
 def get_request_id() -> str | None:
-    """Get current request ID."""
+    """Return the current request id, if any."""
     return request_id_var.get()
 
 
+def ensure_request_id() -> str:
+    """Return existing request id from middleware, or create one if missing."""
+    existing = get_request_id()
+    if existing:
+        structlog.contextvars.bind_contextvars(request_id=existing)
+        return existing
+    return set_request_id()
+
+
+def clear_request_context() -> None:
+    """Clear structlog contextvars and request id (e.g. end of HTTP middleware)."""
+    structlog.contextvars.clear_contextvars()
+    request_id_var.set(None)
+
+
 class TimingContext:
-    """Context manager for timing operations."""
-    
-    def __init__(self, operation_name: str, logger_instance: logging.Logger | None = None):
-        """
-        Initialize timing context.
-        
-        Args:
-            operation_name: Name of the operation being timed
-            logger_instance: Optional logger instance (uses default if not provided)
-        """
+    """Context manager that logs duration for an operation."""
+
+    def __init__(self, operation_name: str, logger_instance: object | None = None):
         self.operation_name = operation_name
-        self.logger = logger_instance or logger
+        self._log = logger_instance or logger
         self.start_time: float | None = None
         self.end_time: float | None = None
-    
+
     def __enter__(self):
-        """Start timing."""
         self.start_time = time.time()
-        self.logger.debug(f"Starting {self.operation_name}")
+        self._log.debug("timing_start", operation=self.operation_name)
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """End timing and log duration."""
-        self.end_time = time.time()
-        duration = self.end_time - self.start_time if self.start_time else 0
-        self.logger.info(
-            f"Completed {self.operation_name} in {duration:.3f}s"
+        end = time.time()
+        self.end_time = end
+        start = self.start_time or end
+        duration = end - start
+        self._log.info(
+            "timing_complete",
+            operation=self.operation_name,
+            duration_s=round(duration, 3),
         )
         return False
-    
+
     @property
     def duration(self) -> float:
-        """Get duration in seconds."""
         if self.start_time is None:
             return 0.0
         end = self.end_time if self.end_time else time.time()
         return end - self.start_time
-
-
-# Create root logger
-logger = setup_logger("app")
-

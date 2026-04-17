@@ -1,0 +1,121 @@
+---
+description: React structure — edit only [PROJECT — CUSTOMIZE] blocks; leave [IMMUTABLE] unchanged
+globs: webapp/src/**/*.{jsx,tsx}
+alwaysApply: false
+---
+
+# React Component Patterns
+
+## How to use this file (agents and humans)
+
+- **`[IMMUTABLE — DO NOT MODIFY]`** — Copy these sections **verbatim** into the project’s `.cursor/rules/react-patterns.mdc`. Do **not** rephrase bullets, merge sections, “simplify” examples, or edit the useEffect rules in any way. If you change these, you are doing it wrong.
+- **`[PROJECT — CUSTOMIZE]`** — Edit **only** these sections so paths, `globs`, folder names, and examples match **this** repository. Typical edits: `webapp/src` vs `apps/web/src`, where `hooks/`, `pages/`, and `components/` live, and domain names in examples (`Students` → your entity).
+
+The **`globs`** field in the YAML frontmatter is **PROJECT**: set it to the glob that covers your React sources (e.g. `webapp/src/**/*.{jsx,tsx}` or `apps/client/src/**/*.tsx`).
+
+---
+
+## [IMMUTABLE — DO NOT MODIFY]
+
+### useEffect rules (most important)
+
+- **Computed values → plain vars, not state.** Never use `useEffect` to sync props into state. Derive inline.
+- **Router-driven resets → `key`, not `useEffect`.** When a component must reinitialize from a route param change, let the parent set `key={id}` to remount instead of switching on props in an effect.
+- **Callbacks in deps → `useEffectEvent`.** Never put a parent-supplied callback directly in a `useEffect` dependency array — you can't trust it's stable. Wrap it with `useEffectEvent`.  `useEffectEvent` > `useCallback`.
+- **"Latest value" reads → `useEffectEvent`.** If you need a value inside an effect but don't want it to re-trigger the effect, read it inside a `useEffectEvent` wrapper.
+- **Fetching → custom hooks only.** Never fetch in `useEffect`. Use TanStack Query via a `useXxx` hook colocated with your project’s hook conventions (see [PROJECT — CUSTOMIZE]).
+- **Expensive calculations → `useMemo`.** Don't compute inside an effect and store to state.
+
+```tsx
+// ✅ Rules 4 & 3 — useEffectEvent for latest values and callbacks
+function Player({ playerId, onPlay }: Props) {
+  const [pos, setPos] = useState(0);
+
+  // Rule 4: read latest pos without adding it as a dep
+  const onTick = useEffectEvent(() => {
+    setPos(p => p + 1);
+    onPlay(pos); // safe — always reads latest pos
+  });
+
+  // Rule 3: onPlay is wrapped, not in the dep array
+  useEffect(() => {
+    const id = setInterval(onTick, 1000);
+    return () => clearInterval(id);
+  }, [playerId]); // ✅ only re-runs when playerId changes
+}
+
+// ✅ Rules 2 & 1 — key for router resets, vars for computed values
+// Parent
+<StudentDetail key={studentId} studentId={studentId} />
+
+// Child — no useEffect needed
+function StudentDetail({ studentId }: Props) {
+  const { data } = useStudent(studentId);         // Rule 5
+  const fullName = `${data?.first} ${data?.last}`; // Rule 1 — var, not state
+  const sorted = useMemo(                          // Rule 6
+    () => data?.comms.sort(...),
+    [data?.comms]
+  );
+}
+```
+
+---
+
+## [PROJECT — CUSTOMIZE]
+
+### Page components are thin orchestrators
+
+Pages live under **`webapp/src/pages/`** (e.g. `CanvasPage.jsx`). Their jobs are: compose hooks and store selectors, keep minimal local UI state, and render layout plus focused child components. Avoid stuffing large Konva/canvas logic, big style blocks, or one-off sub-UI inline—delegate to `webapp/src/components/`.
+
+```tsx
+// ❌ BAD — page doing too much (inline canvas + AI + header logic)
+export default function CanvasPage() { /* hundreds of lines */ }
+
+// ✅ GOOD — page wires data + layout, children own UI domains
+export default function CanvasPage() {
+  return (
+    <>
+      <Header />
+      <Canvas />
+    </>
+  );
+}
+```
+
+### Sub-components do one thing
+
+UI lives under **`webapp/src/components/`** with feature folders such as **`canvas/`** (stage, toolbar, shapes), **`ai/`**, **`auth/`**, **`design-system/`**, **`ui/`**, and shared **`icons/`**. Prefer small components (`Toolbar`, `ZoomControls`, `AIPanel`) over monoliths.
+
+```tsx
+// ❌ BAD — one component owns canvas + AI + presence + zoom
+
+// ✅ GOOD — focused pieces composed on the page or in Canvas
+// webapp/src/components/canvas/Canvas.jsx orchestrates; shapes live in canvas/shapes/
+```
+
+### Co-location rule
+
+Canvas-specific UI belongs under **`webapp/src/components/canvas/`** (and **`canvas/shapes/`** for `Rectangle`, `Circle`, `Text`). Auth screens use **`webapp/src/components/auth/`**. Shared primitives use **`webapp/src/components/design-system/`**. If something is only used from one page and is tiny, co-locating next to that page is optional; this repo mostly centralizes under `components/`.
+
+### Conventions — data fetching and shared utils
+
+#### Data — hooks, Zustand, and the AI HTTP client
+
+Realtime canvas data flows through **Firebase (Firestore + Realtime DB)** using hooks under **`webapp/src/hooks/`** (e.g. `useAuth`, `useObjectSync`, `usePresenceSync`, `useCursorTracking`) and Zustand stores under **`webapp/src/stores/`** (`firestoreStore.js`, `localStore.js`, `presenceStore.js`, with **`webapp/src/stores/actions.js`** for cross-cutting mutations). UI components should use those hooks/stores—not ad hoc `fetch` to Firebase APIs.
+
+The **AI agent** uses **`webapp/src/services/aiService.js`** (HTTP + SSE to the FastAPI backend). Only that service layer should call the agent API; components call `executeAICommandStream` / helpers exported there.
+
+```ts
+// ✅ GOOD — subscription/sync hooks colocated under hooks/
+useObjectSync(canvasId);
+useAuth();
+
+// ✅ GOOD — AI calls go through the service
+import { executeAICommandStream } from "../services/aiService";
+```
+
+#### Helper functions — co-location vs shared utils
+
+Duplication is fine until the **third** copy—then extract to **`webapp/src/utils/`** (e.g. `objectUtils.js`, `toast.js`) or, for design tokens, **`webapp/src/styles/tokens.js`**.
+
+**Utils / libs in this repo:** `webapp/src/utils/objectUtils.js`, `webapp/src/utils/toast.js`, `webapp/src/lib/firebase.js`, `webapp/src/styles/tokens.js`.

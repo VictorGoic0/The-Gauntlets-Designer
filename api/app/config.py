@@ -32,7 +32,13 @@ class Settings:
         # Hardcoded for testing (as per requirements)
         self.ENABLE_RETRY: bool = True
         self.MAX_RETRIES: int = 3
-        self.LOG_LEVEL: str = "INFO"
+        self.LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+        _log_json = os.getenv("LOG_JSON", "").strip().lower()
+        self.LOG_JSON: bool = _log_json in (
+            "1",
+            "true",
+            "yes",
+        ) or os.getenv("APP_ENV", "").strip().lower() == "production"
 
     def validate_firebase_credentials(self) -> bool:
         """Validate that Firebase credentials file exists."""

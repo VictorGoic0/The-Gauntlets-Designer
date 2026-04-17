@@ -42,7 +42,6 @@ next-env.d.ts
 # miscellaneous
 /lecture files
 Collab-Canvas-MVP.pdf
-/.cursor
 
 # Python
 __pycache__/

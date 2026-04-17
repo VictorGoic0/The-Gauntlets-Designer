@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import agent, health
 from app.config import settings
+from app.middleware.request_logging import RequestLoggingMiddleware
 from app.utils.logger import logger
 
 # Initialize FastAPI app
@@ -13,7 +14,8 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS
+# Configure CORS first, then request logging — Starlette runs the *last* added middleware first,
+# so RequestLoggingMiddleware wraps CORS and logs every request (method, path, status, duration).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -28,6 +30,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestLoggingMiddleware)
 
 # Register routers
 app.include_router(health.router)

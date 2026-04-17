@@ -1,0 +1,58 @@
+---
+description: Linting standards and auto-fix workflow for TypeScript files
+globs: **/*.ts, **/*.tsx
+alwaysApply: false
+---
+
+# Linting Workflow
+
+After any substantive edit to a `.ts` or `.tsx` file:
+1. Run `npm run lint:fix` in the relevant app directory — auto-fixes what it can (unused imports, etc.)
+2. Use `ReadLints` on edited files to catch anything the linter can't auto-fix
+3. Fix remaining errors manually
+4. Never leave a task marked complete with outstanding lint errors
+
+# No Conditional Spread
+
+Never use `...(condition && { key: value })` to build objects conditionally. It is hard to read and obscures intent.
+
+```typescript
+// ❌ BAD
+await prisma.user.update({
+  data: {
+    ...(data.role !== undefined && { role: data.role }),
+    ...(data.rosterIds !== undefined && { rosterIds: data.rosterIds }),
+  },
+});
+
+// ✅ GOOD
+const updates: Prisma.UserUpdateInput = {};
+if (data.role !== undefined) updates.role = data.role;
+if (data.rosterIds !== undefined) updates.rosterIds = data.rosterIds;
+await prisma.user.update({ data: updates });
+```
+
+# Express Route Params
+
+`req.params["id"]` types as `string | string[]` — `!` does not narrow this. Always cast to `string`:
+
+```typescript
+// ❌ BAD
+const id = BigInt(req.params["id"]!);
+
+// ✅ GOOD
+const id = BigInt(req.params["id"] as string);
+```
+
+# Type Imports
+
+Always use `import type` for type-only imports. Enforced by `@typescript-eslint/consistent-type-imports`.
+
+```typescript
+// ❌ BAD
+import { RequestHandler } from "express";
+
+// ✅ GOOD
+import type { RequestHandler } from "express";
+```
+

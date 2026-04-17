@@ -65,6 +65,20 @@ uvicorn app.main:app --reload
 
 The server will start at `http://localhost:8000`
 
+## Logging
+
+Structured logging uses **`structlog`** (`app/utils/logger.py`):
+
+| Variable | Effect |
+|----------|--------|
+| `LOG_LEVEL` | `DEBUG`, `INFO`, etc. (default `INFO`) |
+| `LOG_JSON=1` | One JSON object per line on stdout (production-style) |
+| `APP_ENV=production` | Also enables JSON output |
+
+If neither `LOG_JSON` nor `APP_ENV=production` is set, logs use a colored **console** renderer for local development.
+
+Every HTTP request logs an `http_request` event (method, path, status, duration, `request_id`). Responses include `X-Request-ID` for correlation.
+
 ## API Endpoints
 
 ### Health Check
