@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { useAuth } from "../../hooks/useAuth";
 import useCursorTracking from "../../hooks/useCursorTracking";
@@ -9,6 +16,7 @@ import useSelectionTracking from "../../hooks/useSelectionTracking";
 import useSelectionSync from "../../hooks/useSelectionSync";
 import useObjectSync from "../../hooks/useObjectSync";
 import useObjectPositions from "../../hooks/useObjectPositions";
+import { useCanvasLocalOptimisticPrune } from "../../hooks/useCanvasLocalOptimisticPrune";
 import useLocalStore from "../../stores/localStore";
 import usePresenceStore from "../../stores/presenceStore";
 import useFirestoreStore from "../../stores/firestoreStore";
@@ -198,6 +206,8 @@ export default function Canvas() {
     });
   }, [selectedObjectIds, currentUser]);
 
+  useCanvasLocalOptimisticPrune(objects, draggingObjectId, transformingObjectId);
+
   // Update stage size based on container dimensions
   useEffect(() => {
     const updateSize = () => {
@@ -214,147 +224,53 @@ export default function Canvas() {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // Clean up local positions for deleted objects and when remote matches
+  const onCanvasKeyDown = useEffectEvent((event) => {
+    const isTyping =
+      event.target.tagName === "INPUT" ||
+      event.target.tagName === "TEXTAREA" ||
+      event.target.isContentEditable;
+
+    if (isTyping) return;
+
+    if (event.code === "Space" && !event.repeat) {
+      event.preventDefault();
+      setSpacePressed(true);
+    }
+
+    if (event.code === "Backspace" && selectedObjectIds.length > 0) {
+      event.preventDefault();
+      void deleteSelectedObjects();
+    }
+
+    if (event.code === "Escape" && selectedObjectIds.length > 0) {
+      event.preventDefault();
+      clearSelection();
+    }
+  });
+
+  const onCanvasKeyUp = useEffectEvent((event) => {
+    const isTyping =
+      event.target.tagName === "INPUT" ||
+      event.target.tagName === "TEXTAREA" ||
+      event.target.isContentEditable;
+
+    if (isTyping) return;
+
+    if (event.code === "Space") {
+      event.preventDefault();
+      setSpacePressed(false);
+      setIsDragging(false);
+    }
+  });
+
   useEffect(() => {
-    const existingObjectIds = new Set(objects.map((obj) => obj.id));
-    const store = useLocalStore.getState();
-    const currentLocalPositions = store.dragging.localObjectPositions;
-    
-    Object.keys(currentLocalPositions).forEach((objectId) => {
-      // If object was deleted remotely, remove local position
-      if (!existingObjectIds.has(objectId)) {
-        store.clearLocalObjectPosition(objectId);
-        return;
-      }
-      
-      // If object exists and not currently being dragged, check if remote matches
-      if (draggingObjectId !== objectId) {
-        const remoteObject = objects.find(obj => obj.id === objectId);
-        if (remoteObject) {
-          const localPos = currentLocalPositions[objectId];
-          // If remote position matches local (within 1px tolerance), clear local
-          if (
-            Math.abs(remoteObject.x - localPos.x) < 1 &&
-            Math.abs(remoteObject.y - localPos.y) < 1
-          ) {
-            store.clearLocalObjectPosition(objectId);
-          }
-        }
-      }
-    });
-  }, [objects, draggingObjectId]);
-
-  // Clean up local transforms for deleted objects and when remote matches
-  useEffect(() => {
-    const existingObjectIds = new Set(objects.map((obj) => obj.id));
-    const store = useLocalStore.getState();
-    const currentLocalTransforms = store.transforms.localObjectTransforms;
-    
-    Object.keys(currentLocalTransforms).forEach((objectId) => {
-      // If object was deleted remotely, remove local transform
-      if (!existingObjectIds.has(objectId)) {
-        store.clearLocalObjectTransform(objectId);
-        return;
-      }
-      
-      // If object exists and not currently being transformed, check if remote matches
-      if (transformingObjectId !== objectId) {
-        const remoteObject = objects.find(obj => obj.id === objectId);
-        if (remoteObject) {
-          const localTransform = currentLocalTransforms[objectId];
-          // Check if remote transform matches local (within tolerance)
-          let matches = true;
-          
-          // Check position (1px tolerance)
-          if (localTransform.x !== undefined && Math.abs(remoteObject.x - localTransform.x) >= 1) {
-            matches = false;
-          }
-          if (localTransform.y !== undefined && Math.abs(remoteObject.y - localTransform.y) >= 1) {
-            matches = false;
-          }
-          
-          // Check dimensions (1px tolerance)
-          if (localTransform.width !== undefined && Math.abs((remoteObject.width || 0) - localTransform.width) >= 1) {
-            matches = false;
-          }
-          if (localTransform.height !== undefined && Math.abs((remoteObject.height || 0) - localTransform.height) >= 1) {
-            matches = false;
-          }
-          if (localTransform.radius !== undefined && Math.abs((remoteObject.radius || 0) - localTransform.radius) >= 1) {
-            matches = false;
-          }
-          if (localTransform.fontSize !== undefined && Math.abs((remoteObject.fontSize || 16) - localTransform.fontSize) >= 0.5) {
-            matches = false;
-          }
-          
-          // Check rotation (0.5 degree tolerance)
-          if (localTransform.rotation !== undefined && Math.abs((remoteObject.rotation || 0) - localTransform.rotation) >= 0.5) {
-            matches = false;
-          }
-          
-          if (matches) {
-            store.clearLocalObjectTransform(objectId);
-          }
-        }
-      }
-    });
-  }, [objects, transformingObjectId]);
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ignore shortcuts if user is typing in an input/textarea
-      const isTyping =
-        e.target.tagName === "INPUT" ||
-        e.target.tagName === "TEXTAREA" ||
-        e.target.isContentEditable;
-
-      // Don't interfere when user is typing
-      if (isTyping) return;
-
-      if (e.code === "Space" && !e.repeat) {
-        e.preventDefault();
-        setSpacePressed(true);
-      }
-      
-      // Delete selected objects on Backspace
-      if (e.code === "Backspace" && selectedObjectIds.length > 0) {
-        e.preventDefault();
-        deleteSelectedObjects();
-      }
-      
-      // Deselect all on Escape
-      if (e.code === "Escape" && selectedObjectIds.length > 0) {
-        e.preventDefault();
-        clearSelection();
-      }
-    };
-
-    const handleKeyUp = (e) => {
-      // Ignore shortcuts if user is typing in an input/textarea
-      const isTyping =
-        e.target.tagName === "INPUT" ||
-        e.target.tagName === "TEXTAREA" ||
-        e.target.isContentEditable;
-
-      // Don't interfere when user is typing
-      if (isTyping) return;
-
-      if (e.code === "Space") {
-        e.preventDefault();
-        setSpacePressed(false);
-        setIsDragging(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
+    window.addEventListener("keydown", onCanvasKeyDown);
+    window.addEventListener("keyup", onCanvasKeyUp);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("keydown", onCanvasKeyDown);
+      window.removeEventListener("keyup", onCanvasKeyUp);
     };
-  }, [selectedObjectIds, deleteSelectedObjects, clearSelection]);
+  }, []);
 
   // Handle drag start - use central action
   const handleObjectDragStart = (objectId) => {
@@ -363,7 +279,7 @@ export default function Canvas() {
 
   // Handle drag move - use central action
   const handleObjectDragMove = (objectId, newPosition, objectSize) => {
-    actions.moveObject(objectId, newPosition, objectSize);
+    void actions.moveObject(objectId, newPosition, objectSize);
   };
 
   // Handle drag end - use central action
@@ -382,11 +298,13 @@ export default function Canvas() {
   };
 
   // Mouse event handlers for panning and shape creation
-  const handleMouseDown = (e) => {
-    const isMiddleButton = e.evt.button === 1;
-    
+  const handleMouseDown = (event) => {
+    const isMiddleButton = event.evt.button === 1;
+
     // Check if clicking on the stage background or the dark background rect
-    const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background';
+    const clickedOnEmpty =
+      event.target === event.target.getStage() ||
+      event.target.name() === "background";
     
     if (clickedOnEmpty) {
       // Clear selection when clicking on empty space
@@ -403,13 +321,13 @@ export default function Canvas() {
         const canvasY = (pointerPos.y - stagePosition.y) / stageScale;
         
         // Use central action for shape creation (includes optimistic updates)
-        actions.createShape(canvasX, canvasY, canvasMode, currentUser);
+        void actions.createShape(canvasX, canvasY, canvasMode, currentUser);
         return;
       }
     }
     
     if (spacePressed || isMiddleButton) {
-      e.evt.preventDefault();
+      event.evt.preventDefault();
       setIsDragging(true);
       
       const stage = stageRef.current;
@@ -439,8 +357,8 @@ export default function Canvas() {
   };
 
   // Zoom handler - zoom toward cursor position
-  const handleWheel = (e) => {
-    e.evt.preventDefault();
+  const handleWheel = (event) => {
+    event.evt.preventDefault();
 
     const stage = stageRef.current;
     const oldScale = stageScale;
@@ -448,7 +366,7 @@ export default function Canvas() {
 
     // Calculate new scale based on wheel direction
     const scaleBy = 1.1;
-    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const direction = event.evt.deltaY > 0 ? -1 : 1;
     const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
     // Clamp scale between min and max
@@ -469,6 +387,153 @@ export default function Canvas() {
     setStageScale(clampedScale);
     setStagePosition(newPosition);
   };
+
+  function renderRemoteCursor(cursor) {
+    return (
+      <Cursor
+        key={cursor.userId}
+        x={cursor.x}
+        y={cursor.y}
+        userName={cursor.userName}
+        userColor={cursor.userColor}
+      />
+    );
+  }
+
+  function renderCanvasObject(obj) {
+    const localTransform = localObjectTransforms[obj.id];
+    const position = localTransform
+      ? { x: localTransform.x, y: localTransform.y }
+      : localObjectPositions[obj.id] || { x: obj.x, y: obj.y };
+    const isObjectBeingDragged = draggingObjectId === obj.id;
+
+    const mergedProps = localTransform ? { ...obj, ...localTransform } : obj;
+
+    const safeX = position.x ?? 0;
+    const safeY = position.y ?? 0;
+    const safeRotation = mergedProps.rotation ?? 0;
+
+    const onSelectShape = () => selectObject(obj.id);
+    const onDragStartShape = () => handleObjectDragStart(obj.id);
+    const onTransformShape = (transformData) =>
+      handleObjectTransform(obj.id, transformData);
+    const onTransformEndShape = (transformData) =>
+      handleObjectTransformEnd(obj.id, transformData);
+
+    if (obj.type === "rectangle") {
+      const onDragMoveRectangle = (newPos) =>
+        handleObjectDragMove(obj.id, newPos, {
+          width: obj.width,
+          height: obj.height,
+        });
+      const onDragEndRectangle = (newPos) =>
+        handleObjectDragEnd(obj.id, newPos, {
+          width: obj.width,
+          height: obj.height,
+        });
+
+      return (
+        <Rectangle
+          key={obj.id}
+          shapeProps={{
+            x: safeX,
+            y: safeY,
+            width: mergedProps.width ?? 100,
+            height: mergedProps.height ?? 100,
+            fill: mergedProps.fill ?? "#3b82f6",
+            rotation: safeRotation,
+            opacity: isObjectBeingDragged ? 0.6 : 1,
+          }}
+          isSelected={isSelected(obj.id)}
+          remoteSelectors={getRemoteSelectors(obj.id)}
+          onSelect={onSelectShape}
+          onDragStart={onDragStartShape}
+          onDragMove={onDragMoveRectangle}
+          onDragEnd={onDragEndRectangle}
+          onTransform={onTransformShape}
+          onTransformEnd={onTransformEndShape}
+          canvasWidth={CANVAS_WIDTH}
+          canvasHeight={CANVAS_HEIGHT}
+        />
+      );
+    }
+
+    if (obj.type === "circle") {
+      const onDragMoveCircle = (newPos) =>
+        handleObjectDragMove(obj.id, newPos, { radius: obj.radius });
+      const onDragEndCircle = (newPos) =>
+        handleObjectDragEnd(obj.id, newPos, { radius: obj.radius });
+
+      return (
+        <Circle
+          key={obj.id}
+          shapeProps={{
+            x: safeX,
+            y: safeY,
+            radius: mergedProps.radius ?? 50,
+            fill: mergedProps.fill ?? "#3b82f6",
+            rotation: safeRotation,
+            opacity: isObjectBeingDragged ? 0.6 : 1,
+          }}
+          isSelected={isSelected(obj.id)}
+          remoteSelectors={getRemoteSelectors(obj.id)}
+          onSelect={onSelectShape}
+          onDragStart={onDragStartShape}
+          onDragMove={onDragMoveCircle}
+          onDragEnd={onDragEndCircle}
+          onTransform={onTransformShape}
+          onTransformEnd={onTransformEndShape}
+          canvasWidth={CANVAS_WIDTH}
+          canvasHeight={CANVAS_HEIGHT}
+        />
+      );
+    }
+
+    if (obj.type === "text") {
+      const onDragMoveText = (newPos) =>
+        handleObjectDragMove(obj.id, newPos, {
+          width: obj.width || 200,
+          height: 50,
+        });
+      const onDragEndText = (newPos) =>
+        handleObjectDragEnd(obj.id, newPos, {
+          width: obj.width || 200,
+          height: 50,
+        });
+      const onTextContentChange = (newText) =>
+        actions.updateText(obj.id, newText, currentUser);
+
+      return (
+        <Text
+          key={obj.id}
+          shapeProps={{
+            x: safeX,
+            y: safeY,
+            text: mergedProps.text ?? "Double-click to edit",
+            fontSize: mergedProps.fontSize ?? 16,
+            fontFamily: mergedProps.fontFamily ?? "Arial",
+            width: mergedProps.width ?? 200,
+            fill: mergedProps.fill ?? "#000000",
+            rotation: safeRotation,
+            opacity: isObjectBeingDragged ? 0.6 : 1,
+          }}
+          isSelected={isSelected(obj.id)}
+          remoteSelectors={getRemoteSelectors(obj.id)}
+          onSelect={onSelectShape}
+          onDragStart={onDragStartShape}
+          onDragMove={onDragMoveText}
+          onDragEnd={onDragEndText}
+          onTransform={onTransformShape}
+          onTransformEnd={onTransformEndShape}
+          onTextChange={onTextContentChange}
+          canvasWidth={CANVAS_WIDTH}
+          canvasHeight={CANVAS_HEIGHT}
+        />
+      );
+    }
+
+    return null;
+  }
 
   return (
     <div 
@@ -503,106 +568,9 @@ export default function Canvas() {
             />
             
             {/* Render all canvas objects - wait for both Firestore and Realtime DB positions (PR #18) */}
-            {!loading && !objectPositionsLoading && objects.map((obj) => {
-              // Use local transform if object is being transformed, otherwise use Firestore data
-              const localTransform = localObjectTransforms[obj.id];
-              const position = localTransform ? { x: localTransform.x, y: localTransform.y } : 
-                               (localObjectPositions[obj.id] || { x: obj.x, y: obj.y });
-              const isDragging = draggingObjectId === obj.id;
-              
-              // Merge local transforms with Firestore data for optimistic updates
-              const mergedProps = localTransform ? { ...obj, ...localTransform } : obj;
-              
-              // Ensure all numeric values have defaults to prevent NaN warnings
-              const safeX = position.x ?? 0;
-              const safeY = position.y ?? 0;
-              const safeRotation = mergedProps.rotation ?? 0;
-              
-              if (obj.type === "rectangle") {
-                return (
-                  <Rectangle
-                    key={obj.id}
-                    shapeProps={{
-                      x: safeX,
-                      y: safeY,
-                      width: mergedProps.width ?? 100,
-                      height: mergedProps.height ?? 100,
-                      fill: mergedProps.fill ?? "#3b82f6",
-                      rotation: safeRotation,
-                      opacity: isDragging ? 0.6 : 1,
-                    }}
-                    isSelected={isSelected(obj.id)}
-                    remoteSelectors={getRemoteSelectors(obj.id)}
-                    onSelect={() => selectObject(obj.id)}
-                    onDragStart={() => handleObjectDragStart(obj.id)}
-                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width, height: obj.height })}
-                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width, height: obj.height })}
-                    onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
-                    onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
-                    canvasWidth={CANVAS_WIDTH}
-                    canvasHeight={CANVAS_HEIGHT}
-                  />
-                );
-              }
-              
-              if (obj.type === "circle") {
-                return (
-                  <Circle
-                    key={obj.id}
-                    shapeProps={{
-                      x: safeX,
-                      y: safeY,
-                      radius: mergedProps.radius ?? 50,
-                      fill: mergedProps.fill ?? "#3b82f6",
-                      rotation: safeRotation,
-                      opacity: isDragging ? 0.6 : 1,
-                    }}
-                    isSelected={isSelected(obj.id)}
-                    remoteSelectors={getRemoteSelectors(obj.id)}
-                    onSelect={() => selectObject(obj.id)}
-                    onDragStart={() => handleObjectDragStart(obj.id)}
-                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { radius: obj.radius })}
-                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { radius: obj.radius })}
-                    onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
-                    onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
-                    canvasWidth={CANVAS_WIDTH}
-                    canvasHeight={CANVAS_HEIGHT}
-                  />
-                );
-              }
-              
-              if (obj.type === "text") {
-                return (
-                  <Text
-                    key={obj.id}
-                    shapeProps={{
-                      x: safeX,
-                      y: safeY,
-                      text: mergedProps.text ?? "Double-click to edit",
-                      fontSize: mergedProps.fontSize ?? 16,
-                      fontFamily: mergedProps.fontFamily ?? "Arial",
-                      width: mergedProps.width ?? 200,
-                      fill: mergedProps.fill ?? "#000000",
-                      rotation: safeRotation,
-                      opacity: isDragging ? 0.6 : 1,
-                    }}
-                    isSelected={isSelected(obj.id)}
-                    remoteSelectors={getRemoteSelectors(obj.id)}
-                    onSelect={() => selectObject(obj.id)}
-                    onDragStart={() => handleObjectDragStart(obj.id)}
-                    onDragMove={(newPos) => handleObjectDragMove(obj.id, newPos, { width: obj.width || 200, height: 50 })}
-                    onDragEnd={(newPos) => handleObjectDragEnd(obj.id, newPos, { width: obj.width || 200, height: 50 })}
-                    onTransform={(transformData) => handleObjectTransform(obj.id, transformData)}
-                    onTransformEnd={(transformData) => handleObjectTransformEnd(obj.id, transformData)}
-                    onTextChange={(newText) => actions.updateText(obj.id, newText, currentUser)}
-                    canvasWidth={CANVAS_WIDTH}
-                    canvasHeight={CANVAS_HEIGHT}
-                  />
-                );
-              }
-              
-              return null;
-            })}
+            {!loading &&
+              !objectPositionsLoading &&
+              objects.map(renderCanvasObject)}
           </Layer>
         </Stage>
       )}
@@ -612,15 +580,7 @@ export default function Canvas() {
 
       {/* Cursor overlay - HTML elements for simplicity */}
       {/* Only show cursors for users who are currently present/online */}
-      {visibleCursors.map((cursor) => (
-        <Cursor
-          key={cursor.userId}
-          x={cursor.x}
-          y={cursor.y}
-          userName={cursor.userName}
-          userColor={cursor.userColor}
-        />
-      ))}
+      {visibleCursors.map(renderRemoteCursor)}
     </div>
   );
 }

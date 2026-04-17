@@ -9,6 +9,7 @@ import {
   typography,
   transitions,
 } from "../../styles/tokens";
+import PresenceChevronIcon from "../icons/PresenceChevronIcon";
 
 // Static styles - defined outside component for performance
 const containerStyle = {
@@ -146,6 +147,17 @@ export default function PresencePanel() {
     return userName.substring(0, 2).toUpperCase();
   };
 
+  const onClickTogglePresencePanel = () =>
+    setIsCollapsed((previousIsCollapsed) => !previousIsCollapsed);
+
+  const onMouseEnterCollapseChevron = (event) => {
+    event.currentTarget.style.color = colors.neutral.white;
+  };
+
+  const onMouseLeaveCollapseChevron = (event) => {
+    event.currentTarget.style.color = colors.neutral.lightBase;
+  };
+
   return (
     <>
       {/* Inject pulse animation */}
@@ -172,13 +184,9 @@ export default function PresencePanel() {
             </span>
           </div>
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = colors.neutral.white;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = colors.neutral.lightBase;
-            }}
+            onClick={onClickTogglePresencePanel}
+            onMouseEnter={onMouseEnterCollapseChevron}
+            onMouseLeave={onMouseLeaveCollapseChevron}
             style={{
               ...toggleButtonBaseStyle,
               transform: isCollapsed ? "rotate(180deg)" : "rotate(0deg)",
@@ -186,21 +194,7 @@ export default function PresencePanel() {
             title={isCollapsed ? "Expand" : "Collapse"}
             aria-label={isCollapsed ? "Expand user list" : "Collapse user list"}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            <PresenceChevronIcon />
           </button>
         </div>
 
@@ -233,7 +227,10 @@ export default function PresencePanel() {
 function UserItem({ user, getUserInitials }) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Dynamic styles - depend on hover state
+  const onMouseEnterUserRow = () => setIsHovered(true);
+
+  const onMouseLeaveUserRow = () => setIsHovered(false);
+
   const userItemStyle = {
     ...userItemBaseStyle,
     backgroundColor: isHovered ? colors.neutral.mediumDark : "transparent",
@@ -246,8 +243,8 @@ function UserItem({ user, getUserInitials }) {
 
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={onMouseEnterUserRow}
+      onMouseLeave={onMouseLeaveUserRow}
       style={userItemStyle}
     >
       {/* User avatar with initials */}

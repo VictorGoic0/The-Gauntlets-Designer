@@ -26,12 +26,13 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Create `.env` file in the `backend/` directory:
+3. Copy `api/.env.example` to `api/.env` and set values (see comments in `.env.example`):
 
 ```bash
-OPENAI_API_KEY=your_key_here
-FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+cp .env.example .env
 ```
+
+Minimum keys for local runs are listed in `.env.example` (AI keys, optional Firebase path, optional Upstash for rate limits).
 
 4. **Get Firebase Service Account Key** (for Firestore writes):
 
@@ -64,6 +65,20 @@ uvicorn app.main:app --reload
 ```
 
 The server will start at `http://localhost:8000`
+
+## Logging
+
+Structured logging uses **`structlog`** (`app/utils/logger.py`):
+
+| Variable | Effect |
+|----------|--------|
+| `LOG_LEVEL` | `DEBUG`, `INFO`, etc. (default `INFO`) |
+| `LOG_JSON=1` | One JSON object per line on stdout (production-style) |
+| `APP_ENV=production` | Also enables JSON output |
+
+If neither `LOG_JSON` nor `APP_ENV=production` is set, logs use a colored **console** renderer for local development.
+
+Every HTTP request logs an `http_request` event (method, path, status, duration, `request_id`). Responses include `X-Request-ID` for correlation.
 
 ## API Endpoints
 

@@ -1,4 +1,5 @@
 import { colors, typography, spacing, borderRadius, shadows, transitions } from '../../styles/tokens';
+import ButtonSpinnerIcon from '../icons/ButtonSpinnerIcon';
 
 /**
  * Button Component
@@ -189,6 +190,48 @@ export default function Button({
     };
   };
 
+  const onMouseEnterButton = (event) => {
+    if (!disabled && !loading) {
+      Object.assign(event.currentTarget.style, getHoverStyles());
+    }
+  };
+
+  const onMouseLeaveButton = (event) => {
+    if (!disabled && !loading) {
+      Object.assign(event.currentTarget.style, {
+        ...variantStyles[variant],
+        ...sizeStyles[size],
+      });
+    }
+  };
+
+  const onMouseDownButton = (event) => {
+    if (!disabled && !loading) {
+      Object.assign(event.currentTarget.style, getActiveStyles());
+    }
+  };
+
+  const onMouseUpButton = (event) => {
+    if (!disabled && !loading) {
+      Object.assign(event.currentTarget.style, getHoverStyles());
+    }
+  };
+
+  const onFocusButton = (event) => {
+    if (!disabled && !loading) {
+      Object.assign(event.currentTarget.style, {
+        ...variantStyles[variant],
+        ...getFocusStyles(),
+      });
+    }
+  };
+
+  const onBlurButton = (event) => {
+    if (!disabled && !loading) {
+      Object.assign(event.currentTarget.style, variantStyles[variant]);
+    }
+  };
+
   return (
     <button
       type={type}
@@ -198,71 +241,16 @@ export default function Button({
       aria-busy={loading}
       className={className}
       style={buttonStyles}
-      onMouseEnter={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, getHoverStyles());
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, {
-            ...variantStyles[variant],
-            ...sizeStyles[size],
-          });
-        }
-      }}
-      onMouseDown={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, getActiveStyles());
-        }
-      }}
-      onMouseUp={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, getHoverStyles());
-        }
-      }}
-      onFocus={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, {
-            ...variantStyles[variant],
-            ...getFocusStyles(),
-          });
-        }
-      }}
-      onBlur={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, variantStyles[variant]);
-        }
-      }}
+      onMouseEnter={onMouseEnterButton}
+      onMouseLeave={onMouseLeaveButton}
+      onMouseDown={onMouseDownButton}
+      onMouseUp={onMouseUpButton}
+      onFocus={onFocusButton}
+      onBlur={onBlurButton}
       {...props}
     >
       {/* Loading spinner */}
-      {loading && (
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            animation: 'spin 1s linear infinite',
-          }}
-        >
-          <style>
-            {`
-              @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-              }
-            `}
-          </style>
-          <circle cx="12" cy="12" r="10" opacity="0.25" />
-          <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75" />
-        </svg>
-      )}
+      {loading && <ButtonSpinnerIcon />}
       
       {children}
     </button>

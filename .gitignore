@@ -31,6 +31,8 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
+!**/.env.example
 
 # vercel
 .vercel
@@ -42,7 +44,6 @@ next-env.d.ts
 # miscellaneous
 /lecture files
 Collab-Canvas-MVP.pdf
-/.cursor
 
 # Python
 __pycache__/

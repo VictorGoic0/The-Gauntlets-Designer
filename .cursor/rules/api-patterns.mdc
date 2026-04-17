@@ -1,0 +1,68 @@
+---
+description: Backend architecture and agent conventions for the CollabCanvas FastAPI API (Python)
+globs: api/app/**/*.py
+alwaysApply: false
+---
+
+# API Patterns (CollabCanvas — FastAPI)
+
+This repository’s HTTP API is **Python 3 + FastAPI** under **`api/app/`**. It is **not** Node/Express and **does not** use Prisma. The web client talks to **Firebase** directly for canvas data; the API verifies Firebase ID tokens and runs the **AI agent** (LangChain + OpenAI) plus health checks.
+
+## Folder responsibilities
+
+```
+api/app/
+  main.py              ← FastAPI app factory, router includes, middleware
+  config.py            ← Settings (pydantic-settings); env vars centralized here (Phase 4 runbook)
+  api/routes/          ← Thin route modules: validate input, call services/agent, return responses
+  services/            ← Firebase admin, OpenAI wrapper, rate limiting — no raw route wiring
+  agent/               ← LangChain orchestration, tools, prompts, model routing
+  middleware/          ← e.g. Firebase JWT verification
+  models/              ← Pydantic request/response models
+  utils/logger.py      ← App logging setup; use project loggers, not print()
+```
+
+**Hard rule:** Routes stay thin. Heavy logic belongs in **`services/`** or **`agent/`**. **Do not** embed LLM calls or long business logic inside route functions—delegate to **`agent/orchestrator`** or a service.
+
+## LLM and agent
+
+- Agent entrypoints and tool wiring live under **`api/app/agent/`** (`orchestrator.py`, `tools.py`, `langchain_tools.py`, `model_router.py`, `prompts.py`).
+- Prefer the existing **LangChain** / OpenAI integration in **`services/openai_service.py`** and the orchestrator rather than ad hoc HTTP calls to OpenAI from routes.
+- Streaming responses (SSE) for the agent must match the API’s established event/stream pattern in **`api/routes/agent.py`** and the web client’s **`webapp/src/services/aiService.js`**.
+
+## Auth
+
+- Protected routes use middleware in **`api/app/middleware/auth.py`** (Firebase token verification). New protected endpoints must use the same pattern as existing routes.
+
+## Errors and JSON shape
+
+Follow the patterns already used in **`api/app/api/routes/`** and **`api/app/models/responses.py`**: consistent HTTP status codes and structured `detail` / error bodies compatible with the frontend and OpenAPI.
+
+## Logging
+
+- Use **`app.utils.logger`** (`setup_logger`, `get_logger`) and the logging module—not **`print`**—for operational messages.
+- Include **`request_id`** context where the logger supports it; avoid logging secrets, full tokens, or raw user message bodies.
+
+### Log shape (conceptual)
+
+| Field | Notes |
+|-------|--------|
+| Time / level | Standard library logging format configured in `utils/logger.py` |
+| `request_id` | Correlation ID per request (when set) |
+| Message | Short, searchable event description |
+
+### Service name
+
+Use a stable logger **`name`** (e.g. `collabcanvas` or `app`) consistent with **`setup_logger`** / **`get_logger`**—do not fork ad hoc loggers per file unless scoped (e.g. `app.agent`).
+
+## Configuration
+
+- Read runtime configuration from **`app.config`** / **`settings`** only—**never** scatter **`os.getenv` / `os.environ`** reads outside **`app/config.py`** (Phase 4 runbook). New env vars belong in **`Settings`** there.
+
+## HTTP routes documentation
+
+- Canonical route list: **`docs/api-routes.md`**. Update it when routes or auth/error shapes change. Agents should read it first (see **`api-routes-reference.mdc`**).
+
+## Migrations and databases
+
+- There is **no** Prisma/SQL schema in this API. Do not add Prisma migration instructions here. If SQL is introduced later, use the project’s chosen migration tool and document it in **`README.md`**.

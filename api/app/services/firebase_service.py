@@ -14,17 +14,17 @@ Each object document contains:
     - params: Action parameters dictionary
     - createdAt: Server timestamp
 """
-import os
+from pathlib import Path
+from typing import Any
+
 import firebase_admin
 from firebase_admin import credentials, firestore
-from typing import Dict, List, Any, Optional
-from pathlib import Path
 
 from app.config import settings
 from app.utils.logger import logger
 
 # Global Firestore client instance
-_db: Optional[firestore.Client] = None
+_db: firestore.Client | None = None
 
 
 def initialize_firebase() -> None:
@@ -53,8 +53,8 @@ def initialize_firebase() -> None:
             # Not initialized yet, proceed with initialization
             pass
         
-        # Try environment variable first (Railway deployment)
-        creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+        # Try JSON from config first (Railway / env consolidated in app.config.settings)
+        creds_json = (settings.FIREBASE_CREDENTIALS_JSON or "").strip()
         if creds_json:
             import json
             
@@ -142,8 +142,8 @@ def is_firebase_initialized() -> bool:
 
 
 async def write_canvas_actions_to_firestore(
-    actions: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+    actions: list[dict[str, Any]]
+) -> dict[str, Any]:
     """
     Write canvas actions to Firestore using batch write.
     

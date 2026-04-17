@@ -16,22 +16,27 @@ export default function AIInput({ onSubmit, isLoading }) {
   const [command, setCommand] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const onSubmitAICommandForm = (event) => {
+    event.preventDefault();
 
     if (command.trim().length === 0) return;
 
     onSubmit(command);
-    setCommand(""); // Clear input after submit
+    setCommand("");
   };
 
-  const handleKeyDown = (e) => {
-    // Submit on Enter (without Shift)
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+  const onKeyDownCommandField = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      onSubmitAICommandForm(event);
     }
   };
+
+  const onChangeCommandText = (event) => setCommand(event.target.value);
+
+  const onFocusCommandField = () => setIsFocused(true);
+
+  const onBlurCommandField = () => setIsFocused(false);
 
   // Textarea styles using design tokens
   const textareaStyles = {
@@ -59,13 +64,16 @@ export default function AIInput({ onSubmit, isLoading }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: spacing[3] }}>
+    <form
+      onSubmit={onSubmitAICommandForm}
+      style={{ display: "flex", flexDirection: "column", gap: spacing[3] }}
+    >
       <textarea
         value={command}
-        onChange={(e) => setCommand(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onChange={onChangeCommandText}
+        onKeyDown={onKeyDownCommandField}
+        onFocus={onFocusCommandField}
+        onBlur={onBlurCommandField}
         placeholder="Describe what you want to create... (e.g., 'Create a red rectangle')"
         disabled={isLoading}
         rows={3}

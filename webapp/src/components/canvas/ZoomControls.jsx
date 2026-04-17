@@ -8,6 +8,8 @@ import {
   typography,
   transitions,
 } from "../../styles/tokens";
+import ZoomInIcon from "../icons/ZoomInIcon";
+import ZoomOutIcon from "../icons/ZoomOutIcon";
 
 // Static styles - defined outside component for performance
 const containerStyle = {
@@ -73,23 +75,28 @@ export default function ZoomControls() {
   // Calculate zoom percentage
   const zoomPercentage = Math.round(stageScale * 100);
 
-  // Zoom in by 20%
-  const handleZoomIn = () => {
+  const onClickZoomIn = () => {
     const newScale = Math.min(stageScale * 1.2, MAX_SCALE);
     setStageScale(newScale);
   };
 
-  // Zoom out by 20%
-  const handleZoomOut = () => {
+  const onClickZoomOut = () => {
     const newScale = Math.max(stageScale / 1.2, MIN_SCALE);
     setStageScale(newScale);
   };
 
-  // Reset zoom to 100%
-  const handleResetZoom = () => {
+  const onClickResetZoom = () => {
     setStageScale(1);
     setStagePosition({ x: 0, y: 0 });
   };
+
+  const onMouseLeaveZoomControl = () => setHoveredButton(null);
+
+  const onMouseEnterZoomInButton = () => setHoveredButton("zoomIn");
+
+  const onMouseEnterZoomOutButton = () => setHoveredButton("zoomOut");
+
+  const onMouseEnterResetZoomButton = () => setHoveredButton("reset");
 
   // Dynamic styles - depend on component state
   const getButtonStyle = (buttonId, disabled = false) => {
@@ -122,29 +129,15 @@ export default function ZoomControls() {
     <div style={containerStyle}>
       {/* Zoom In Button */}
       <button
-        onClick={handleZoomIn}
+        onClick={onClickZoomIn}
         disabled={stageScale >= MAX_SCALE}
-        onMouseEnter={() => setHoveredButton("zoomIn")}
-        onMouseLeave={() => setHoveredButton(null)}
+        onMouseEnter={onMouseEnterZoomInButton}
+        onMouseLeave={onMouseLeaveZoomControl}
         style={getButtonStyle("zoomIn", stageScale >= MAX_SCALE)}
         title="Zoom In"
         aria-label="Zoom In"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
+        <ZoomInIcon />
       </button>
 
       {/* Zoom Percentage Display */}
@@ -154,36 +147,22 @@ export default function ZoomControls() {
 
       {/* Zoom Out Button */}
       <button
-        onClick={handleZoomOut}
+        onClick={onClickZoomOut}
         disabled={stageScale <= MIN_SCALE}
-        onMouseEnter={() => setHoveredButton("zoomOut")}
-        onMouseLeave={() => setHoveredButton(null)}
+        onMouseEnter={onMouseEnterZoomOutButton}
+        onMouseLeave={onMouseLeaveZoomControl}
         style={getButtonStyle("zoomOut", stageScale <= MIN_SCALE)}
         title="Zoom Out"
         aria-label="Zoom Out"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M20 12H4"
-          />
-        </svg>
+        <ZoomOutIcon />
       </button>
 
       {/* Reset Zoom Button */}
       <button
-        onClick={handleResetZoom}
-        onMouseEnter={() => setHoveredButton("reset")}
-        onMouseLeave={() => setHoveredButton(null)}
+        onClick={onClickResetZoom}
+        onMouseEnter={onMouseEnterResetZoomButton}
+        onMouseLeave={onMouseLeaveZoomControl}
         style={getResetButtonStyle()}
         title="Reset Zoom (100%)"
         aria-label="Reset Zoom to 100%"

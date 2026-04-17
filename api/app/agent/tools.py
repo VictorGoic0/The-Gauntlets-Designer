@@ -9,7 +9,7 @@ This provides:
 
 Refer to TDD Section 10 for caching rationale.
 """
-from typing import List, Dict, Any
+from typing import Any
 
 # Module-level constant for cached tool definitions
 TOOL_DEFINITIONS = [
@@ -252,7 +252,7 @@ TOOL_DEFINITIONS = [
 ]
 
 
-def get_tool_definitions() -> List[Dict[str, Any]]:
+def get_tool_definitions() -> list[dict[str, Any]]:
     """
     Return cached tool definitions.
     

@@ -1,23 +1,21 @@
 """OpenAI service with retry logic and error handling."""
-from typing import List, Dict, Any, Optional
+from typing import Any
 
-from openai import OpenAI, RateLimitError, APIError, APITimeoutError
+from openai import APIError, APITimeoutError, OpenAI, RateLimitError
 from tenacity import (
+    RetryCallState,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    RetryCallState,
-    before_sleep_log,
-    after_log,
 )
 
 from app.config import settings
-from app.models.models import get_model_name, AVAILABLE_MODELS
+from app.models.models import get_model_name
 from app.utils.logger import logger
 
 # Initialize OpenAI client
-client: Optional[OpenAI] = None
+client: OpenAI | None = None
 
 
 def initialize_openai_client() -> OpenAI:
@@ -66,7 +64,7 @@ def test_openai_connection() -> bool:
     try:
         test_client = get_openai_client()
         # Use a lightweight model for testing
-        response = test_client.chat.completions.create(
+        test_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "test"}],
             max_tokens=5,
@@ -80,9 +78,9 @@ def test_openai_connection() -> bool:
 
 def format_error_response(
     error: Exception,
-    retry_attempt: Optional[int] = None,
+    retry_attempt: int | None = None,
     will_retry: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Format error response for frontend consumption.
     
@@ -181,9 +179,9 @@ retry_decorator = create_retry_decorator()
 
 @retry_decorator
 def call_openai_with_retry(
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     model: str = "gpt-4-turbo",
-    tools: Optional[List[Dict[str, Any]]] = None,
+    tools: list[dict[str, Any]] | None = None,
     tool_choice: str = "auto"
 ) -> Any:
     """

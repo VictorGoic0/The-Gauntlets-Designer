@@ -12,13 +12,12 @@ Classification strategy:
 - Fast signals: count + primitive shape, or no clear composition needed
 """
 import re
-from typing import Literal, Tuple
+from typing import Literal
 
 from openai import OpenAI
 
 from app.config import settings
 from app.utils.logger import logger
-
 
 ModelTier = Literal["fast", "reasoning"]
 
@@ -100,7 +99,7 @@ def classify_complexity(message: str) -> ModelTier:
     return "fast"
 
 
-def get_model_client(tier: ModelTier) -> Tuple[OpenAI, str]:
+def get_model_client(tier: ModelTier) -> tuple[OpenAI, str]:
     """
     Return an OpenAI-compatible client and model name for the given tier.
 
@@ -127,7 +126,7 @@ def get_model_client(tier: ModelTier) -> Tuple[OpenAI, str]:
     return client, model
 
 
-def route(message: str) -> Tuple[OpenAI, str, ModelTier]:
+def route(message: str) -> tuple[OpenAI, str, ModelTier]:
     """
     Classify message and return (client, model_name, tier).
 

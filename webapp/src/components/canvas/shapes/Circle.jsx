@@ -24,23 +24,23 @@ export default function Circle({ shapeProps, isSelected, remoteSelectors = [], o
     }
   }, [isSelected]);
 
-  const handleClick = (e) => {
+  const handleClick = (event) => {
     // Only allow selection in select mode
     if (canvasMode === "select") {
-      e.cancelBubble = true;
+      event.cancelBubble = true;
       onSelect();
     }
   };
 
-  const handleDragStart = (e) => {
+  const handleDragStart = (event) => {
     if (onDragStart) {
-      onDragStart(e);
+      onDragStart(event);
     }
   };
 
-  const handleDragMove = (e) => {
+  const handleDragMove = (event) => {
     if (onDragMove) {
-      const node = e.target;
+      const node = event.target;
       onDragMove({
         x: node.x(),
         y: node.y(),
@@ -48,9 +48,9 @@ export default function Circle({ shapeProps, isSelected, remoteSelectors = [], o
     }
   };
 
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (event) => {
     if (onDragEnd) {
-      const node = e.target;
+      const node = event.target;
       onDragEnd({
         x: node.x(),
         y: node.y(),
@@ -58,9 +58,9 @@ export default function Circle({ shapeProps, isSelected, remoteSelectors = [], o
     }
   };
 
-  const handleTransform = (e) => {
+  const handleTransform = (event) => {
     if (onTransform) {
-      const node = e.target;
+      const node = event.target;
       // For circles, scale affects the radius
       const avgScale = (node.scaleX() + node.scaleY()) / 2;
       onTransform({
@@ -72,9 +72,9 @@ export default function Circle({ shapeProps, isSelected, remoteSelectors = [], o
     }
   };
 
-  const handleTransformEnd = (e) => {
+  const handleTransformEnd = (event) => {
     if (onTransformEnd) {
-      const node = e.target;
+      const node = event.target;
       // For circles, scale affects the radius
       const avgScale = (node.scaleX() + node.scaleY()) / 2;
       const newRadius = node.radius() * avgScale;
@@ -109,6 +109,13 @@ export default function Circle({ shapeProps, isSelected, remoteSelectors = [], o
   // Get count of remote selectors
   const remoteSelectorsCount = remoteSelectors.length;
   const hasRemoteSelectors = remoteSelectorsCount > 0;
+
+  const limitTransformerBoundingBox = (oldBox, newBox) => {
+    if (newBox.width < 5 || newBox.height < 5) {
+      return oldBox;
+    }
+    return newBox;
+  };
 
   return (
     <>
@@ -147,13 +154,7 @@ export default function Circle({ shapeProps, isSelected, remoteSelectors = [], o
       {isSelected && canvasMode === "select" && (
         <Transformer
           ref={transformerRef}
-          boundBoxFunc={(oldBox, newBox) => {
-            // Limit resize to prevent negative dimensions
-            if (newBox.width < 5 || newBox.height < 5) {
-              return oldBox;
-            }
-            return newBox;
-          }}
+          boundBoxFunc={limitTransformerBoundingBox}
         />
       )}
     </>

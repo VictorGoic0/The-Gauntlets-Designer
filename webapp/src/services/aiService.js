@@ -80,11 +80,9 @@ export async function executeAICommandStream(command, callbacks = {}) {
 
   const token = await getIdToken();
 
-  const {
-    onMessage = () => {},
-    onComplete = () => {},
-    onError = () => {},
-  } = callbacks;
+  const onMessageCb = callbacks.onMessage ?? (() => {});
+  const onCompleteCb = callbacks.onComplete ?? (() => {});
+  const onErrorCb = callbacks.onError ?? (() => {});
 
   const controller = new AbortController();
 
@@ -141,17 +139,17 @@ export async function executeAICommandStream(command, callbacks = {}) {
                   switch (event.event) {
                     case "progress":
                       // Tool execution progress
-                      onMessage(event.message);
+                      onMessageCb(event.message);
                       break;
                     case "complete":
                       // Final completion with message
                       if (event.message) {
-                        onMessage(event.message);
+                        onMessageCb(event.message);
                       }
-                      onComplete(event.toolCalls);
+                      onCompleteCb(event.toolCalls);
                       break;
                     case "error":
-                      onError(new Error(event.message));
+                      onErrorCb(new Error(event.message));
                       break;
                   }
                 } catch (parseError) {
@@ -165,7 +163,7 @@ export async function executeAICommandStream(command, callbacks = {}) {
       .catch((error) => {
         if (error.name !== "AbortError") {
           console.error("Streaming error:", error);
-          onError(error);
+          onErrorCb(error);
         }
       });
 
@@ -175,7 +173,7 @@ export async function executeAICommandStream(command, callbacks = {}) {
     };
   } catch (error) {
     console.error("AI Service streaming error:", error);
-    onError(error);
+    onErrorCb(error);
     return () => {}; // No-op cleanup
   }
 }

@@ -2,8 +2,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, agent
+from app.api.routes import agent, health
 from app.config import settings
+from app.middleware.request_logging import RequestLoggingMiddleware
 from app.utils.logger import logger
 
 # Initialize FastAPI app
@@ -13,7 +14,8 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS
+# Configure CORS first, then request logging — Starlette runs the *last* added middleware first,
+# so RequestLoggingMiddleware wraps CORS and logs every request (method, path, status, duration).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -28,6 +30,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestLoggingMiddleware)
 
 # Register routers
 app.include_router(health.router)
@@ -55,8 +58,9 @@ async def startup_event():
     
     # Test OpenAI connection (non-blocking, log errors but don't crash)
     try:
-        from app.services.openai_service import test_openai_connection
         import asyncio
+
+        from app.services.openai_service import test_openai_connection
         # Run in thread pool since it's a synchronous call
         await asyncio.to_thread(test_openai_connection)
         logger.info("OpenAI connection test passed")
