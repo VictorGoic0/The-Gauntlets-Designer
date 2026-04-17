@@ -26,12 +26,13 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Create `.env` file in the `backend/` directory:
+3. Copy `api/.env.example` to `api/.env` and set values (see comments in `.env.example`):
 
 ```bash
-OPENAI_API_KEY=your_key_here
-FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+cp .env.example .env
 ```
+
+Minimum keys for local runs are listed in `.env.example` (AI keys, optional Firebase path, optional Upstash for rate limits).
 
 4. **Get Firebase Service Account Key** (for Firestore writes):
 
