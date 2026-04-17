@@ -36,17 +36,17 @@ export function useCursorTracking(
     const cursorRef = ref(realtimeDb, `cursors/${currentUser.uid}`);
 
     // Set up automatic cleanup on disconnect
-    onDisconnect(cursorRef).remove();
+    void onDisconnect(cursorRef).remove();
 
-    const handleMouseMove = async (e) => {
+    const handleMouseMove = async (event) => {
       const now = Date.now();
 
       // Convert screen coordinates to canvas coordinates
       // Account for: container offset from viewport, stage pan, and scale
       const canvasX =
-        (e.clientX - containerOffset.x - stagePosition.x) / stageScale;
+        (event.clientX - containerOffset.x - stagePosition.x) / stageScale;
       const canvasY =
-        (e.clientY - containerOffset.y - stagePosition.y) / stageScale;
+        (event.clientY - containerOffset.y - stagePosition.y) / stageScale;
 
       // Store cursor position (in canvas coordinates)
       cursorPositionRef.current = {
@@ -116,7 +116,7 @@ export function useCursorTracking(
       }
     };
 
-    updateCursorOnReconnect();
+    void updateCursorOnReconnect();
   }, [isConnected, enabled, currentUser]);
 }
 

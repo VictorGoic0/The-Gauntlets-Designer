@@ -1,8 +1,8 @@
 """Model configuration and validation."""
-from typing import Dict, Any
+from typing import Any
 
 # Hardcoded model configuration (not in environment variables)
-AVAILABLE_MODELS: Dict[str, Dict[str, Any]] = {
+AVAILABLE_MODELS: dict[str, dict[str, Any]] = {
     "gpt-4-turbo": {
         "name": "gpt-4-turbo-2024-04-09",
         "cost_per_1k_input": 0.01,

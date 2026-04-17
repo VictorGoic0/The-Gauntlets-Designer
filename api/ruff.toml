@@ -1,0 +1,26 @@
+# CollabCanvas API — Ruff (Phase 1 runbook; Python uses Ruff instead of oxlint)
+target-version = "py312"
+line-length = 120
+src = ["app"]
+
+exclude = [
+  ".venv",
+  "venv",
+  "__pycache__",
+  ".git",
+]
+
+[lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # Pyflakes
+  "I",   # isort
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+]
+extend-ignore = [
+  "E501", # line length — many docstrings/log lines; format pass can tighten later
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["S101"]

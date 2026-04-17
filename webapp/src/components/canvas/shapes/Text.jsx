@@ -61,31 +61,31 @@ export default function Text({
     }
   }, [isSelected, shapeProps.width, shapeProps.fontSize, editValue]);
 
-  const handleClick = (e) => {
+  const handleClick = (event) => {
     // Only allow selection in select mode
     if (canvasMode === "select") {
-      e.cancelBubble = true;
+      event.cancelBubble = true;
       onSelect();
     }
   };
 
-  const handleDoubleClick = (e) => {
+  const handleDoubleClick = (event) => {
     if (canvasMode === "select" && isSelected) {
-      e.cancelBubble = true;
+      event.cancelBubble = true;
       setIsEditing(true);
       setEditValue(shapeProps.text || "Double-click to edit");
     }
   };
 
-  const handleDragStart = (e) => {
+  const handleDragStart = (event) => {
     if (onDragStart) {
-      onDragStart(e);
+      onDragStart(event);
     }
   };
 
-  const handleDragMove = (e) => {
+  const handleDragMove = (event) => {
     if (onDragMove) {
-      const node = e.target;
+      const node = event.target;
       onDragMove({
         x: node.x(),
         y: node.y(),
@@ -93,9 +93,9 @@ export default function Text({
     }
   };
 
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (event) => {
     if (onDragEnd) {
-      const node = e.target;
+      const node = event.target;
       onDragEnd({
         x: node.x(),
         y: node.y(),
@@ -103,9 +103,9 @@ export default function Text({
     }
   };
 
-  const handleTransform = (e) => {
+  const handleTransform = (event) => {
     if (onTransform) {
-      const node = e.target;
+      const node = event.target;
       onTransform({
         x: node.x(),
         y: node.y(),
@@ -116,9 +116,9 @@ export default function Text({
     }
   };
 
-  const handleTransformEnd = (e) => {
+  const handleTransformEnd = (event) => {
     if (onTransformEnd) {
-      const node = e.target;
+      const node = event.target;
       const newWidth = node.width() * node.scaleX();
       const newFontSize = (shapeProps.fontSize || 16) * node.scaleY();
       
@@ -209,15 +209,15 @@ export default function Text({
         removeTextarea();
       };
       
-      const handleKeyDown = (e) => {
+      const handleKeyDown = (event) => {
         // Stop event propagation to prevent canvas shortcuts while typing
-        e.stopPropagation();
-        
-        if (e.key === "Escape") {
+        event.stopPropagation();
+
+        if (event.key === "Escape") {
           setIsEditing(false);
           removeTextarea();
-        } else if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault(); // Prevent default Enter behavior
+        } else if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault(); // Prevent default Enter behavior
           handleBlur();
         }
       };
@@ -236,6 +236,13 @@ export default function Text({
   // Get count of remote selectors
   const remoteSelectorsCount = remoteSelectors.length;
   const hasRemoteSelectors = remoteSelectorsCount > 0;
+
+  const limitTransformerBoundingBox = (oldBox, newBox) => {
+    if (newBox.width < 5 || newBox.height < 5) {
+      return oldBox;
+    }
+    return newBox;
+  };
 
   return (
     <>
@@ -283,13 +290,7 @@ export default function Text({
       {isSelected && canvasMode === "select" && !isEditing && (
         <Transformer
           ref={transformerRef}
-          boundBoxFunc={(oldBox, newBox) => {
-            // Limit resize to prevent negative dimensions
-            if (newBox.width < 5 || newBox.height < 5) {
-              return oldBox;
-            }
-            return newBox;
-          }}
+          boundBoxFunc={limitTransformerBoundingBox}
         />
       )}
     </>

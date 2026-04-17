@@ -1,13 +1,15 @@
 """Agent chat endpoint with LangChain integration and SSE streaming."""
 import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sse_starlette.sse import EventSourceResponse
+
 from app.agent.orchestrator import CanvasAgent
 from app.middleware.auth import get_current_user_uid
 from app.models.requests import ChatRequest
-from app.services.rate_limit import check_rate_limits
 from app.models.responses import ChatResponse
-from app.utils.logger import logger, set_request_id, TimingContext
+from app.services.rate_limit import check_rate_limits
+from app.utils.logger import TimingContext, logger, set_request_id
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
@@ -56,7 +58,10 @@ async def chat(
             if not request.message or not request.message.strip():
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="message is required and cannot be empty"
+                    detail={
+                        "error": "ValidationError",
+                        "detail": "message is required and cannot be empty",
+                    },
                 )
 
             logger.info(
@@ -118,7 +123,7 @@ async def chat(
                 "error": "InternalServerError",
                 "detail": f"An unexpected error occurred: {str(e)}"
             }
-        )
+        ) from e
 
 
 @router.post(
@@ -161,7 +166,10 @@ async def chat_stream(
         if not request.message or not request.message.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="message is required and cannot be empty"
+                detail={
+                    "error": "ValidationError",
+                    "detail": "message is required and cannot be empty",
+                },
             )
 
         logger.info(
@@ -222,5 +230,5 @@ async def chat_stream(
                 "error": "InternalServerError",
                 "detail": f"An unexpected error occurred: {str(e)}"
             }
-        )
+        ) from e
 

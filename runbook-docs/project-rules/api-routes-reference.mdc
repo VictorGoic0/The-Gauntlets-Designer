@@ -1,0 +1,8 @@
+---
+description: Always reference the routes doc when looking for API routes
+alwaysApply: true
+---
+
+When looking for API routes, their request/response shapes, or auth requirements, check `docs/api-routes.md` first. Do not search the codebase for routes unless the doc is insufficient.
+
+When adding a new route, update `docs/api-routes.md` before closing the task.

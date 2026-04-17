@@ -1,4 +1,4 @@
-import { Rect, Transformer, Group } from "react-konva";
+import { Rect, Transformer } from "react-konva";
 import { useRef, useEffect } from "react";
 import useLocalStore from "../../../stores/localStore";
 
@@ -23,23 +23,23 @@ export default function Rectangle({ shapeProps, isSelected, remoteSelectors = []
     }
   }, [isSelected]);
 
-  const handleClick = (e) => {
+  const handleClick = (event) => {
     // Only allow selection in select mode
     if (canvasMode === "select") {
-      e.cancelBubble = true;
+      event.cancelBubble = true;
       onSelect();
     }
   };
 
-  const handleDragStart = (e) => {
+  const handleDragStart = (event) => {
     if (onDragStart) {
-      onDragStart(e);
+      onDragStart(event);
     }
   };
 
-  const handleDragMove = (e) => {
+  const handleDragMove = (event) => {
     if (onDragMove) {
-      const node = e.target;
+      const node = event.target;
       onDragMove({
         x: node.x(),
         y: node.y(),
@@ -47,9 +47,9 @@ export default function Rectangle({ shapeProps, isSelected, remoteSelectors = []
     }
   };
 
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (event) => {
     if (onDragEnd) {
-      const node = e.target;
+      const node = event.target;
       onDragEnd({
         x: node.x(),
         y: node.y(),
@@ -57,9 +57,9 @@ export default function Rectangle({ shapeProps, isSelected, remoteSelectors = []
     }
   };
 
-  const handleTransform = (e) => {
+  const handleTransform = (event) => {
     if (onTransform) {
-      const node = e.target;
+      const node = event.target;
       onTransform({
         x: node.x(),
         y: node.y(),
@@ -70,9 +70,9 @@ export default function Rectangle({ shapeProps, isSelected, remoteSelectors = []
     }
   };
 
-  const handleTransformEnd = (e) => {
+  const handleTransformEnd = (event) => {
     if (onTransformEnd) {
-      const node = e.target;
+      const node = event.target;
       const newWidth = node.width() * node.scaleX();
       const newHeight = node.height() * node.scaleY();
       
@@ -112,6 +112,13 @@ export default function Rectangle({ shapeProps, isSelected, remoteSelectors = []
   const remoteSelectorsCount = remoteSelectors.length;
   const hasRemoteSelectors = remoteSelectorsCount > 0;
 
+  const limitTransformerBoundingBox = (oldBox, newBox) => {
+    if (newBox.width < 5 || newBox.height < 5) {
+      return oldBox;
+    }
+    return newBox;
+  };
+
   return (
     <>
       {/* Remote selection borders (PR #19) - rendered behind the shape */}
@@ -150,13 +157,7 @@ export default function Rectangle({ shapeProps, isSelected, remoteSelectors = []
       {isSelected && canvasMode === "select" && (
         <Transformer
           ref={transformerRef}
-          boundBoxFunc={(oldBox, newBox) => {
-            // Limit resize to prevent negative dimensions
-            if (newBox.width < 5 || newBox.height < 5) {
-              return oldBox;
-            }
-            return newBox;
-          }}
+          boundBoxFunc={limitTransformerBoundingBox}
         />
       )}
     </>

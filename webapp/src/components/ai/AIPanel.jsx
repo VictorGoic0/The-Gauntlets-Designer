@@ -8,6 +8,7 @@ import AIInput from "./AIInput";
 import { executeAICommandStream } from "../../services/aiService";
 import toast from "react-hot-toast";
 import { colors, typography, spacing } from "../../styles/tokens";
+import CloseXIcon from "../icons/CloseXIcon";
 
 export default function AIPanel({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
@@ -29,84 +30,82 @@ export default function AIPanel({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  const handleSubmit = async (command) => {
-    // Add user message to chat
+  const onSubmitAICommand = async (command) => {
     const userMessage = {
       id: `user-${Date.now()}`,
       type: "user",
       content: command,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((previousMessagesState) => [
+      ...previousMessagesState,
+      userMessage,
+    ]);
 
     setIsLoading(true);
-    
-    // Counter for unique IDs
+
     let progressCounter = 0;
 
-    try {
-      // Use streaming API (requires auth token)
-      const cleanup = await executeAICommandStream(command, {
-        onMessage: (content) => {
-          // Add each progress message as a separate message in the chat
-          progressCounter++;
-          const progressMessage = {
-            id: `progress-${Date.now()}-${progressCounter}`,
-            type: "progress",
-            content: content,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, progressMessage]);
-        },
-        onComplete: (toolCalls, finalMessage) => {
-          // Add final AI response to chat
-          if (finalMessage) {
-            const aiMessage = {
-              id: `ai-${Date.now()}`,
-              type: "ai",
-              content: finalMessage,
-              toolCalls,
-              timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, aiMessage]);
-          }
+    const appendProgressMessageFromStream = (content) => {
+      progressCounter++;
+      const progressMessage = {
+        id: `progress-${Date.now()}-${progressCounter}`,
+        type: "progress",
+        content: content,
+        timestamp: new Date(),
+      };
+      setMessages((previousMessagesState) => [
+        ...previousMessagesState,
+        progressMessage,
+      ]);
+    };
 
-          // Show success toast
-          toast.success(`✨ Created ${toolCalls} object(s)`);
+    const onStreamComplete = (toolCalls) => {
+      toast.success(`✨ Created ${toolCalls} object(s)`);
 
-          setIsLoading(false);
-        },
-        onError: (error) => {
-          console.error("AI command failed:", error);
+      setIsLoading(false);
+    };
 
-          // Add error message to chat
-          const errorMessage = {
-            id: `error-${Date.now()}`,
-            type: "error",
-            content: error.message || "Failed to execute command",
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, errorMessage]);
-
-          toast.error(`❌ ${error.message}`);
-
-          setIsLoading(false);
-        },
-      });
-
-      // Store cleanup function
-      cleanupRef.current = cleanup;
-    } catch (error) {
+    const onStreamError = (error) => {
       console.error("AI command failed:", error);
 
-      // Add error message to chat
       const errorMessage = {
         id: `error-${Date.now()}`,
         type: "error",
         content: error.message || "Failed to execute command",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((previousMessagesState) => [
+        ...previousMessagesState,
+        errorMessage,
+      ]);
+
+      toast.error(`❌ ${error.message}`);
+
+      setIsLoading(false);
+    };
+
+    try {
+      const cleanup = await executeAICommandStream(command, {
+        onMessage: appendProgressMessageFromStream,
+        onComplete: onStreamComplete,
+        onError: onStreamError,
+      });
+
+      cleanupRef.current = cleanup;
+    } catch (error) {
+      console.error("AI command failed:", error);
+
+      const errorMessage = {
+        id: `error-${Date.now()}`,
+        type: "error",
+        content: error.message || "Failed to execute command",
+        timestamp: new Date(),
+      };
+      setMessages((previousMessagesState) => [
+        ...previousMessagesState,
+        errorMessage,
+      ]);
 
       toast.error(`❌ ${error.message}`);
 
@@ -114,9 +113,17 @@ export default function AIPanel({ isOpen, onClose }) {
     }
   };
 
-  const handleClear = () => {
+  const onClickClearConversation = () => {
     setMessages([]);
     toast.success("Conversation cleared");
+  };
+
+  const onMouseEnterSecondaryTextControl = (event) => {
+    event.currentTarget.style.color = colors.text.primary;
+  };
+
+  const onMouseLeaveSecondaryTextControl = (event) => {
+    event.currentTarget.style.color = colors.text.secondary;
   };
 
   if (!isOpen) return null;
@@ -229,26 +236,10 @@ export default function AIPanel({ isOpen, onClose }) {
                 alignItems: "center",
               }}
               aria-label="Close AI panel"
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = colors.text.primary)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = colors.text.secondary)
-              }
+              onMouseEnter={onMouseEnterSecondaryTextControl}
+              onMouseLeave={onMouseLeaveSecondaryTextControl}
             >
-              <svg
-                style={{ width: "1.5rem", height: "1.5rem" }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <CloseXIcon style={{ width: "1.5rem", height: "1.5rem" }} />
             </button>
           </div>
 
@@ -450,7 +441,7 @@ export default function AIPanel({ isOpen, onClose }) {
           >
             {messages.length > 0 && (
               <button
-                onClick={handleClear}
+                onClick={onClickClearConversation}
                 style={{
                   fontSize: typography.fontSize.xs,
                   color: colors.text.secondary,
@@ -460,17 +451,13 @@ export default function AIPanel({ isOpen, onClose }) {
                   marginBottom: spacing[3],
                   padding: 0,
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = colors.text.primary)
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = colors.text.secondary)
-                }
+                onMouseEnter={onMouseEnterSecondaryTextControl}
+                onMouseLeave={onMouseLeaveSecondaryTextControl}
               >
                 Clear conversation
               </button>
             )}
-            <AIInput onSubmit={handleSubmit} isLoading={isLoading} />
+            <AIInput onSubmit={onSubmitAICommand} isLoading={isLoading} />
           </div>
         </Card>
       </div>

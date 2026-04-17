@@ -4,7 +4,6 @@ Firebase ID token verification for agent endpoints.
 Expects: Authorization: Bearer <firebase_id_token>
 Returns: verified uid (str) or raises HTTP 401.
 """
-from typing import Optional
 
 import firebase_admin.auth
 from fastapi import Header, HTTPException, status
@@ -14,7 +13,7 @@ from app.utils.logger import logger
 
 
 async def get_current_user_uid(
-    authorization: Optional[str] = Header(None, alias="Authorization"),
+    authorization: str | None = Header(None, alias="Authorization"),
 ) -> str:
     """
     Verify Firebase ID token from Authorization header and return the user's uid.
@@ -69,16 +68,16 @@ async def get_current_user_uid(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Firebase token has expired",
-        )
+        ) from None
     except firebase_admin.auth.InvalidIdTokenError:
         logger.warning("Invalid Firebase ID token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Firebase token",
-        )
+        ) from None
     except Exception as e:
         logger.error(f"Token verification failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token verification failed",
-        )
+        ) from e

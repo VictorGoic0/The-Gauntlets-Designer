@@ -7,7 +7,7 @@ Global: 1000 requests / 24h (identifier = "app").
 import time
 
 from fastapi import HTTPException, status
-from upstash_ratelimit import Ratelimit, FixedWindow
+from upstash_ratelimit import FixedWindow, Ratelimit
 from upstash_redis import Redis
 
 redis = Redis.from_env()

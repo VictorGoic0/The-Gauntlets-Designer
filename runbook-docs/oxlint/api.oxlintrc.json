@@ -1,0 +1,51 @@
+{
+  "plugins": ["unicorn", "typescript"],
+  "jsPlugins": ["oxlint-plugin-eslint"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  },
+  "rules": {
+    "no-unused-vars": "error",
+    "eslint-js/id-length": [
+      "error",
+      {
+        "min": 2,
+        "exceptions": ["i"]
+      }
+    ],
+    "unicorn/no-useless-spread": "error",
+    "unicorn/prefer-ternary": "warn",
+    "@typescript-eslint/consistent-type-imports": "error",
+    "no-console": "error",
+    "eslint-js/no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/db/client*", "**/generated/prisma*"],
+            "message": "Prisma must only be called from src/services/. Import a service function instead."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/services/**",
+        "src/db/client.ts",
+        "src/middleware/attachUser.ts",
+        "src/rag/embeddings.ts",
+        "src/agents/rag/pipeline.ts",
+        "src/agents/contradiction/nodes/persist.ts",
+        "src/integrations/google/gmail/watch.ts",
+        "prisma/seed.ts",
+        "scripts/**"
+      ],
+      "rules": {
+        "eslint-js/no-restricted-imports": "off"
+      }
+    }
+  ]
+}

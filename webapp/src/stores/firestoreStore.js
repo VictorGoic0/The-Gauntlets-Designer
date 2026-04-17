@@ -103,7 +103,9 @@ const useFirestoreStore = create(
             });
 
             // Sort by zIndex to maintain proper layering
-            objectsArray.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            objectsArray.sort(
+              (left, right) => (left.zIndex || 0) - (right.zIndex || 0)
+            );
 
             return {
               objects: {
@@ -150,7 +152,9 @@ const useFirestoreStore = create(
             };
 
             const objectsArray = Object.values(newObjectsMap);
-            objectsArray.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            objectsArray.sort(
+              (left, right) => (left.zIndex || 0) - (right.zIndex || 0)
+            );
 
             return {
               objects: {
@@ -179,7 +183,9 @@ const useFirestoreStore = create(
             };
 
             const objectsArray = Object.values(newObjectsMap);
-            objectsArray.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            objectsArray.sort(
+              (left, right) => (left.zIndex || 0) - (right.zIndex || 0)
+            );
 
             return {
               objects: {
@@ -202,7 +208,9 @@ const useFirestoreStore = create(
             delete newObjectsMap[objectId];
 
             const objectsArray = Object.values(newObjectsMap);
-            objectsArray.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            objectsArray.sort(
+              (left, right) => (left.zIndex || 0) - (right.zIndex || 0)
+            );
 
             // Clean up pending updates and current objects map
             const newPendingUpdates = { ...state.pendingUpdates };
@@ -235,7 +243,9 @@ const useFirestoreStore = create(
             });
 
             const objectsArray = Object.values(newObjectsMap);
-            objectsArray.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            objectsArray.sort(
+              (left, right) => (left.zIndex || 0) - (right.zIndex || 0)
+            );
 
             // Clean up pending updates and current objects map
             const newPendingUpdates = { ...state.pendingUpdates };

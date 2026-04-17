@@ -15,11 +15,11 @@ Tools:
 
 Each tool returns: {"success": bool, "objectId": str, "message": str}
 """
-import asyncio
-from typing import Dict, Any
+from typing import Any
+
+from firebase_admin import db as realtime_db
+from firebase_admin import firestore
 from langchain.tools import tool
-import firebase_admin
-from firebase_admin import firestore, db as realtime_db
 
 from app.services.firebase_service import get_firestore_client, is_firebase_initialized
 from app.utils.logger import logger
@@ -42,7 +42,7 @@ def create_rectangle(
     height: float = 100,
     fill: str = "#3B82F6",
     rotation: float = 0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a rectangle shape on the canvas at the specified position with optional dimensions and color.
     
     Args:
@@ -119,7 +119,7 @@ def create_circle(
     radius: float = 50,
     fill: str = "#10B981",
     rotation: float = 0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a circle shape on the canvas at the specified position with optional radius and color.
     
     Args:
@@ -197,7 +197,7 @@ def create_text(
     fontFamily: str = "Arial",
     width: float = 200,
     rotation: float = 0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a text element on the canvas with specified content and styling.
     
     Args:
@@ -276,7 +276,7 @@ def move_object(
     objectId: str,
     x: float,
     y: float
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Move an existing object to a new position on the canvas.
     
     Args:
@@ -349,7 +349,7 @@ def resize_object(
     width: float = None,
     height: float = None,
     radius: float = None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Resize an existing object. For rectangles/text, provide width and height. For circles, provide radius.
     
     Args:
@@ -430,7 +430,7 @@ def resize_object(
 def change_color(
     objectId: str,
     fill: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Change the color/fill of an existing object.
     
     Args:
@@ -487,7 +487,7 @@ def change_color(
 def rotate_object(
     objectId: str,
     rotation: float
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Rotate an existing object by a specified angle.
     
     Args:

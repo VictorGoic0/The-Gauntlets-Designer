@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useEffectEvent } from "react";
 import Header from "../components/ui/Header";
 import Canvas from "../components/canvas/Canvas";
 import ZoomControls from "../components/canvas/ZoomControls";
@@ -9,38 +9,41 @@ import AIPanel from "../components/ai/AIPanel";
 export default function CanvasPage() {
   const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
 
-  // Keyboard shortcut: Cmd/Ctrl + K to toggle AI panel
+  const onCanvasPageKeyDown = useEffectEvent((event) => {
+    const isTyping =
+      event.target.tagName === "INPUT" ||
+      event.target.tagName === "TEXTAREA" ||
+      event.target.isContentEditable;
+
+    if ((event.metaKey || event.ctrlKey) && event.key === "k" && !isTyping) {
+      event.preventDefault();
+      setIsAIPanelOpen(
+        (previousIsAIPanelOpen) => !previousIsAIPanelOpen,
+      );
+    }
+
+    if (event.key === "Escape") {
+      setIsAIPanelOpen((previousIsOpen) =>
+        previousIsOpen ? false : previousIsOpen,
+      );
+    }
+  });
+
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ignore shortcuts if user is typing in an input/textarea
-      const isTyping = 
-        e.target.tagName === "INPUT" ||
-        e.target.tagName === "TEXTAREA" ||
-        e.target.isContentEditable;
-
-      // Check for Cmd (Mac) or Ctrl (Windows/Linux) + K
-      if ((e.metaKey || e.ctrlKey) && e.key === "k" && !isTyping) {
-        e.preventDefault(); // Prevent browser's default search
-        setIsAIPanelOpen((prev) => !prev);
-      }
-
-      // Escape key to close AI panel (allow even when typing)
-      if (e.key === "Escape" && isAIPanelOpen) {
-        setIsAIPanelOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
+    window.addEventListener("keydown", onCanvasPageKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", onCanvasPageKeyDown);
     };
-  }, [isAIPanelOpen]);
+  }, []);
+
+  const onClickOpenAIPanel = () => setIsAIPanelOpen(true);
+
+  const onCloseAIPanel = () => setIsAIPanelOpen(false);
 
   return (
     <div className="flex flex-col w-full h-screen overflow-hidden bg-gray-900">
       {/* Header at the top */}
-      <Header onOpenAI={() => setIsAIPanelOpen(true)} />
+      <Header onOpenAI={onClickOpenAIPanel} />
       
       {/* Canvas fills remaining space */}
       <div className="flex-1 relative">
@@ -57,10 +60,7 @@ export default function CanvasPage() {
       </div>
 
       {/* AI Panel (slides in from right) */}
-      <AIPanel
-        isOpen={isAIPanelOpen}
-        onClose={() => setIsAIPanelOpen(false)}
-      />
+      <AIPanel isOpen={isAIPanelOpen} onClose={onCloseAIPanel} />
     </div>
   );
 }

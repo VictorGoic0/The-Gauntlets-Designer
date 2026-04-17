@@ -36,7 +36,7 @@ Error Handling:
     - Zero tool calls and tokens
     - Error message in response text
 """
-from typing import Dict, List, Any
+from typing import Any
 
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
@@ -45,7 +45,7 @@ from app.agent.langchain_tools import get_langchain_tools
 from app.agent.model_router import ModelTier, get_model_client, route
 from app.agent.prompts import SYSTEM_PROMPT
 from app.config import settings
-from app.utils.logger import logger, TimingContext, get_request_id
+from app.utils.logger import TimingContext, get_request_id, logger
 
 
 def _build_agent(tier: ModelTier):
@@ -86,7 +86,7 @@ def _build_agent(tier: ModelTier):
 
 
 # Cache one agent per tier — avoids rebuilding on every request
-_AGENT_CACHE: Dict[ModelTier, Any] = {}
+_AGENT_CACHE: dict[ModelTier, Any] = {}
 
 
 def _get_agent(tier: ModelTier):
@@ -111,8 +111,8 @@ class CanvasAgent:
     
     def _extract_tool_calls_from_messages(
         self,
-        messages: List[Any]
-    ) -> List[Dict[str, Any]]:
+        messages: list[Any]
+    ) -> list[dict[str, Any]]:
         """
         Extract tool calls from LangChain agent messages.
         
@@ -151,7 +151,7 @@ class CanvasAgent:
     async def process_message(
         self,
         user_message: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Process user message using LangChain agent.
 
@@ -296,7 +296,7 @@ class CanvasAgent:
                                     if isinstance(result, dict) and "message" in result:
                                         progress_msg = result["message"]
                                     else:
-                                        progress_msg = f"Successfully executed tool"
+                                        progress_msg = "Successfully executed tool"
                                     
                                     yield {
                                         "event": "progress",

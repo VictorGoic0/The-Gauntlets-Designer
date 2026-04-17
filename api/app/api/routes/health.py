@@ -1,9 +1,9 @@
 """Health check endpoint."""
 from fastapi import APIRouter
 
-from app.utils.logger import logger
-from app.services.openai_service import test_openai_connection
 from app.services.firebase_service import is_firebase_initialized
+from app.services.openai_service import test_openai_connection
+from app.utils.logger import logger
 
 router = APIRouter(prefix="/api", tags=["health"])
 

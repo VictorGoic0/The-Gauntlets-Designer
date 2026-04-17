@@ -20,6 +20,8 @@ class Settings:
         self.FIREBASE_CREDENTIALS_PATH: str = os.getenv(
             "FIREBASE_CREDENTIALS_PATH", "./serviceAccountKey.json"
         )
+        # Optional: full JSON string of service account (e.g. Railway); see firebase_service.initialize_firebase
+        self.FIREBASE_CREDENTIALS_JSON: str = os.getenv("FIREBASE_CREDENTIALS_JSON", "")
 
         # Model configuration
         self.REASONING_MODEL: str = "gpt-5-mini-2025-08-07"
@@ -58,18 +60,22 @@ settings = Settings()
 if not settings.OPENAI_API_KEY or settings.OPENAI_API_KEY == "your_key_here":
     warnings.warn(
         "OPENAI_API_KEY must be set in environment variables or .env file",
-        UserWarning
+        UserWarning,
+        stacklevel=2,
     )
 
 if not settings.GROK_API_KEY or settings.GROK_API_KEY == "your_key_here":
     warnings.warn(
         "GROK_API_KEY must be set in environment variables or .env file",
-        UserWarning
+        UserWarning,
+        stacklevel=2,
     )
 
 # Validate Firebase credentials (warn if not found, but don't crash)
 try:
     settings.validate_firebase_credentials()
 except FileNotFoundError as e:
-    warnings.warn(f"Firebase credentials validation: {e}", UserWarning)
+    warnings.warn(
+        f"Firebase credentials validation: {e}", UserWarning, stacklevel=2
+    )
 

@@ -270,8 +270,8 @@ const useLocalStore = create(
       removeOptimisticObject: (localId) =>
         set(
           (state) => {
-            const { [localId]: _, ...remainingObjects } =
-              state.optimisticObjects.data;
+            const remainingObjects = { ...state.optimisticObjects.data };
+            delete remainingObjects[localId];
             return {
               optimisticObjects: {
                 data: remainingObjects,
@@ -286,8 +286,8 @@ const useLocalStore = create(
         set(
           (state) => {
             // Remove from optimistic objects
-            const { [localId]: _, ...remainingOptimistic } =
-              state.optimisticObjects.data;
+            const remainingOptimistic = { ...state.optimisticObjects.data };
+            delete remainingOptimistic[localId];
 
             // Update dragging positions
             const newDraggingPositions = {

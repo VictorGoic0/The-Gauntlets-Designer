@@ -1,11 +1,10 @@
 """Logging configuration for the application."""
 import logging
 import sys
-import uuid
 import time
-from pathlib import Path
+import uuid
 from contextvars import ContextVar
-from typing import Optional
+from pathlib import Path
 
 from app.config import settings
 
@@ -18,7 +17,7 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(mess
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # Context variable for request ID (thread-safe)
-request_id_var: ContextVar[Optional[str]] = ContextVar('request_id', default=None)
+request_id_var: ContextVar[str | None] = ContextVar('request_id', default=None)
 
 # Get log level from settings
 log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
@@ -79,7 +78,7 @@ def generate_request_id() -> str:
     return str(uuid.uuid4())[:8]
 
 
-def set_request_id(request_id: Optional[str] = None) -> str:
+def set_request_id(request_id: str | None = None) -> str:
     """
     Set request ID for current context.
     
@@ -95,7 +94,7 @@ def set_request_id(request_id: Optional[str] = None) -> str:
     return request_id
 
 
-def get_request_id() -> Optional[str]:
+def get_request_id() -> str | None:
     """Get current request ID."""
     return request_id_var.get()
 
@@ -103,7 +102,7 @@ def get_request_id() -> Optional[str]:
 class TimingContext:
     """Context manager for timing operations."""
     
-    def __init__(self, operation_name: str, logger_instance: Optional[logging.Logger] = None):
+    def __init__(self, operation_name: str, logger_instance: logging.Logger | None = None):
         """
         Initialize timing context.
         
@@ -113,8 +112,8 @@ class TimingContext:
         """
         self.operation_name = operation_name
         self.logger = logger_instance or logger
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
     
     def __enter__(self):
         """Start timing."""

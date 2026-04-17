@@ -61,7 +61,7 @@ export function usePresence(enabled = true) {
     };
 
     // Initialize presence
-    initializePresence();
+    void initializePresence();
 
     // Set up periodic updates
     intervalRef.current = setInterval(updatePresence, UPDATE_INTERVAL_MS);
@@ -103,7 +103,7 @@ export function usePresence(enabled = true) {
       }
     };
 
-    updatePresenceOnReconnect();
+    void updatePresenceOnReconnect();
   }, [isConnected, enabled, currentUser]);
 }
 

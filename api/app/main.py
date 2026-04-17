@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, agent
+from app.api.routes import agent, health
 from app.config import settings
 from app.utils.logger import logger
 
@@ -55,8 +55,9 @@ async def startup_event():
     
     # Test OpenAI connection (non-blocking, log errors but don't crash)
     try:
-        from app.services.openai_service import test_openai_connection
         import asyncio
+
+        from app.services.openai_service import test_openai_connection
         # Run in thread pool since it's a synchronous call
         await asyncio.to_thread(test_openai_connection)
         logger.info("OpenAI connection test passed")
